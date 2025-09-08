@@ -295,7 +295,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Documentation
 - [Azure OpenAI Documentation](https://docs.microsoft.com/en-us/azure/cognitive-services/openai/)
-- [PTU Pricing Guide](https://docs.microsoft.com/en-us/azure/cognitive-services/openai/concepts/provisioned-throughput)
+- [PTU Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/provisioned-throughput)
 - [KQL Reference](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/)
 
 ### Community
