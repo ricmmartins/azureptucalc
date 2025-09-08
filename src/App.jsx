@@ -28,9 +28,9 @@ function App() {
   
   // KQL form data
   const [formData, setFormData] = useState({
-    avgTPM: 5678,
-    p99TPM: 12000,
-    maxTPM: 25000,
+    avgTPM: 0,
+    p99TPM: 0,
+    maxTPM: 0,
     avgPTU: 1,
     p99PTU: 1,
     maxPTU: 1,
