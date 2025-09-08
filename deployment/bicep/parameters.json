@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "staticWebAppName": {
+      "value": "azure-openai-ptu-estimator"
+    },
+    "repositoryUrl": {
+      "value": "https://github.com/your-username/azure-openai-ptu-estimator"
+    },
+    "branch": {
+      "value": "main"
+    },
+    "sku": {
+      "value": "Free"
+    },
+    "tags": {
+      "value": {
+        "Environment": "Production",
+        "Application": "Azure OpenAI PTU Estimator",
+        "Owner": "DevOps Team",
+        "CostCenter": "IT",
+        "Project": "Azure OpenAI Cost Optimization"
+      }
+    }
+  }
+}
+

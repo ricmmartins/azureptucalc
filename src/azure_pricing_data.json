@@ -1,0 +1,265 @@
+{
+  "pricing_data": {
+    "o3": {
+      "o3 2025-04-16 Global": {
+        "paygo_input": 2.00,
+        "paygo_cached_input": 0.50,
+        "paygo_output": 8.00,
+        "batch_api_input": 1.00,
+        "batch_api_output": 4.00
+      },
+      "o3 2025-04-16 Data Zone": {
+        "paygo_input": 2.20,
+        "paygo_cached_input": 0.55,
+        "paygo_output": 8.80,
+        "batch_api_input": 1.10,
+        "batch_api_output": 4.40
+      },
+      "o3 2025-04-16 Regional": {
+        "paygo_input": 2.20,
+        "paygo_cached_input": 0.55,
+        "paygo_output": 8.80,
+        "batch_api_input": null,
+        "batch_api_output": null
+      }
+    },
+    "o4-mini": {
+      "o4-mini 2025-04-16 Global": {
+        "paygo_input": 0.40,
+        "paygo_cached_input": 0.10,
+        "paygo_output": 1.60,
+        "batch_api_input": 0.20,
+        "batch_api_output": 0.80
+      },
+      "o4-mini 2025-04-16 Data Zone": {
+        "paygo_input": 0.44,
+        "paygo_cached_input": 0.11,
+        "paygo_output": 1.76,
+        "batch_api_input": 0.22,
+        "batch_api_output": 0.88
+      },
+      "o4-mini 2025-04-16 Regional": {
+        "paygo_input": 0.44,
+        "paygo_cached_input": 0.11,
+        "paygo_output": 1.76,
+        "batch_api_input": null,
+        "batch_api_output": null
+      }
+    },
+    "GPT-4.1 series": {
+      "GPT-4.1-2025-04-14 Global": {
+        "paygo_input": 2.00,
+        "paygo_cached_input": 0.50,
+        "paygo_output": 8.00,
+        "batch_api_input": 1.00,
+        "batch_api_output": 4.00
+      },
+      "GPT-4.1-2025-04-14 Data Zone": {
+        "paygo_input": 2.20,
+        "paygo_cached_input": 0.55,
+        "paygo_output": 8.80,
+        "batch_api_input": 1.10,
+        "batch_api_output": 4.40
+      },
+      "GPT-4.1-2025-04-14 Regional": {
+        "paygo_input": 2.20,
+        "paygo_cached_input": 0.55,
+        "paygo_output": 8.80,
+        "batch_api_input": null,
+        "batch_api_output": null
+      },
+      "GPT-4.1-mini-2025-04-14 Global": {
+        "paygo_input": 0.40,
+        "paygo_cached_input": 0.10,
+        "paygo_output": 1.60,
+        "batch_api_input": 0.20,
+        "batch_api_output": 0.80
+      },
+      "GPT-4.1-mini-2025-04-14 Data Zone": {
+        "paygo_input": 0.44,
+        "paygo_cached_input": 0.11,
+        "paygo_output": 1.76,
+        "batch_api_input": 0.22,
+        "batch_api_output": 0.88
+      },
+      "GPT-4.1-mini-2025-04-14 Regional": {
+        "paygo_input": 0.44,
+        "paygo_cached_input": 0.11,
+        "paygo_output": 1.76,
+        "batch_api_input": null,
+        "batch_api_output": null
+      },
+      "GPT-4.1-nano-2025-04-14 Global": {
+        "paygo_input": 0.10,
+        "paygo_cached_input": 0.03,
+        "paygo_output": 0.40,
+        "batch_api_input": 0.05,
+        "batch_api_output": 0.20
+      },
+      "GPT-4.1-nano-2025-04-14 Data Zone": {
+        "paygo_input": 0.11,
+        "paygo_cached_input": 0.03,
+        "paygo_output": 0.44,
+        "batch_api_input": 0.06,
+        "batch_api_output": 0.22
+      },
+      "GPT-4.1-nano-2025-04-14 Regional": {
+        "paygo_input": 0.11,
+        "paygo_cached_input": 0.03,
+        "paygo_output": 0.44,
+        "batch_api_input": null,
+        "batch_api_output": null
+      }
+    },
+    "GPT-4o": {
+      "GPT-4o Global": {
+        "paygo_input": 2.50,
+        "paygo_cached_input": 1.25,
+        "paygo_output": 10.00,
+        "batch_api_input": 1.25,
+        "batch_api_output": 5.00
+      },
+      "GPT-4o Data Zone": {
+        "paygo_input": 2.75,
+        "paygo_cached_input": 1.38,
+        "paygo_output": 11.00,
+        "batch_api_input": 1.38,
+        "batch_api_output": 5.50
+      },
+      "GPT-4o Regional": {
+        "paygo_input": 2.75,
+        "paygo_cached_input": 1.38,
+        "paygo_output": 11.00,
+        "batch_api_input": null,
+        "batch_api_output": null
+      },
+      "GPT-4o-mini Global": {
+        "paygo_input": 0.20,
+        "paygo_cached_input": 0.10,
+        "paygo_output": 0.60,
+        "batch_api_input": 0.10,
+        "batch_api_output": 0.30
+      },
+      "GPT-4o-mini Data Zone": {
+        "paygo_input": 0.22,
+        "paygo_cached_input": 0.11,
+        "paygo_output": 0.66,
+        "batch_api_input": 0.11,
+        "batch_api_output": 0.33
+      },
+      "GPT-4o-mini Regional": {
+        "paygo_input": 0.22,
+        "paygo_cached_input": 0.11,
+        "paygo_output": 0.66,
+        "batch_api_input": null,
+        "batch_api_output": null
+      }
+    }
+  },
+  "ptu_pricing": {
+    "o3": {
+      "Global": 1000.00,
+      "Data Zone": 1100.00,
+      "Regional": 1100.00
+    },
+    "o4-mini": {
+      "Global": 200.00,
+      "Data Zone": 220.00,
+      "Regional": 220.00
+    },
+    "GPT-4.1": {
+      "Global": 1000.00,
+      "Data Zone": 1100.00,
+      "Regional": 1100.00
+    },
+    "GPT-4.1-mini": {
+      "Global": 200.00,
+      "Data Zone": 220.00,
+      "Regional": 220.00
+    },
+    "GPT-4.1-nano": {
+      "Global": 50.00,
+      "Data Zone": 55.00,
+      "Regional": 55.00
+    },
+    "GPT-4o": {
+      "Global": 1250.00,
+      "Data Zone": 1375.00,
+      "Regional": 1375.00
+    },
+    "GPT-4o-mini": {
+      "Global": 75.00,
+      "Data Zone": 83.00,
+      "Regional": 83.00
+    }
+  },
+  "regions": [
+    {"value": "australia-east", "label": "Australia East", "models": 14},
+    {"value": "australia-southeast", "label": "Australia Southeast", "models": 10},
+    {"value": "brazil-south", "label": "Brazil South", "models": 8},
+    {"value": "canada-central", "label": "Canada Central", "models": 12},
+    {"value": "canada-east", "label": "Canada East", "models": 9},
+    {"value": "central-india", "label": "Central India", "models": 11},
+    {"value": "central-us", "label": "Central US", "models": 15},
+    {"value": "east-asia", "label": "East Asia", "models": 13},
+    {"value": "east-us", "label": "East US", "models": 18},
+    {"value": "east-us-2", "label": "East US 2", "models": 16},
+    {"value": "france-central", "label": "France Central", "models": 12},
+    {"value": "france-south", "label": "France South", "models": 7},
+    {"value": "germany-west-central", "label": "Germany West Central", "models": 10},
+    {"value": "japan-east", "label": "Japan East", "models": 14},
+    {"value": "japan-west", "label": "Japan West", "models": 8},
+    {"value": "korea-central", "label": "Korea Central", "models": 9},
+    {"value": "korea-south", "label": "Korea South", "models": 6},
+    {"value": "north-central-us", "label": "North Central US", "models": 12},
+    {"value": "north-europe", "label": "North Europe", "models": 16},
+    {"value": "norway-east", "label": "Norway East", "models": 8},
+    {"value": "poland-central", "label": "Poland Central", "models": 6},
+    {"value": "qatar-central", "label": "Qatar Central", "models": 5},
+    {"value": "south-africa-north", "label": "South Africa North", "models": 7},
+    {"value": "south-central-us", "label": "South Central US", "models": 14},
+    {"value": "southeast-asia", "label": "Southeast Asia", "models": 13},
+    {"value": "south-india", "label": "South India", "models": 8},
+    {"value": "spain-central", "label": "Spain Central", "models": 7},
+    {"value": "sweden-central", "label": "Sweden Central", "models": 12},
+    {"value": "sweden-south", "label": "Sweden South", "models": 8},
+    {"value": "switzerland-north", "label": "Switzerland North", "models": 8},
+    {"value": "switzerland-west", "label": "Switzerland West", "models": 6},
+    {"value": "uae-central", "label": "UAE Central", "models": 6},
+    {"value": "uae-north", "label": "UAE North", "models": 5},
+    {"value": "uk-south", "label": "UK South", "models": 9},
+    {"value": "uk-west", "label": "UK West", "models": 7},
+    {"value": "west-central-us", "label": "West Central US", "models": 10},
+    {"value": "west-europe", "label": "West Europe", "models": 17},
+    {"value": "west-us", "label": "West US", "models": 13},
+    {"value": "west-us-2", "label": "West US 2", "models": 17},
+    {"value": "west-us-3", "label": "West US 3", "models": 11}
+  ],
+  "models": [
+    {"value": "o3", "label": "o3", "category": "high-performance"},
+    {"value": "o4-mini", "label": "o4-mini", "category": "efficient"},
+    {"value": "gpt-4.1", "label": "GPT-4.1", "category": "high-performance"},
+    {"value": "gpt-4.1-mini", "label": "GPT-4.1 Mini", "category": "efficient"},
+    {"value": "gpt-4.1-nano", "label": "GPT-4.1 Nano", "category": "efficient"},
+    {"value": "gpt-4o", "label": "GPT-4o", "category": "high-performance"},
+    {"value": "gpt-4o-mini", "label": "GPT-4o Mini", "category": "efficient"}
+  ],
+  "deployment_types": [
+    {
+      "value": "global",
+      "label": "Global Deployment",
+      "description": "Global SKU with worldwide availability and load balancing"
+    },
+    {
+      "value": "data-zone",
+      "label": "Data Zone Deployment",
+      "description": "Geographic-based deployment (EU or US) for data residency"
+    },
+    {
+      "value": "regional",
+      "label": "Regional Deployment",
+      "description": "Local region deployment (up to 27 regions) for lowest latency"
+    }
+  ]
+}
+

@@ -1,0 +1,242 @@
+{
+  "last_updated": "2025-08-14T06:18:52.543418",
+  "source": "Azure Retail Prices API + Fallback Pricing",
+  "pricing_data": {
+    "gpt-4": {
+      "gpt-4 Data Zone": {
+        "paygo_input": 0.0022,
+        "paygo_output": 1.32,
+        "ptu_hourly": 110.0
+      },
+      "gpt-4 Regional": {
+        "paygo_input": 0.0275,
+        "paygo_output": 0.00044,
+        "ptu_hourly": 110.0
+      },
+      "gpt-4 Global": {
+        "paygo_output": 0.0004,
+        "paygo_input": 1.7,
+        "ptu_hourly": 100.0
+      }
+    },
+    "gpt-5": {
+      "gpt-5 Data Zone": {
+        "paygo_input": 0.0625,
+        "paygo_output": 1.32,
+        "ptu_hourly": 165.0
+      },
+      "gpt-5 Global": {
+        "paygo_input": 0.3,
+        "paygo_output": 1.2,
+        "ptu_hourly": 150.0
+      },
+      "gpt-5 Regional": {
+        "paygo_input": 0.33,
+        "paygo_output": 1.32,
+        "ptu_hourly": 165.0
+      }
+    },
+    "gpt-4o": {
+      "gpt-4o Data Zone": {
+        "paygo_input": 0.022,
+        "paygo_output": 0.011,
+        "ptu_hourly": 110.0
+      },
+      "gpt-4o Global": {
+        "paygo_input": 0.25,
+        "paygo_output": 1.0,
+        "ptu_hourly": 100.0
+      },
+      "gpt-4o Regional": {
+        "paygo_input": 0.275,
+        "paygo_output": 1.1,
+        "ptu_hourly": 110.0
+      }
+    },
+    "gpt-5-nano": {
+      "gpt-5-nano Data Zone": {
+        "paygo_input": 0.005,
+        "paygo_output": 0.66,
+        "ptu_hourly": 82.5
+      },
+      "gpt-5-nano Global": {
+        "paygo_input": 0.15,
+        "paygo_output": 0.6,
+        "ptu_hourly": 75.0
+      },
+      "gpt-5-nano Regional": {
+        "paygo_input": 0.165,
+        "paygo_output": 0.66,
+        "ptu_hourly": 82.5
+      }
+    },
+    "text-embedding-3-large": {
+      "text-embedding-3-large Data Zone": {
+        "paygo_input": 0.00013,
+        "paygo_output": 0.143,
+        "ptu_hourly": 55.0
+      },
+      "text-embedding-3-large Global": {
+        "paygo_input": 0.13,
+        "paygo_output": 0.13,
+        "ptu_hourly": 50.0
+      },
+      "text-embedding-3-large Regional": {
+        "paygo_input": 0.143,
+        "paygo_output": 0.143,
+        "ptu_hourly": 55.0
+      }
+    },
+    "text-embedding": {
+      "text-embedding Data Zone": {
+        "paygo_input": 0.0001
+      }
+    },
+    "gpt-4o-mini": {
+      "gpt-4o-mini Data Zone": {
+        "paygo_input": 0.0132,
+        "paygo_output": 0.00066,
+        "ptu_hourly": 55.0
+      },
+      "gpt-4o-mini Global": {
+        "paygo_input": 0.15,
+        "paygo_output": 0.6,
+        "ptu_hourly": 50.0
+      },
+      "gpt-4o-mini Regional": {
+        "paygo_input": 0.165,
+        "paygo_output": 0.66,
+        "ptu_hourly": 55.0
+      }
+    },
+    "gpt-5-mini": {
+      "gpt-5-mini Data Zone": {
+        "paygo_input": 0.01375,
+        "paygo_output": 0.88,
+        "ptu_hourly": 110.0
+      },
+      "gpt-5-mini Global": {
+        "paygo_input": 0.2,
+        "paygo_output": 0.8,
+        "ptu_hourly": 100.0
+      },
+      "gpt-5-mini Regional": {
+        "paygo_input": 0.22,
+        "paygo_output": 0.88,
+        "ptu_hourly": 110.0
+      }
+    },
+    "gpt-35-turbo": {
+      "gpt-35-turbo Regional": {
+        "paygo_input": 0.001,
+        "paygo_output": 0.002,
+        "ptu_hourly": 55.0
+      },
+      "gpt-35-turbo Data Zone": {
+        "paygo_input": 0.0005,
+        "paygo_output": 0.165,
+        "ptu_hourly": 55.0
+      },
+      "gpt-35-turbo Global": {
+        "paygo_input": 0.05,
+        "paygo_output": 0.15,
+        "ptu_hourly": 50.0
+      }
+    },
+    "gpt-4-turbo": {
+      "gpt-4-turbo Regional": {
+        "paygo_input": 0.01,
+        "paygo_output": 1.32,
+        "ptu_hourly": 110.0
+      },
+      "gpt-4-turbo Data Zone": {
+        "paygo_input": 0.01,
+        "paygo_output": 1.32,
+        "ptu_hourly": 110.0
+      },
+      "gpt-4-turbo Global": {
+        "paygo_input": 0.3,
+        "paygo_output": 1.2,
+        "ptu_hourly": 100.0
+      }
+    },
+    "whisper": {
+      "whisper Data Zone": {
+        "paygo_input": 0.36,
+        "paygo_output": 0.0066,
+        "ptu_hourly": 55.0
+      },
+      "whisper Global": {
+        "paygo_input": 0.006,
+        "paygo_output": 0.006,
+        "ptu_hourly": 50.0
+      },
+      "whisper Regional": {
+        "paygo_input": 0.0066,
+        "paygo_output": 0.0066,
+        "ptu_hourly": 55.0
+      }
+    },
+    "gpt-5-chat": {
+      "gpt-5-chat Data Zone": {
+        "paygo_input": 1.25,
+        "paygo_output": 0.88,
+        "ptu_hourly": 110.0
+      },
+      "gpt-5-chat Global": {
+        "paygo_input": 0.2,
+        "paygo_output": 0.8,
+        "ptu_hourly": 100.0
+      },
+      "gpt-5-chat Regional": {
+        "paygo_input": 0.22,
+        "paygo_output": 0.88,
+        "ptu_hourly": 110.0
+      }
+    },
+    "text-embedding-ada-002": {
+      "text-embedding-ada-002 Global": {
+        "paygo_input": 0.1,
+        "paygo_output": 0.1,
+        "ptu_hourly": 50.0
+      },
+      "text-embedding-ada-002 Data Zone": {
+        "paygo_input": 0.11,
+        "paygo_output": 0.11,
+        "ptu_hourly": 55.0
+      },
+      "text-embedding-ada-002 Regional": {
+        "paygo_input": 0.11,
+        "paygo_output": 0.11,
+        "ptu_hourly": 55.0
+      }
+    },
+    "text-embedding-3-small": {
+      "text-embedding-3-small Global": {
+        "paygo_input": 0.02,
+        "paygo_output": 0.02,
+        "ptu_hourly": 50.0
+      },
+      "text-embedding-3-small Data Zone": {
+        "paygo_input": 0.022,
+        "paygo_output": 0.022,
+        "ptu_hourly": 55.0
+      },
+      "text-embedding-3-small Regional": {
+        "paygo_input": 0.022,
+        "paygo_output": 0.022,
+        "ptu_hourly": 55.0
+      }
+    }
+  },
+  "notes": {
+    "currency": "USD per 1K tokens (except PTU which is per hour)",
+    "fallback_used": "Yes - for models with missing or $0.00 pricing",
+    "gpt5_support": "Yes - includes all GPT-5 variants",
+    "deployment_types": [
+      "Global",
+      "Data Zone",
+      "Regional"
+    ]
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "ptu_supported_models": {
+    "gpt-5": {
+      "name": "GPT-5",
+      "description": "Most advanced reasoning model for coding and agentic tasks",
+      "ptu_support": true,
+      "min_ptu": 150,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "germany-west-central", "switzerland-north", "norway-east", "sweden-central", "australia-east", "japan-east", "korea-central", "canada-central", "brazil-south", "uae-north", "south-africa-north", "india-south", "southeast-asia", "east-asia"]
+    },
+    "gpt-5-mini": {
+      "name": "GPT-5 Mini",
+      "description": "Faster, cost-efficient version of GPT-5 for well-defined tasks",
+      "ptu_support": true,
+      "min_ptu": 100,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "germany-west-central", "switzerland-north", "norway-east", "sweden-central", "australia-east", "japan-east", "korea-central", "canada-central", "brazil-south", "uae-north", "south-africa-north", "india-south", "southeast-asia", "east-asia"]
+    },
+    "gpt-5-nano": {
+      "name": "GPT-5 Nano",
+      "description": "Lightweight GPT-5 variant optimized for speed and efficiency",
+      "ptu_support": true,
+      "min_ptu": 75,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "germany-west-central", "switzerland-north", "norway-east", "sweden-central", "australia-east", "japan-east", "korea-central", "canada-central", "brazil-south", "uae-north", "south-africa-north", "india-south", "southeast-asia", "east-asia"]
+    },
+    "gpt-5-chat": {
+      "name": "GPT-5 Chat",
+      "description": "Text-only chat optimized version of GPT-5 (Preview)",
+      "ptu_support": true,
+      "min_ptu": 100,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "germany-west-central", "switzerland-north", "norway-east", "sweden-central", "australia-east", "japan-east", "korea-central", "canada-central", "brazil-south", "uae-north", "south-africa-north", "india-south", "southeast-asia", "east-asia"]
+    },
+    "gpt-4o": {
+      "name": "GPT-4o",
+      "description": "Latest multimodal model with text and image capabilities",
+      "ptu_support": true,
+      "min_ptu": 100,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "germany-west-central", "switzerland-north", "norway-east", "sweden-central", "australia-east", "japan-east", "korea-central", "canada-central", "brazil-south", "uae-north", "south-africa-north", "india-south", "southeast-asia", "east-asia"]
+    },
+    "gpt-4o-mini": {
+      "name": "GPT-4o Mini",
+      "description": "Smaller, faster version of GPT-4o with cost optimization",
+      "ptu_support": true,
+      "min_ptu": 50,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "germany-west-central", "switzerland-north", "norway-east", "sweden-central", "australia-east", "japan-east", "korea-central", "canada-central", "brazil-south", "uae-north", "south-africa-north", "india-south", "southeast-asia", "east-asia"]
+    },
+    "gpt-4": {
+      "name": "GPT-4",
+      "description": "Advanced language model with superior reasoning capabilities",
+      "ptu_support": true,
+      "min_ptu": 100,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central"]
+    },
+    "gpt-4-turbo": {
+      "name": "GPT-4 Turbo",
+      "description": "Enhanced GPT-4 with improved performance and larger context window",
+      "ptu_support": true,
+      "min_ptu": 100,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central"]
+    },
+    "gpt-35-turbo": {
+      "name": "GPT-3.5 Turbo",
+      "description": "Fast and efficient model for most conversational tasks",
+      "ptu_support": true,
+      "min_ptu": 50,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central", "brazil-south", "uae-north", "south-africa-north", "india-south", "southeast-asia", "east-asia"]
+    },
+    "text-embedding-ada-002": {
+      "name": "Text Embedding Ada 002",
+      "description": "High-quality text embeddings for semantic search and similarity",
+      "ptu_support": true,
+      "min_ptu": 50,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central"]
+    },
+    "text-embedding-3-large": {
+      "name": "Text Embedding 3 Large",
+      "description": "Latest large embedding model with improved performance",
+      "ptu_support": true,
+      "min_ptu": 50,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central"]
+    },
+    "text-embedding-3-small": {
+      "name": "Text Embedding 3 Small",
+      "description": "Efficient embedding model for cost-sensitive applications",
+      "ptu_support": true,
+      "min_ptu": 50,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central"]
+    },
+    "whisper": {
+      "name": "Whisper",
+      "description": "Speech-to-text model for audio transcription",
+      "ptu_support": true,
+      "min_ptu": 50,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central"]
+    }
+  },
+  "non_ptu_models": {
+    "dall-e-3": {
+      "name": "DALL-E 3",
+      "description": "Advanced image generation model",
+      "ptu_support": false,
+      "reason": "Image generation models do not support PTU"
+    },
+    "dall-e-2": {
+      "name": "DALL-E 2",
+      "description": "Image generation model",
+      "ptu_support": false,
+      "reason": "Image generation models do not support PTU"
+    },
+    "tts": {
+      "name": "Text-to-Speech",
+      "description": "Text-to-speech synthesis models",
+      "ptu_support": false,
+      "reason": "TTS models do not support PTU"
+    }
+  },
+  "regions": {
+    "east-us": "East US",
+    "east-us-2": "East US 2",
+    "west-us": "West US",
+    "west-us-2": "West US 2",
+    "north-central-us": "North Central US",
+    "south-central-us": "South Central US",
+    "west-europe": "West Europe",
+    "north-europe": "North Europe",
+    "uk-south": "UK South",
+    "france-central": "France Central",
+    "germany-west-central": "Germany West Central",
+    "switzerland-north": "Switzerland North",
+    "norway-east": "Norway East",
+    "sweden-central": "Sweden Central",
+    "australia-east": "Australia East",
+    "japan-east": "Japan East",
+    "korea-central": "Korea Central",
+    "canada-central": "Canada Central",
+    "brazil-south": "Brazil South",
+    "uae-north": "UAE North",
+    "south-africa-north": "South Africa North",
+    "india-south": "India South",
+    "southeast-asia": "Southeast Asia",
+    "east-asia": "East Asia"
+  }
+}
+

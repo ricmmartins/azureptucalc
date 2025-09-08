@@ -1,0 +1,477 @@
+{
+  "timestamp": "2025-08-20T00:50:00Z",
+  "source": "Official Azure OpenAI Pricing Page",
+  "url": "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/",
+  "models": {
+    "gpt-4o": {
+      "displayName": "GPT-4o",
+      "minPTU": {
+        "global": 15,
+        "dataZone": 15,
+        "regional": 50
+      },
+      "paygo": {
+        "global": {
+          "input": 0.50,
+          "output": 2.00
+        },
+        "dataZone": {
+          "input": 0.55,
+          "output": 2.20
+        },
+        "regional": {
+          "input": 0.55,
+          "output": 2.20
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "gpt-4o-mini": {
+      "displayName": "GPT-4o Mini",
+      "minPTU": {
+        "global": 15,
+        "dataZone": 15,
+        "regional": 25
+      },
+      "paygo": {
+        "global": {
+          "input": 0.15,
+          "output": 0.60
+        },
+        "dataZone": {
+          "input": 0.17,
+          "output": 0.66
+        },
+        "regional": {
+          "input": 0.17,
+          "output": 0.66
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "gpt-4": {
+      "displayName": "GPT-4",
+      "minPTU": {
+        "global": 50,
+        "dataZone": 50,
+        "regional": 100
+      },
+      "paygo": {
+        "global": {
+          "input": 3.00,
+          "output": 6.00
+        },
+        "dataZone": {
+          "input": 3.30,
+          "output": 6.60
+        },
+        "regional": {
+          "input": 3.30,
+          "output": 6.60
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "gpt-4-turbo": {
+      "displayName": "GPT-4 Turbo",
+      "minPTU": {
+        "global": 50,
+        "dataZone": 50,
+        "regional": 100
+      },
+      "paygo": {
+        "global": {
+          "input": 1.00,
+          "output": 3.00
+        },
+        "dataZone": {
+          "input": 1.10,
+          "output": 3.30
+        },
+        "regional": {
+          "input": 1.10,
+          "output": 3.30
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "gpt-4.1": {
+      "displayName": "GPT-4.1",
+      "minPTU": {
+        "global": 15,
+        "dataZone": 15,
+        "regional": 50
+      },
+      "paygo": {
+        "global": {
+          "input": 2.00,
+          "output": 8.00
+        },
+        "dataZone": {
+          "input": 2.20,
+          "output": 8.80
+        },
+        "regional": {
+          "input": 2.20,
+          "output": 8.80
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "gpt-4.1-mini": {
+      "displayName": "GPT-4.1-mini",
+      "minPTU": {
+        "global": 15,
+        "dataZone": 15,
+        "regional": 25
+      },
+      "paygo": {
+        "global": {
+          "input": 0.40,
+          "output": 1.60
+        },
+        "dataZone": {
+          "input": 0.44,
+          "output": 1.76
+        },
+        "regional": {
+          "input": 0.44,
+          "output": 1.76
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "gpt-4.1-nano": {
+      "displayName": "GPT-4.1-nano",
+      "minPTU": {
+        "global": 15,
+        "dataZone": 15,
+        "regional": 25
+      },
+      "paygo": {
+        "global": {
+          "input": 0.20,
+          "output": 0.80
+        },
+        "dataZone": {
+          "input": 0.22,
+          "output": 0.88
+        },
+        "regional": {
+          "input": 0.22,
+          "output": 0.88
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "gpt-3.5-turbo": {
+      "displayName": "GPT-3.5 Turbo",
+      "minPTU": {
+        "global": 25,
+        "dataZone": 25,
+        "regional": 50
+      },
+      "paygo": {
+        "global": {
+          "input": 0.50,
+          "output": 1.50
+        },
+        "dataZone": {
+          "input": 0.55,
+          "output": 1.65
+        },
+        "regional": {
+          "input": 0.55,
+          "output": 1.65
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "o3": {
+      "displayName": "o3",
+      "minPTU": {
+        "global": 15,
+        "dataZone": 15,
+        "regional": 50
+      },
+      "paygo": {
+        "global": {
+          "input": 2.00,
+          "output": 8.00
+        },
+        "dataZone": {
+          "input": 2.20,
+          "output": 8.80
+        },
+        "regional": {
+          "input": 2.20,
+          "output": 8.80
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "o3-mini": {
+      "displayName": "o3-mini",
+      "minPTU": {
+        "global": 15,
+        "dataZone": 15,
+        "regional": 25
+      },
+      "paygo": {
+        "global": {
+          "input": 1.10,
+          "output": 4.40
+        },
+        "dataZone": {
+          "input": 1.21,
+          "output": 4.84
+        },
+        "regional": {
+          "input": 1.21,
+          "output": 4.84
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "o4-mini": {
+      "displayName": "o4-mini",
+      "minPTU": {
+        "global": 15,
+        "dataZone": 15,
+        "regional": 25
+      },
+      "paygo": {
+        "global": {
+          "input": 1.10,
+          "output": 4.40
+        },
+        "dataZone": {
+          "input": 1.21,
+          "output": 4.84
+        },
+        "regional": {
+          "input": 1.21,
+          "output": 4.84
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "text-embedding-ada-002": {
+      "displayName": "Text Embedding Ada 002",
+      "minPTU": {
+        "global": 25,
+        "dataZone": 25,
+        "regional": 50
+      },
+      "paygo": {
+        "global": {
+          "input": 0.10,
+          "output": 0.00
+        },
+        "dataZone": {
+          "input": 0.11,
+          "output": 0.00
+        },
+        "regional": {
+          "input": 0.11,
+          "output": 0.00
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "text-embedding-3-large": {
+      "displayName": "Text Embedding 3 Large",
+      "minPTU": {
+        "global": 25,
+        "dataZone": 25,
+        "regional": 50
+      },
+      "paygo": {
+        "global": {
+          "input": 0.13,
+          "output": 0.00
+        },
+        "dataZone": {
+          "input": 0.14,
+          "output": 0.00
+        },
+        "regional": {
+          "input": 0.14,
+          "output": 0.00
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "text-embedding-3-small": {
+      "displayName": "Text Embedding 3 Small",
+      "minPTU": {
+        "global": 25,
+        "dataZone": 25,
+        "regional": 50
+      },
+      "paygo": {
+        "global": {
+          "input": 0.02,
+          "output": 0.00
+        },
+        "dataZone": {
+          "input": 0.022,
+          "output": 0.00
+        },
+        "regional": {
+          "input": 0.022,
+          "output": 0.00
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    },
+    "whisper": {
+      "displayName": "Whisper",
+      "minPTU": {
+        "global": 25,
+        "dataZone": 25,
+        "regional": 50
+      },
+      "paygo": {
+        "global": {
+          "input": 0.006,
+          "output": 0.00
+        },
+        "dataZone": {
+          "input": 0.0066,
+          "output": 0.00
+        },
+        "regional": {
+          "input": 0.0066,
+          "output": 0.00
+        }
+      },
+      "ptu": {
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
+      },
+      "reservations": {
+        "monthly": 260,
+        "yearly": 2652
+      }
+    }
+  },
+  "ptuCapacity": {
+    "tokensPerPTUPerMinute": 50000,
+    "description": "Each PTU provides approximately 50,000 tokens per minute of throughput capacity"
+  }
+}
+
