@@ -871,7 +871,6 @@ AzureMetrics
             </div>
 
             <Alert className="mt-6 border-green-200 bg-green-50">
-              <Lightbulb className="h-5 w-5 text-green-600" />
               <AlertDescription>
                 <div className="space-y-4">
                   <div>
@@ -1324,7 +1323,6 @@ AzureMetrics
             <Card className="border-purple-200 bg-purple-50">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-purple-600" />
                   <CardTitle className="text-purple-800">💡 Key Concepts & Pro Tips</CardTitle>
                 </div>
                 <CardDescription className="text-purple-700">Essential information for understanding Azure OpenAI pricing and deployment options</CardDescription>
