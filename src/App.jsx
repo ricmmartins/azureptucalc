@@ -428,7 +428,6 @@ AzureMetrics
             </div>
 
             <Alert className="mt-6 border-blue-200 bg-blue-50">
-              <Lightbulb className="h-5 w-5 text-blue-600" />
               <AlertDescription>
                 <div className="space-y-4">
                   <h4 className="text-lg font-semibold text-blue-800 mb-3">🔍 Query Features & Benefits</h4>
