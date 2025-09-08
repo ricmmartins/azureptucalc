@@ -299,11 +299,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [KQL Reference](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/)
 
 ### Community
-- [GitHub Issues](https://github.com/your-username/azure-openai-ptu-estimator/issues)
-- [GitHub Discussions](https://github.com/your-username/azure-openai-ptu-estimator/discussions)
+- [GitHub Issues](https://github.com/ricmmartins/azureptucalc/issues)
+- [GitHub Discussions](https://github.com/ricmmartins/azureptucalc/discussions)
 
-### Professional Support
-For enterprise support and custom implementations, contact [your-email@domain.com](mailto:your-email@domain.com).
 
 ---
 
