@@ -30,6 +30,48 @@ Optimize your Azure OpenAI costs by analyzing real usage patterns and comparing 
 - **Real-time Updates**: Live calculations as you input KQL results
 - **Mobile Responsive**: Works perfectly on desktop and mobile devices
 
+## 🔧 Technical Features
+
+### 🎯 **Intelligent Calculations**
+- **Burst Detection Algorithm**: Analyzes P99 vs Average TPM ratios
+- **Hybrid Model Optimization**: Smart base PTU + spillover calculations  
+- **Real-time Pricing**: Azure Retail Prices API integration with 3-hour caching
+- **Multi-scenario Analysis**: PAYGO vs PTU vs Hybrid comparisons
+
+### 📊 **Data Processing**
+- **7-Parameter KQL Support**: Complete Azure Monitor integration
+- **Pattern Recognition**: Steady/Bursty/Spiky usage classification
+- **Cost Efficiency Metrics**: Utilization rates and ROI calculations
+- **Reservation Planning**: 1-year vs 3-year commitment analysis
+
+### 🎨 **User Experience**
+- **Progressive Disclosure**: Clean interface with contextual help
+- **Educational Content**: Built-in PTU concept explanations
+- **Mobile-First Design**: Responsive across all devices
+- **Accessibility**: WCAG compliant with screen reader support
+
+## 🎯 Use Cases
+
+### 👥 **For Azure Architects**
+- Size PTU deployments based on real usage data
+- Plan for burst traffic and seasonal variations
+- Optimize costs across multiple Azure OpenAI deployments
+
+### 💼 **For Finance Teams**
+- Calculate ROI of PTU reservations vs PAYGO
+- Budget planning for Azure OpenAI costs
+- Understand financial impact of different deployment strategies
+
+### 🔧 **For DevOps Teams**
+- Monitor and optimize existing Azure OpenAI usage
+- Plan capacity for new applications
+- Implement hybrid models for cost-effective scaling
+
+### 📊 **For Data Scientists**
+- Understand token consumption patterns
+- Optimize model usage for cost efficiency
+- Plan for production workload scaling
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -275,23 +317,37 @@ azure-openai-ptu-estimator/
 └── README.md            # This file
 ```
 
+## 🎬 Demo
+
+![Azure PTU Calculator Demo](screenshots/demo.gif)
+
+*See the calculator in action: KQL input → Real-time analysis → Cost recommendations*
+
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details. Here's how you can help:
 
-### Development Workflow
+### 🐛 **Bug Reports**
+- Use the issue templates
+- Include screenshots and browser info
+- Provide KQL query examples if relevant
+
+### 💡 **Feature Requests**
+- Check existing issues first
+- Describe the business value
+- Include mockups if possible
+
+### 🔧 **Code Contributions**
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and test thoroughly
-4. Commit your changes: `git commit -m 'Add amazing feature'`
-5. Push to the branch: `git push origin feature/amazing-feature`
-6. Open a Pull Request
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-### Code Standards
-- Use TypeScript for new features
-- Follow React best practices
-- Maintain test coverage above 80%
-- Use conventional commit messages
+### 📝 **Documentation**
+- Improve README clarity
+- Add more use case examples
+- Enhance KQL query documentation
 
 ## 📄 License
 
@@ -308,6 +364,29 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [GitHub Issues](https://github.com/ricmmartins/azureptucalc/issues)
 - [GitHub Discussions](https://github.com/ricmmartins/azureptucalc/discussions)
 
+## ❓ FAQ
+
+### **Q: How accurate are the pricing calculations?**
+A: The calculator uses official Azure Retail Prices API with intelligent fallbacks. Pricing is updated every 3 hours and includes all current PTU models and regions.
+
+### **Q: Can I use this without KQL data?**
+A: Yes! The calculator includes estimation guides for users without Azure Monitor access. You can input estimated TPM values based on your usage patterns.
+
+### **Q: What's the difference between deployment types?**
+A: Global deployments offer multi-region failover but cost 20-40% more. Regional deployments provide lowest latency. Data Zone deployments ensure compliance within EU/US boundaries.
+
+### **Q: How does the hybrid model work?**
+A: Reserve base PTUs for average usage, let burst traffic "spill over" to PAYGO. Ideal for predictable baselines with occasional spikes (2-5x average).
+
+### **Q: Is my data secure?**
+A: All calculations happen in your browser. No usage data is sent to external servers. The app only fetches public Azure pricing information.
+
+## 🚀 Deployment Status
+
+| Environment | Status | URL | Last Updated |
+|-------------|--------|-----|--------------|
+| Production | [![Vercel](https://img.shields.io/badge/Vercel-Live-brightgreen)](https://ptucalc.com) | [ptucalc.com](https://ptucalc.com) | Auto-deploy |
+| Staging | [![Vercel](https://img.shields.io/badge/Vercel-Live-brightgreen)](https://staging.ptucalc.com) | [staging.ptucalc.com](https://staging.ptucalc.com) | On PR |
 
 ---
 
