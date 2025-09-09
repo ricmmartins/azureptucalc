@@ -138,6 +138,7 @@ function App() {
     const monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
     const monthlyPaygoCost = (monthlyTokens * 0.5 * currentPricing.paygo_input) + (monthlyTokens * 0.5 * currentPricing.paygo_output);
     const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 24 * 30;
+    const monthlyPtuHourlyCost = monthlyPtuCost; // For InteractiveCharts
     const monthlyPtuReservationCost = ptuNeeded * currentPricing.ptu_monthly;
     const yearlyPtuReservationCost = ptuNeeded * currentPricing.ptu_yearly;
     
@@ -203,6 +204,7 @@ function App() {
       monthlyTokens,
       monthlyPaygoCost,
       monthlyPtuCost,
+      monthlyPtuHourlyCost,
       monthlyPtuReservationCost,
       yearlyPtuReservationCost,
       utilizationRate,
@@ -1309,13 +1311,41 @@ AzureMetrics
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Monthly Savings</div>
-                        <div className="text-2xl font-bold text-purple-600">${calculations.oneYearSavings > 0 ? calculations.oneYearSavings?.toFixed(2) : '0.00'}</div>
+                        <div className="text-2xl font-bold text-purple-600">${calculations.oneYearSavings > 0 ? (calculations.oneYearSavings / 12)?.toFixed(2) : '0.00'}</div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </CardContent>
             </Card>
+
+            {/* Interactive Analytics Dashboard - Only shows when user has data */}
+            {showInteractiveCharts && (
+              <InteractiveCharts
+                costData={{
+                  paygo: calculations.monthlyPaygoCost,
+                  ptuHourly: calculations.monthlyPtuHourlyCost,
+                  ptuMonthly: calculations.monthlyPtuReservationCost,
+                  ptuYearly: calculations.yearlyPtuReservationCost / 12,
+                  savings: Math.max(0, calculations.monthlyPaygoCost - calculations.monthlyPtuReservationCost)
+                }}
+                utilizationData={{
+                  utilization: calculations.utilizationRate,
+                  burstRatio: calculations.burstRatio,
+                  peakRatio: calculations.peakRatio
+                }}
+                projectionData={{
+                  monthly: calculations.monthlyPaygoCost,
+                  yearly: calculations.monthlyPaygoCost * 12
+                }}
+                burstData={{
+                  pattern: calculations.usagePattern,
+                  efficiency: calculations.utilizationRate
+                }}
+                selectedModel={selectedModel}
+                selectedRegion={selectedRegion}
+              />
+            )}
           </>
         )}
 
@@ -1435,4 +1465,3 @@ AzureMetrics
 }
 
 export default App;
-
