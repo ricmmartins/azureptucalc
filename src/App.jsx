@@ -26,7 +26,7 @@ function App() {
   const [selectedDeployment, setSelectedDeployment] = useState('global');
   const [useCustomPricing, setUseCustomPricing] = useState(false);
   
-  // KQL form data
+  // KQL form data - ALL VALUES SET TO 0 EXCEPT MONTHLY MINUTES
   const [formData, setFormData] = useState({
     avgTPM: 0,
     p99TPM: 0,
@@ -66,6 +66,9 @@ function App() {
     usingLiveData: false,
     dataExpiry: new Date(Date.now() + 3 * 60 * 60 * 1000).toLocaleString() // 3 hours from now
   });
+
+  // Check if user has entered valid data
+  const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0;
 
   // Get current pricing from service
   const getCurrentPricing = () => {
@@ -114,6 +117,12 @@ function App() {
 
   // Calculate costs and recommendations
   useEffect(() => {
+    // Only calculate if user has entered valid data
+    if (!hasValidData) {
+      setCalculations({});
+      return;
+    }
+
     // Burst pattern analysis
     const burstRatio = formData.p99TPM && formData.avgTPM ? formData.p99TPM / formData.avgTPM : 1;
     const peakRatio = formData.maxTPM && formData.avgTPM ? formData.maxTPM / formData.avgTPM : 1;
@@ -136,16 +145,16 @@ function App() {
     const utilizationRate = formData.avgTPM / (ptuNeeded * currentPricing.tokensPerPTUPerMinute);
     
     // Cost per 1M tokens
-    const costPer1MTokens = monthlyPaygoCost / monthlyTokens;
+    const costPer1MTokens = monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0;
     
     // PTU cost effectiveness
-    const ptuCostEffectiveness = monthlyPtuCost / monthlyPaygoCost;
+    const ptuCostEffectiveness = monthlyPaygoCost > 0 ? monthlyPtuCost / monthlyPaygoCost : 0;
     
     // Reservation savings
     const oneYearSavings = (monthlyPtuCost - monthlyPtuReservationCost) * 12;
     const threeYearSavings = (monthlyPtuCost - (yearlyPtuReservationCost / 12)) * 36;
-    const oneYearSavingsPercent = ((monthlyPtuCost - monthlyPtuReservationCost) / monthlyPtuCost) * 100;
-    const threeYearSavingsPercent = ((monthlyPtuCost - (yearlyPtuReservationCost / 12)) / monthlyPtuCost) * 100;
+    const oneYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - monthlyPtuReservationCost) / monthlyPtuCost) * 100 : 0;
+    const threeYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - (yearlyPtuReservationCost / 12)) / monthlyPtuCost) * 100 : 0;
     
     // Recommendations
     let recommendation = 'PAYGO';
@@ -213,7 +222,7 @@ function App() {
       hybridTotalCost,
       chartData
     });
-  }, [formData, currentPricing]);
+  }, [formData, currentPricing, hasValidData]);
 
   // Handle form input changes
   const handleInputChange = (field, value) => {
@@ -430,7 +439,7 @@ AzureMetrics
             <Alert className="mt-6 border-blue-200 bg-blue-50">
               <AlertDescription>
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-blue-800 mb-3">🔍 Query Features & Benefits</h4>
+                  <h4 className="text-lg font-semibold text-blue-800 mb-3">Query Features & Benefits</h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-3">
@@ -477,7 +486,6 @@ AzureMetrics
           <CardContent>
             <div className="space-y-4">
               <Alert className="border-amber-300 bg-amber-100">
-                <Lightbulb className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-amber-800">
                   <strong>Minimum Information Needed:</strong> Just your estimated monthly token usage or API call volume.
                 </AlertDescription>
@@ -529,13 +537,15 @@ AzureMetrics
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-blue-600" />
-              <CardTitle>Step 2: Input Parameters</CardTitle>
+              <Globe className="h-5 w-5 text-blue-600" />
+              <CardTitle>Step 2: Configure Your Deployment</CardTitle>
             </div>
-            <CardDescription>Configure your pricing parameters and usage patterns</CardDescription>
+            <CardDescription>
+              Select your Azure region, OpenAI model, and deployment type for accurate pricing
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Deployment Type Cards */}
+            {/* Deployment Type Selection */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <Card className={`cursor-pointer border-2 ${selectedDeployment === 'global' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`} onClick={() => setSelectedDeployment('global')}>
                 <CardContent className="p-4">
@@ -543,9 +553,9 @@ AzureMetrics
                     <Globe className="h-5 w-5 text-blue-600" />
                     <h3 className="font-medium">Global Deployment</h3>
                   </div>
-                  <p className="text-sm text-gray-600">Global SKU with worldwide availability and load balancing.</p>
-                  <p className="text-sm text-gray-600 mt-1">Best for applications requiring global reach and high availability.</p>
-                  <p className="text-sm text-gray-600 mt-1">Data processed worldwide with intelligent routing.</p>
+                  <p className="text-sm text-gray-600">Multi-region deployment with automatic failover and load balancing.</p>
+                  <p className="text-sm text-gray-600 mt-1">Best for high availability and global reach.</p>
+                  <p className="text-sm text-gray-600 mt-1">Traffic is routed to the best available region automatically.</p>
                 </CardContent>
               </Card>
               
@@ -776,7 +786,7 @@ AzureMetrics
                   type="number"
                   value={formData.avgTPM}
                   onChange={(e) => handleInputChange('avgTPM', e.target.value)}
-                  placeholder="5678"
+                  placeholder="0"
                 />
                 <p className="text-sm text-gray-600 mt-1">AvgTPM from your KQL query results</p>
               </div>
@@ -787,7 +797,7 @@ AzureMetrics
                   type="number"
                   value={formData.p99TPM}
                   onChange={(e) => handleInputChange('p99TPM', e.target.value)}
-                  placeholder="12000"
+                  placeholder="0"
                 />
                 <p className="text-sm text-gray-600 mt-1">P99TPM - shows burst patterns</p>
               </div>
@@ -798,7 +808,7 @@ AzureMetrics
                   type="number"
                   value={formData.maxTPM}
                   onChange={(e) => handleInputChange('maxTPM', e.target.value)}
-                  placeholder="25000"
+                  placeholder="0"
                 />
                 <p className="text-sm text-gray-600 mt-1">MaxTPM - absolute peak usage</p>
               </div>
@@ -809,7 +819,7 @@ AzureMetrics
                   type="number"
                   value={formData.avgPTU}
                   onChange={(e) => handleInputChange('avgPTU', e.target.value)}
-                  placeholder="1"
+                  placeholder="0"
                 />
                 <p className="text-sm text-gray-600 mt-1">AvgPTU - average PTU needs</p>
               </div>
@@ -820,7 +830,7 @@ AzureMetrics
                   type="number"
                   value={formData.p99PTU}
                   onChange={(e) => handleInputChange('p99PTU', e.target.value)}
-                  placeholder="1"
+                  placeholder="0"
                 />
                 <p className="text-sm text-gray-600 mt-1">P99PTU - PTU needs for bursts</p>
               </div>
@@ -831,7 +841,7 @@ AzureMetrics
                   type="number"
                   value={formData.maxPTU}
                   onChange={(e) => handleInputChange('maxPTU', e.target.value)}
-                  placeholder="1"
+                  placeholder="0"
                 />
                 <p className="text-sm text-gray-600 mt-1">MaxPTU - maximum PTU needs</p>
               </div>
@@ -842,7 +852,7 @@ AzureMetrics
                   type="number"
                   value={formData.recommendedPTU}
                   onChange={(e) => handleInputChange('recommendedPTU', e.target.value)}
-                  placeholder="1"
+                  placeholder="0"
                 />
                 <p className="text-sm text-gray-600 mt-1">RecommendedPTU - KQL's sizing recommendation</p>
               </div>
@@ -864,7 +874,7 @@ AzureMetrics
                   type="number"
                   value={formData.basePTUs}
                   onChange={(e) => handleInputChange('basePTUs', e.target.value)}
-                  placeholder="1"
+                  placeholder="0"
                 />
                 <p className="text-sm text-gray-600 mt-1">Base PTU reservation for hybrid approach</p>
               </div>
@@ -875,7 +885,7 @@ AzureMetrics
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-lg font-semibold text-green-800 mb-2 flex items-center gap-2">
-                      💡 Pro Tip: Hybrid Model Strategy
+                      Pro Tip: Hybrid Model Strategy
                     </h4>
                     <p className="text-green-700 mb-3">
                       <strong>Hybrid Model (Base + Spillover):</strong> Reserve base PTUs for average usage, let burst traffic "spill over" to PAYGO. 
@@ -906,8 +916,40 @@ AzureMetrics
           </CardContent>
         </Card>
 
-        {/* Results Section */}
-        {calculations.burstRatio && (
+        {/* Results Section - Only show if user has entered valid data */}
+        {!hasValidData ? (
+          <Card className="border-gray-300 bg-gradient-to-r from-gray-50 to-blue-50">
+            <CardContent className="p-8 text-center">
+              <div className="space-y-4">
+                <div className="flex items-center justify-center">
+                  <BarChart3 className="h-12 w-12 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-700">📊 Ready for Analysis</h3>
+                <p className="text-gray-600 max-w-md mx-auto">
+                  Enter your KQL query results above to see:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Cost comparisons (PAYGO vs PTU)
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Reservation savings opportunities
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Usage pattern analysis
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Personalized recommendations
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
           <>
             {/* Burst Pattern Analysis */}
             <Card>
@@ -916,167 +958,62 @@ AzureMetrics
                   <TrendingUp className="h-5 w-5 text-blue-600" />
                   <CardTitle>Burst Pattern Analysis</CardTitle>
                 </div>
+                <CardDescription>Understanding your usage patterns for optimal PTU sizing</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{calculations.burstRatio.toFixed(1)}x</div>
-                    <div className="text-sm text-gray-600">Burst Ratio</div>
-                    <div className="text-xs text-gray-500">P99TPM ÷ AvgTPM</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">{calculations.peakRatio.toFixed(1)}x</div>
-                    <div className="text-sm text-gray-600">Peak Ratio</div>
-                    <div className="text-xs text-gray-500">MaxTPM ÷ AvgTPM</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">{calculations.ptuVariance} PTU</div>
-                    <div className="text-sm text-gray-600">PTU Variance</div>
-                    <div className="text-xs text-gray-500">P99PTU - AvgPTU</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Cost Analysis */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
-                  <CardTitle>Cost Analysis</CardTitle>
-                </div>
-                <CardDescription>Monthly cost comparison across pricing models</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* PTU Efficiency & Burst Analysis */}
-                <Card className="mb-6 border-orange-200 bg-orange-50">
-                  <CardHeader>
-                    <CardTitle className="text-orange-800">PTU Efficiency & Burst Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div>
-                        <div className="text-sm text-orange-700">PTU Utilization:</div>
-                        <div className="text-lg font-semibold text-orange-800">
-                          {(calculations.utilizationRate * 100).toFixed(1)}% ({formData.avgTPM.toLocaleString()} TPM out of {(calculations.ptuNeeded * currentPricing.tokensPerPTUPerMinute).toLocaleString()} TPM capacity)
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-orange-700">Burst Pattern:</div>
-                        <div className="text-lg font-semibold text-orange-800">
-                          {calculations.burstRatio.toFixed(1)}x burst ratio (P99/Avg TPM)
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-orange-700">Recommended PTUs:</div>
-                        <div className="text-lg font-semibold text-orange-800">
-                          {calculations.ptuNeeded} PTU (from KQL analysis)
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-orange-700">Peak Spikes:</div>
-                        <div className="text-lg font-semibold text-orange-800">
-                          {calculations.peakRatio.toFixed(1)}x peak ratio (Max/Avg TPM)
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-sm text-orange-700">Cost Difference:</div>
-                        <div className="text-lg font-semibold text-orange-800">
-                          PTU is {calculations.ptuCostEffectiveness.toFixed(1)}x more expensive than PAYGO
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-orange-700">Usage Pattern:</div>
-                        <Badge variant={calculations.usagePattern === 'Steady' ? 'default' : 'destructive'} className="text-lg">
-                          {calculations.usagePattern}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <Card className="mt-4 bg-red-50 border-red-200">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-2xl">❌</span>
-                          <h3 className="font-medium text-red-800">PAYGO</h3>
-                        </div>
-                        <p className="text-red-700">
-                          Very low utilization ({(calculations.utilizationRate * 100).toFixed(1)}%). PTU reservations would be cost-ineffective. Stick with PAYGO for maximum flexibility.
-                        </p>
-                        <p className="text-red-600 text-sm mt-1">
-                          Your usage is too low to justify PTU reservations.
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </CardContent>
-                </Card>
-
-                {/* Reservation Savings Opportunity */}
-                <Card className="mb-6 border-green-200 bg-green-50">
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-green-600" />
-                      <CardTitle className="text-green-800">Reservation Savings Opportunity</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                      <div className="text-center">
-                        <h3 className="text-lg font-medium text-green-800 mb-2">1-Year Reservation</h3>
-                        <div className="text-3xl font-bold text-green-600">${calculations.oneYearSavings > 0 ? (calculations.monthlyPtuReservationCost).toFixed(2) : '0.00'}/mo</div>
-                        <div className="text-sm text-green-700">{calculations.oneYearSavingsPercent.toFixed(1)}% savings</div>
-                      </div>
-                      <div className="text-center">
-                        <h3 className="text-lg font-medium text-green-800 mb-2">3-Year Reservation</h3>
-                        <div className="text-3xl font-bold text-green-600">${calculations.threeYearSavings > 0 ? (calculations.yearlyPtuReservationCost / 12).toFixed(2) : '0.00'}/mo</div>
-                        <div className="text-sm text-green-700">{calculations.threeYearSavingsPercent.toFixed(1)}% savings</div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <h3 className="text-lg font-medium text-green-800 mb-2">3-Year Total Savings</h3>
-                      <div className="text-4xl font-bold text-green-600">${calculations.threeYearSavings > 0 ? calculations.threeYearSavings.toFixed(2) : '0.00'}</div>
-                      <div className="text-sm text-green-700">Over full term</div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Cost Comparison Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  <Card>
+                  <Card className="bg-blue-50 border-blue-200">
                     <CardContent className="p-4 text-center">
-                      <h3 className="font-medium text-gray-700 mb-1">PAYGO</h3>
-                      <p className="text-xs text-gray-500 mb-2">No commitment required</p>
-                      <div className="text-right">
-                        <span className="text-xs text-gray-500">Pay-as-you-go</span>
-                        <div className="text-2xl font-bold text-blue-600">${calculations.monthlyPaygoCost.toFixed(2)}</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <h3 className="font-medium text-gray-700 mb-1">PTU (On-Demand)</h3>
-                      <p className="text-xs text-gray-500 mb-2">{calculations.ptuNeeded} PTUs needed</p>
-                      <div className="text-right">
-                        <span className="text-xs text-gray-500">Reserved</span>
-                        <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuCost.toFixed(2)}</div>
-                      </div>
+                      <h3 className="font-medium text-blue-800">Usage Pattern</h3>
+                      <div className="text-2xl font-bold text-blue-600 mt-2">{calculations.usagePattern}</div>
+                      <p className="text-sm text-blue-600 mt-1">
+                        {calculations.usagePattern === 'Steady' && 'Consistent usage with minimal spikes'}
+                        {calculations.usagePattern === 'Bursty' && 'Moderate spikes in usage patterns'}
+                        {calculations.usagePattern === 'Spiky' && 'High variability with significant peaks'}
+                      </p>
                     </CardContent>
                   </Card>
 
                   <Card className="bg-green-50 border-green-200">
                     <CardContent className="p-4 text-center">
+                      <h3 className="font-medium text-green-800">Burst Ratio</h3>
+                      <div className="text-2xl font-bold text-green-600 mt-2">{calculations.burstRatio?.toFixed(1)}x</div>
+                      <p className="text-sm text-green-600 mt-1">P99 vs Average TPM</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-purple-50 border-purple-200">
+                    <CardContent className="p-4 text-center">
+                      <h3 className="font-medium text-purple-800">Peak Ratio</h3>
+                      <div className="text-2xl font-bold text-purple-600 mt-2">{calculations.peakRatio?.toFixed(1)}x</div>
+                      <p className="text-sm text-purple-600 mt-1">Max vs Average TPM</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Reservation Savings Opportunity */}
+            <Card className="bg-green-50 border-green-200">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <CardTitle className="text-green-800">Reservation Savings Opportunity</CardTitle>
+                </div>
+                <CardDescription className="text-green-700">Potential savings with PTU reservations vs on-demand pricing</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="bg-green-100 border-green-300">
+                    <CardContent className="p-4 text-center">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-medium text-green-700">PTU (1 Year)</h3>
+                        <h3 className="font-medium text-green-800">1-Year Reservation</h3>
                         <Badge variant="secondary" className="bg-green-100 text-green-800">25% off</Badge>
                       </div>
                       <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings > 0 ? (calculations.monthlyPtuCost - calculations.monthlyPtuReservationCost).toFixed(2) : '0.00'}/mo</p>
                       <div className="text-right">
-                        <span className="text-xs text-green-600">25% off</span>
-                        <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost.toFixed(2)}</div>
+                        <span className="text-xs text-green-600">{calculations.oneYearSavingsPercent?.toFixed(1)}% savings</span>
+                        <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2)}/mo</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -1084,87 +1021,148 @@ AzureMetrics
                   <Card className="bg-green-100 border-green-300">
                     <CardContent className="p-4 text-center">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-medium text-green-800">PTU (3 Year)</h3>
+                        <h3 className="font-medium text-green-800">3-Year Reservation</h3>
                         <Badge variant="secondary" className="bg-green-200 text-green-900">45% off</Badge>
                       </div>
                       <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings > 0 ? (calculations.monthlyPtuCost - (calculations.yearlyPtuReservationCost / 12)).toFixed(2) : '0.00'}/mo</p>
                       <div className="text-right">
-                        <span className="text-xs text-green-700">45% off</span>
-                        <div className="text-2xl font-bold text-green-800">${(calculations.yearlyPtuReservationCost / 12).toFixed(2)}</div>
+                        <span className="text-xs text-green-700">{calculations.threeYearSavingsPercent?.toFixed(1)}% savings</span>
+                        <div className="text-2xl font-bold text-green-800">${(calculations.yearlyPtuReservationCost / 12)?.toFixed(2)}/mo</div>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Cost Comparison Chart */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cost Comparison Chart</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={calculations.chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`$${value.toFixed(2)}`, 'Monthly Cost']} />
-                        <Legend />
-                        <Bar dataKey="cost" fill="#8884d8" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                <Card className="mt-4 bg-gradient-to-r from-green-100 to-blue-100 border-green-300">
+                  <CardContent className="p-4 text-center">
+                    <h3 className="font-medium text-green-800 mb-2">3-Year Total Savings</h3>
+                    <div className="text-3xl font-bold text-green-600">${calculations.threeYearSavings?.toFixed(2)}</div>
+                    <p className="text-sm text-green-700 mt-1">Over full term</p>
                   </CardContent>
                 </Card>
-
-                {/* Usage Metrics and Cost Efficiency */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center gap-2">
-                        <BarChart3 className="h-5 w-5 text-blue-600" />
-                        <CardTitle>Usage Metrics</CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span>Average TPM:</span>
-                          <span className="font-semibold">{formData.avgTPM.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>PTUs Needed:</span>
-                          <span className="font-semibold">{calculations.ptuNeeded}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Monthly Tokens:</span>
-                          <span className="font-semibold">{calculations.monthlyTokens.toFixed(1)}M</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <CardTitle>Cost Efficiency</CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span>Cost per 1M tokens:</span>
-                          <span className="font-semibold">${calculations.costPer1MTokens.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Utilization:</span>
-                          <span className="font-semibold">{(calculations.utilizationRate * 100).toFixed(1)}%</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
               </CardContent>
             </Card>
+
+            {/* Cost Comparison Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-gray-50 border-gray-200">
+                <CardContent className="p-4 text-center">
+                  <h3 className="font-medium text-gray-800">PAYGO</h3>
+                  <p className="text-xs text-gray-600 mb-2">No commitment required</p>
+                  <div className="text-right">
+                    <span className="text-xs text-gray-600">Pay-as-you-go</span>
+                    <div className="text-2xl font-bold text-gray-600">${calculations.monthlyPaygoCost?.toFixed(2)}</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-4 text-center">
+                  <h3 className="font-medium text-blue-800">PTU (On-Demand)</h3>
+                  <p className="text-xs text-blue-600 mb-2">{calculations.ptuNeeded} PTUs needed</p>
+                  <div className="text-right">
+                    <span className="text-xs text-blue-600">Reserved</span>
+                    <div className="text-2xl font-bold text-blue-600">${calculations.monthlyPtuCost?.toFixed(2)}</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-green-100 border-green-300">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-medium text-green-800">PTU (1 Year)</h3>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">25% off</Badge>
+                  </div>
+                  <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings > 0 ? (calculations.monthlyPtuCost - calculations.monthlyPtuReservationCost).toFixed(2) : '0.00'}/mo</p>
+                  <div className="text-right">
+                    <span className="text-xs text-green-600">25% off</span>
+                    <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2)}</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-green-100 border-green-300">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-medium text-green-800">PTU (3 Year)</h3>
+                    <Badge variant="secondary" className="bg-green-200 text-green-900">45% off</Badge>
+                  </div>
+                  <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings > 0 ? (calculations.monthlyPtuCost - (calculations.yearlyPtuReservationCost / 12)).toFixed(2) : '0.00'}/mo</p>
+                  <div className="text-right">
+                    <span className="text-xs text-green-700">45% off</span>
+                    <div className="text-2xl font-bold text-green-800">${(calculations.yearlyPtuReservationCost / 12)?.toFixed(2)}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Cost Comparison Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Cost Comparison Chart</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={calculations.chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`$${value.toFixed(2)}`, 'Monthly Cost']} />
+                    <Legend />
+                    <Bar dataKey="cost" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Usage Metrics and Cost Efficiency */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-blue-600" />
+                    <CardTitle>Usage Metrics</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Average TPM:</span>
+                      <span className="font-semibold">{formData.avgTPM.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>PTUs Needed:</span>
+                      <span className="font-semibold">{calculations.ptuNeeded}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Monthly Tokens:</span>
+                      <span className="font-semibold">{calculations.monthlyTokens?.toFixed(1)}M</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <CardTitle>Cost Efficiency</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Cost per 1M tokens:</span>
+                      <span className="font-semibold">${calculations.costPer1MTokens?.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Utilization:</span>
+                      <span className="font-semibold">{(calculations.utilizationRate * 100)?.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* PTU Cost-Effectiveness Guidelines */}
             <Card>
@@ -1303,194 +1301,107 @@ AzureMetrics
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Recommended Cost</div>
-                        <div className="text-2xl font-bold text-green-600">${calculations.monthlyPaygoCost.toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-green-600">${calculations.monthlyPaygoCost?.toFixed(2)}</div>
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">PTU Utilization</div>
-                        <div className="text-2xl font-bold text-orange-600">{(calculations.utilizationRate * 100).toFixed(1)}%</div>
+                        <div className="text-2xl font-bold text-orange-600">{(calculations.utilizationRate * 100)?.toFixed(1)}%</div>
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Monthly Savings</div>
-                        <div className="text-2xl font-bold text-purple-600">${calculations.oneYearSavings > 0 ? calculations.oneYearSavings.toFixed(2) : '0.00'}</div>
+                        <div className="text-2xl font-bold text-purple-600">${calculations.oneYearSavings > 0 ? calculations.oneYearSavings?.toFixed(2) : '0.00'}</div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </CardContent>
             </Card>
-
-            {/* Key Concepts */}
-            <Card className="border-purple-200 bg-purple-50">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-purple-800">💡 Key Concepts & Pro Tips</CardTitle>
-                </div>
-                <CardDescription className="text-purple-700">Essential information for understanding Azure OpenAI pricing and deployment options</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="bg-white p-4 rounded-lg border border-purple-200">
-                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                        🔢 PTU Conversion Rate (50,000)
-                      </h4>
-                      <p className="text-sm text-purple-700">
-                        Microsoft's official standard - each PTU provides exactly 50,000 tokens/minute of sustained throughput capacity according to Azure OpenAI documentation.
-                      </p>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded-lg border border-purple-200">
-                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                        ⚖️ Base PTUs for Hybrid Model
-                      </h4>
-                      <p className="text-sm text-purple-700">
-                        Reserve a fixed number of PTUs (e.g., 2 PTUs = 100k tokens/min guaranteed) for your baseline usage, with automatic PAYGO billing when demand exceeds reserved capacity.
-                      </p>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded-lg border border-purple-200">
-                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                        🎯 Hybrid Strategy Benefits
-                      </h4>
-                      <p className="text-sm text-purple-700">
-                        Combines predictable costs (PTU reservation) with elastic scalability (PAYGO overflow) - optimal for workloads with variable demand patterns.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="bg-white p-4 rounded-lg border border-purple-200">
-                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                        🌍 Deployment Type Pricing
-                      </h4>
-                      <p className="text-sm text-purple-700">
-                        Global deployments typically cost 20-40% more than Regional deployments, with Data Zone deployments priced between the two.
-                      </p>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded-lg border border-purple-200">
-                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                        💰 PTU vs PAYGO
-                      </h4>
-                      <p className="text-sm text-purple-700">
-                        PTU pricing offers 20-40% savings for sustained high-volume usage but requires monthly commitment, while PAYGO provides flexibility without commitment.
-                      </p>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded-lg border border-purple-200">
-                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                        ⏰ Monthly Minutes
-                      </h4>
-                      <p className="text-sm text-purple-700 mb-2">
-                        Default 43,800 minutes assumes continuous 24/7 usage (30.4 days × 24 hours × 60 minutes).
-                      </p>
-                      <p className="text-xs text-purple-600 italic">
-                        💡 Tip: Adjust this based on your actual usage hours for more accurate cost estimates.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-purple-200">
-                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                    🔄 Dynamic Pricing Updates
-                  </h4>
-                  <p className="text-sm text-purple-700">
-                    The app uses AI analysis of official Azure OpenAI documentation to ensure current pricing accuracy and model availability.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Critical Reservation Details */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-red-600" />
-                  <CardTitle>Critical Reservation Details</CardTitle>
-                </div>
-                <CardDescription>Important considerations before committing to PTU reservations</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <MapPin className="h-4 w-4 text-red-600" />
-                      <h4 className="font-medium text-red-800">Geographic Constraints</h4>
-                    </div>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-red-700 mb-4">
-                      <li>Reservations are region-locked (cannot transfer)</li>
-                      <li>Must commit to specific Azure region</li>
-                      <li>Plan for geographic redundancy separately</li>
-                    </ul>
-                    
-                    <div className="flex items-center gap-2 mb-2">
-                      <RefreshCw className="h-4 w-4 text-red-600" />
-                      <h4 className="font-medium text-red-800">Flexibility & Changes</h4>
-                    </div>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
-                      <li>Use reserved PTUs with any supported model</li>
-                      <li>Purchase additional on-demand PTUs as needed</li>
-                      <li>Limited exchanges possible under specific conditions</li>
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <DollarSign className="h-4 w-4 text-red-600" />
-                      <h4 className="font-medium text-red-800">Payment & Commitment</h4>
-                    </div>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-red-700 mb-4">
-                      <li>30-day cancellation window after purchase</li>
-                      <li>Choose: upfront payment (max savings) or monthly</li>
-                      <li>Full commitment for selected term (1 or 3 years)</li>
-                    </ul>
-                    
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="h-4 w-4 text-red-600" />
-                      <h4 className="font-medium text-red-800">Capacity & Scaling</h4>
-                    </div>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
-                      <li>Guaranteed capacity in selected region</li>
-                      <li>Protection against demand spikes</li>
-                      <li>Scale up with additional reservations</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </>
         )}
 
-        {/* Enhanced Features */}
-        {showInteractiveCharts && (
-            <InteractiveCharts
-              costData={{
-                paygo: calculations.monthlyPaygoCost,
-                ptuHourly: calculations.monthlyPtuHourlyCost,
-                ptuMonthly: calculations.monthlyPtuReservationCost,
-                ptuYearly: calculations.monthlyPtuReservationCost,
-                savings: Math.max(0, calculations.monthlyPaygoCost - calculations.monthlyPtuReservationCost)
-              }}
-              utilizationData={{
-                utilization: calculations.utilizationRate,
-                burstRatio: calculations.burstRatio,
-                peakRatio: calculations.peakRatio
-              }}
-              projectionData={{
-                monthly: calculations.monthlyPaygoCost,
-                yearly: calculations.monthlyPaygoCost * 12
-              }}
-              burstData={{
-                pattern: calculations.usagePattern,
-                efficiency: calculations.utilizationRate
-              }}
-              selectedModel={selectedModel}
-              selectedRegion={selectedRegion}
-            />
-        )}
+        {/* Key Concepts */}
+        <Card className="border-purple-200 bg-purple-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-purple-800">Key Concepts & Pro Tips</CardTitle>
+            </div>
+            <CardDescription className="text-purple-700">Essential information for understanding Azure OpenAI pricing and deployment options</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="bg-white p-4 rounded-lg border border-purple-200">
+                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                    🔢 PTU Conversion Rate (50,000)
+                  </h4>
+                  <p className="text-sm text-purple-700">
+                    Microsoft's official standard - each PTU provides exactly 50,000 tokens/minute of sustained throughput capacity according to Azure OpenAI documentation.
+                  </p>
+                </div>
+                
+                <div className="bg-white p-4 rounded-lg border border-purple-200">
+                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                    ⚖️ Base PTUs for Hybrid Model
+                  </h4>
+                  <p className="text-sm text-purple-700">
+                    Reserve a fixed number of PTUs (e.g., 2 PTUs = 100k tokens/min guaranteed) for your baseline usage, with automatic PAYGO billing when demand exceeds reserved capacity.
+                  </p>
+                </div>
+                
+                <div className="bg-white p-4 rounded-lg border border-purple-200">
+                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                    🎯 Hybrid Strategy Benefits
+                  </h4>
+                  <p className="text-sm text-purple-700">
+                    Combines predictable costs (PTU reservation) with elastic scalability (PAYGO overflow) - optimal for workloads with variable demand patterns.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="bg-white p-4 rounded-lg border border-purple-200">
+                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                    🌍 Deployment Type Pricing
+                  </h4>
+                  <p className="text-sm text-purple-700">
+                    Global deployments typically cost 20-40% more than Regional deployments, with Data Zone deployments priced between the two.
+                  </p>
+                </div>
+                
+                <div className="bg-white p-4 rounded-lg border border-purple-200">
+                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                    💰 PTU vs PAYGO
+                  </h4>
+                  <p className="text-sm text-purple-700">
+                    PTU pricing offers 20-40% savings for sustained high-volume usage but requires monthly commitment, while PAYGO provides flexibility without commitment.
+                  </p>
+                </div>
+                
+                <div className="bg-white p-4 rounded-lg border border-purple-200">
+                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                    ⏰ Monthly Minutes
+                  </h4>
+                  <p className="text-sm text-purple-700 mb-2">
+                    Default 43,800 minutes assumes continuous 24/7 usage (30.4 days × 24 hours × 60 minutes).
+                  </p>
+                  <p className="text-xs text-purple-600 italic">
+                    💡 Tip: Adjust this based on your actual usage hours for more accurate cost estimates.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-purple-200">
+              <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                🔄 Dynamic Pricing Updates
+              </h4>
+              <p className="text-sm text-purple-700">
+                The app uses AI analysis of official Azure OpenAI documentation to ensure current pricing accuracy and model availability.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-        
         {/* Footer */}
         <Card className="mt-8 border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
           <CardContent className="p-6 text-center">
@@ -1504,10 +1415,6 @@ AzureMetrics
             </div>
           </CardContent>
         </Card>
-
-
-
-
 
         {/* Mobile Action Buttons */}
         {deviceInfo.isMobile && (
