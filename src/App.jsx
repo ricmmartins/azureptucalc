@@ -31,12 +31,12 @@ function App() {
     avgTPM: 0,
     p99TPM: 0,
     maxTPM: 0,
-    avgPTU: 1,
-    p99PTU: 1,
-    maxPTU: 1,
-    recommendedPTU: 1,
+    avgPTU: 0,
+    p99PTU: 0,
+    maxPTU: 0,
+    recommendedPTU: 0,
     monthlyMinutes: 43800,
-    basePTUs: 1
+    basePTUs: 0
   });
   
   // Custom pricing data
