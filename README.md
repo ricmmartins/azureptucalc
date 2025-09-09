@@ -1,3 +1,9 @@
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-ptucalc.com-blue?style=for-the-badge)](https://ptucalc.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+
 # Azure OpenAI PTU Estimator
 
 🚀 **Enterprise-grade tool for optimizing Azure OpenAI costs through intelligent PTU sizing and burst pattern analysis**
