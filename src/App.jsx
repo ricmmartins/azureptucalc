@@ -128,11 +128,13 @@ function App() {
     const peakRatio = formData.maxTPM && formData.avgTPM ? formData.maxTPM / formData.avgTPM : 1;
     const ptuVariance = formData.p99PTU && formData.avgPTU ? Math.abs(formData.p99PTU - formData.avgPTU) : 0;
     
-    // Calculate PTU requirements
-    const ptuNeeded = Math.max(
-      formData.recommendedPTU || Math.ceil(formData.avgTPM / currentPricing.tokensPerPTUPerMinute),
-      currentPricing.minPTU
-    );
+    // FIXED PTU CALCULATION LOGIC
+    // Calculate actual PTUs needed based on usage
+    const calculatedPTU = formData.recommendedPTU || Math.ceil(formData.avgTPM / currentPricing.tokensPerPTUPerMinute);
+    
+    // Determine if we need to use minimum
+    const ptuNeeded = Math.max(calculatedPTU, currentPricing.minPTU);
+    const isUsingMinimum = calculatedPTU < currentPricing.minPTU;
     
     // Monthly calculations
     const monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
@@ -142,7 +144,7 @@ function App() {
     const monthlyPtuReservationCost = ptuNeeded * currentPricing.ptu_monthly;
     const yearlyPtuReservationCost = ptuNeeded * currentPricing.ptu_yearly;
     
-    // Utilization calculation
+    // Utilization calculation - use actual TPM vs actual PTU capacity
     const utilizationRate = formData.avgTPM / (ptuNeeded * currentPricing.tokensPerPTUPerMinute);
     
     // Cost per 1M tokens
@@ -200,7 +202,9 @@ function App() {
       burstRatio,
       peakRatio,
       ptuVariance,
+      calculatedPTU,
       ptuNeeded,
+      isUsingMinimum,
       monthlyTokens,
       monthlyPaygoCost,
       monthlyPtuCost,
@@ -1061,7 +1065,14 @@ AzureMetrics
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-4 text-center">
                   <h3 className="font-medium text-blue-800">PTU (On-Demand)</h3>
-                  <p className="text-xs text-blue-600 mb-2">{calculations.ptuNeeded} PTUs needed</p>
+                  <p className="text-xs text-blue-600 mb-2">
+                    {calculations.ptuNeeded} PTUs needed
+                    {calculations.isUsingMinimum && (
+                      <span className="block text-xs text-orange-600 mt-1">
+                        (Minimum: {currentPricing.minPTU} PTUs)
+                      </span>
+                    )}
+                  </p>
                   <div className="text-right">
                     <span className="text-xs text-blue-600">Reserved</span>
                     <div className="text-2xl font-bold text-blue-600">${calculations.monthlyPtuCost?.toFixed(2)}</div>
@@ -1098,6 +1109,16 @@ AzureMetrics
               </Card>
             </div>
 
+            {/* PTU Requirements Explanation */}
+            {calculations.isUsingMinimum && (
+              <Alert className="border-orange-200 bg-orange-50">
+                <Info className="h-4 w-4 text-orange-600" />
+                <AlertDescription className="text-orange-800">
+                  <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU} PTU(s), but Azure requires a minimum of {currentPricing.minPTU} PTUs for this model. You'll pay for {calculations.ptuNeeded} PTUs but get extra capacity for bursts.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Cost Comparison Chart */}
             <Card>
               <CardHeader>
@@ -1131,6 +1152,10 @@ AzureMetrics
                     <div className="flex justify-between">
                       <span>Average TPM:</span>
                       <span className="font-semibold">{formData.avgTPM.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Calculated PTUs:</span>
+                      <span className="font-semibold">{calculations.calculatedPTU}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>PTUs Needed:</span>
@@ -1465,3 +1490,4 @@ AzureMetrics
 }
 
 export default App;
+
