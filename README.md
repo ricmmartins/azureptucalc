@@ -268,8 +268,8 @@ az login
 
 # Create Static Web App
 az staticwebapp create \
-  --name azure-openai-ptu-estimator \
-  --resource-group your-resource-group \
+  --name azureptucalc \
+  --resource-group rg-azureptucalc \
   --source https://github.com/ricmmartins/azureptucalc \
   --location "East US 2" \
   --branch main \
@@ -316,12 +316,6 @@ azure-openai-ptu-estimator/
 ├── vite.config.js        # Vite configuration
 └── README.md            # This file
 ```
-
-## 🎬 Demo
-
-![Azure PTU Calculator Demo](screenshots/demo.gif)
-
-*See the calculator in action: KQL input → Real-time analysis → Cost recommendations*
 
 ## 🤝 Contributing
 
