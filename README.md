@@ -381,13 +381,6 @@ A: Reserve base PTUs for average usage, let burst traffic "spill over" to PAYGO.
 ### **Q: Is my data secure?**
 A: All calculations happen in your browser. No usage data is sent to external servers. The app only fetches public Azure pricing information.
 
-## 🚀 Deployment Status
-
-| Environment | Status | URL | Last Updated |
-|-------------|--------|-----|--------------|
-| Production | [![Vercel](https://img.shields.io/badge/Vercel-Live-brightgreen)](https://ptucalc.com) | [ptucalc.com](https://ptucalc.com) | Auto-deploy |
-| Staging | [![Vercel](https://img.shields.io/badge/Vercel-Live-brightgreen)](https://staging.ptucalc.com) | [staging.ptucalc.com](https://staging.ptucalc.com) | On PR |
-
 ---
 
 **Made with ❤️ for the Azure community**
