@@ -227,7 +227,7 @@ We follow [Semantic Versioning](https://semver.org/):
 ### Communication Channels
 - **GitHub Issues** - Bug reports and feature requests
 - **GitHub Discussions** - General questions and ideas
-- **Email** - [maintainer@domain.com](mailto:maintainer@domain.com)
+- **Email** - [ricardo.martins@microsoft.com](mailto:ricardo.martins@microsoft.com)
 
 ### Development Resources
 - [React Documentation](https://reactjs.org/docs)
