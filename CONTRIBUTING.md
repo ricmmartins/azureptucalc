@@ -5,7 +5,7 @@ Thank you for your interest in contributing to the Azure OpenAI PTU Estimator! T
 ## 🤝 How to Contribute
 
 ### Reporting Issues
-- Use the [GitHub Issues](https://github.com/your-username/azure-openai-ptu-estimator/issues) page
+- Use the [GitHub Issues](https://github.com/ricmmartins/azureptucalc/issues) page
 - Search existing issues before creating a new one
 - Provide detailed information including:
   - Steps to reproduce
@@ -14,7 +14,7 @@ Thank you for your interest in contributing to the Azure OpenAI PTU Estimator! T
   - Screenshots if applicable
 
 ### Suggesting Features
-- Open a [GitHub Discussion](https://github.com/your-username/azure-openai-ptu-estimator/discussions)
+- Open a [GitHub Discussion](https://github.com/ricmmartins/azureptucalc/discussions)
 - Describe the feature and its use case
 - Explain how it would benefit users
 - Consider implementation complexity
@@ -24,7 +24,7 @@ Thank you for your interest in contributing to the Azure OpenAI PTU Estimator! T
 #### Development Setup
 ```bash
 # Fork and clone the repository
-git clone https://github.com/your-username/azure-openai-ptu-estimator.git
+git clone https://github.com/ricmmartins/azureptucalc.git
 cd azure-openai-ptu-estimator
 
 # Install dependencies
