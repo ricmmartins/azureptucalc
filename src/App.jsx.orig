@@ -31,12 +31,12 @@ function App() {
     avgTPM: 0,
     p99TPM: 0,
     maxTPM: 0,
-    avgPTU: 1,
-    p99PTU: 1,
-    maxPTU: 1,
-    recommendedPTU: 1,
+    avgPTU: 0,
+    p99PTU: 0,
+    maxPTU: 0,
+    recommendedPTU: 0,
     monthlyMinutes: 43800,
-    basePTUs: 1
+    basePTUs: 0
   });
   
   // Custom pricing data
@@ -390,26 +390,74 @@ AzureMetrics
               </pre>
             </div>
             
-            <div className="mt-4 space-y-2">
-              <h4 className="font-medium">How to use this query:</h4>
-              <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
-                <li>Navigate to your Azure Log Analytics workspace</li>
-                <li>Paste and run the query above</li>
-                <li>The query will show results with AvgTPM, P99TPM, MaxTPM, and RecommendedPTU</li>
-                <li>Note the "RecommendedPTU" value for your resource and enter it in the calculator below</li>
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Target className="h-5 w-5 text-blue-600" />
+                How to use this query:
+              </h4>
+              <ol className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-semibold rounded-full flex items-center justify-center">1</span>
+                  <div>
+                    <p className="font-medium text-gray-800">Navigate to your Azure Log Analytics workspace</p>
+                    <p className="text-sm text-gray-600 mt-1">Access your workspace through the Azure portal</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-semibold rounded-full flex items-center justify-center">2</span>
+                  <div>
+                    <p className="font-medium text-gray-800">Paste and run the query above</p>
+                    <p className="text-sm text-gray-600 mt-1">Copy the KQL query and execute it in your workspace</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-semibold rounded-full flex items-center justify-center">3</span>
+                  <div>
+                    <p className="font-medium text-gray-800">Review the query results</p>
+                    <p className="text-sm text-gray-600 mt-1">The query will show results with AvgTPM, P99TPM, MaxTPM, and RecommendedPTU</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-semibold rounded-full flex items-center justify-center">4</span>
+                  <div>
+                    <p className="font-medium text-gray-800">Enter the RecommendedPTU value</p>
+                    <p className="text-sm text-gray-600 mt-1">Note the "RecommendedPTU" value for your resource and enter it in the calculator below</p>
+                  </div>
+                </li>
               </ol>
             </div>
 
-            <Alert className="mt-4">
-              <Lightbulb className="h-4 w-4" />
+            <Alert className="mt-6 border-blue-200 bg-blue-50">
               <AlertDescription>
-                <strong>Query Features:</strong>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li><strong>Fine-grained binning:</strong> Aggregates token counts per minute to expose bursts.</li>
-                  <li><strong>Peak statistics:</strong> Captures max / P99 tokens-per-minute (TPM) to size for bursts.</li>
-                  <li><strong>Dual PTU estimate:</strong> Computes PTUs from both average and peak, provisioning to the higher value.</li>
-                  <li><strong>RecommendedPTU:</strong> The higher value to cover bursts without large over-allocation.</li>
-                </ul>
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-blue-800 mb-3">🔍 Query Features & Benefits</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="bg-white p-3 rounded-lg border border-blue-200">
+                        <h5 className="font-semibold text-blue-700 mb-1">Fine-grained binning</h5>
+                        <p className="text-sm text-blue-600">Aggregates token counts per minute to expose bursts and usage patterns.</p>
+                      </div>
+                      
+                      <div className="bg-white p-3 rounded-lg border border-blue-200">
+                        <h5 className="font-semibold text-blue-700 mb-1">Peak statistics</h5>
+                        <p className="text-sm text-blue-600">Captures max / P99 tokens-per-minute (TPM) to size for bursts effectively.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="bg-white p-3 rounded-lg border border-blue-200">
+                        <h5 className="font-semibold text-blue-700 mb-1">Dual PTU estimate</h5>
+                        <p className="text-sm text-blue-600">Computes PTUs from both average and peak, provisioning to the higher value.</p>
+                      </div>
+                      
+                      <div className="bg-white p-3 rounded-lg border border-blue-200">
+                        <h5 className="font-semibold text-blue-700 mb-1">RecommendedPTU</h5>
+                        <p className="text-sm text-blue-600">The optimal value to cover bursts without large over-allocation.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -822,12 +870,37 @@ AzureMetrics
               </div>
             </div>
 
-            <Alert className="mt-4">
-              <Info className="h-4 w-4" />
+            <Alert className="mt-6 border-green-200 bg-green-50">
               <AlertDescription>
-                <strong>Hybrid Model (Base + Spillover):</strong> Reserve base PTUs for average usage, let burst traffic "spill over" to PAYGO. Best for predictable baselines with occasional bursts (≈2–5×). Set base to your AvgPTU or P99PTU from KQL; overflow is billed at PAYGO.
-                <br />
-                <strong>Example:</strong> Need 2 PTU avg, 8 PTU peaks → reserve 2–3 PTUs and let the extra 5–6 PTUs use PAYGO.
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-lg font-semibold text-green-800 mb-2 flex items-center gap-2">
+                      💡 Pro Tip: Hybrid Model Strategy
+                    </h4>
+                    <p className="text-green-700 mb-3">
+                      <strong>Hybrid Model (Base + Spillover):</strong> Reserve base PTUs for average usage, let burst traffic "spill over" to PAYGO. 
+                      Best for predictable baselines with occasional bursts (≈2–5×).
+                    </p>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-lg border border-green-200">
+                    <h5 className="font-semibold text-green-800 mb-2">📊 Implementation Guide:</h5>
+                    <ul className="space-y-2 text-sm text-green-700">
+                      <li>• Set base to your AvgPTU or P99PTU from KQL</li>
+                      <li>• Overflow traffic is automatically billed at PAYGO rates</li>
+                      <li>• Ideal for workloads with predictable baseline + occasional spikes</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h5 className="font-semibold text-blue-800 mb-2">🎯 Example Scenario:</h5>
+                    <p className="text-sm text-blue-700">
+                      <strong>Need:</strong> 2 PTU average, 8 PTU peaks<br/>
+                      <strong>Strategy:</strong> Reserve 2–3 PTUs, let extra 5–6 PTUs use PAYGO<br/>
+                      <strong>Benefit:</strong> Cost control + automatic scaling
+                    </p>
+                  </div>
+                </div>
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -1247,54 +1320,84 @@ AzureMetrics
             </Card>
 
             {/* Key Concepts */}
-            <Card>
+            <Card className="border-purple-200 bg-purple-50">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-blue-600" />
-                  <CardTitle>Key Concepts</CardTitle>
+                  <CardTitle className="text-purple-800">💡 Key Concepts & Pro Tips</CardTitle>
                 </div>
-                <CardDescription>Essential information for understanding Azure OpenAI pricing and deployment options</CardDescription>
+                <CardDescription className="text-purple-700">Essential information for understanding Azure OpenAI pricing and deployment options</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-medium mb-2">PTU Conversion Rate (50,000)</h4>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Microsoft's official standard - each PTU provides exactly 50,000 tokens/minute of sustained throughput capacity according to Azure OpenAI documentation.
-                    </p>
+                  <div className="space-y-4">
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                        🔢 PTU Conversion Rate (50,000)
+                      </h4>
+                      <p className="text-sm text-purple-700">
+                        Microsoft's official standard - each PTU provides exactly 50,000 tokens/minute of sustained throughput capacity according to Azure OpenAI documentation.
+                      </p>
+                    </div>
                     
-                    <h4 className="font-medium mb-2">Base PTUs for Hybrid Model</h4>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Reserve a fixed number of PTUs (e.g., 2 PTUs = 100k tokens/min guaranteed) for your baseline usage, with automatic PAYGO billing when demand exceeds reserved capacity.
-                    </p>
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                        ⚖️ Base PTUs for Hybrid Model
+                      </h4>
+                      <p className="text-sm text-purple-700">
+                        Reserve a fixed number of PTUs (e.g., 2 PTUs = 100k tokens/min guaranteed) for your baseline usage, with automatic PAYGO billing when demand exceeds reserved capacity.
+                      </p>
+                    </div>
                     
-                    <h4 className="font-medium mb-2">Hybrid Strategy Benefits</h4>
-                    <p className="text-sm text-gray-600">
-                      Combines predictable costs (PTU reservation) with elastic scalability (PAYGO overflow) - optimal for workloads with variable demand patterns.
-                    </p>
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                        🎯 Hybrid Strategy Benefits
+                      </h4>
+                      <p className="text-sm text-purple-700">
+                        Combines predictable costs (PTU reservation) with elastic scalability (PAYGO overflow) - optimal for workloads with variable demand patterns.
+                      </p>
+                    </div>
                   </div>
                   
-                  <div>
-                    <h4 className="font-medium mb-2">Deployment Type Pricing</h4>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Global deployments typically cost 20-40% more than Regional deployments, with Data Zone deployments priced between the two.
-                    </p>
+                  <div className="space-y-4">
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                        🌍 Deployment Type Pricing
+                      </h4>
+                      <p className="text-sm text-purple-700">
+                        Global deployments typically cost 20-40% more than Regional deployments, with Data Zone deployments priced between the two.
+                      </p>
+                    </div>
                     
-                    <h4 className="font-medium mb-2">PTU vs PAYGO</h4>
-                    <p className="text-sm text-gray-600 mb-4">
-                      PTU pricing offers 20-40% savings for sustained high-volume usage but requires monthly commitment, while PAYGO provides flexibility without commitment.
-                    </p>
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                        💰 PTU vs PAYGO
+                      </h4>
+                      <p className="text-sm text-purple-700">
+                        PTU pricing offers 20-40% savings for sustained high-volume usage but requires monthly commitment, while PAYGO provides flexibility without commitment.
+                      </p>
+                    </div>
                     
-                    <h4 className="font-medium mb-2">Monthly Minutes</h4>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Default 43,800 minutes assumes continuous 24/7 usage (30.4 days × 24 hours × 60 minutes).
-                    </p>
-                    
-                    <h4 className="font-medium mb-2">Dynamic Pricing Updates</h4>
-                    <p className="text-sm text-gray-600">
-                      The app uses AI analysis of official Azure OpenAI documentation to ensure current pricing accuracy and model availability.
-                    </p>
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                        ⏰ Monthly Minutes
+                      </h4>
+                      <p className="text-sm text-purple-700 mb-2">
+                        Default 43,800 minutes assumes continuous 24/7 usage (30.4 days × 24 hours × 60 minutes).
+                      </p>
+                      <p className="text-xs text-purple-600 italic">
+                        💡 Tip: Adjust this based on your actual usage hours for more accurate cost estimates.
+                      </p>
+                    </div>
                   </div>
+                </div>
+                
+                <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-purple-200">
+                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                    🔄 Dynamic Pricing Updates
+                  </h4>
+                  <p className="text-sm text-purple-700">
+                    The app uses AI analysis of official Azure OpenAI documentation to ensure current pricing accuracy and model availability.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -1386,6 +1489,25 @@ AzureMetrics
               selectedRegion={selectedRegion}
             />
         )}
+
+        
+        {/* Footer */}
+        <Card className="mt-8 border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+          <CardContent className="p-6 text-center">
+            <div className="space-y-2">
+              <p className="text-lg font-medium text-gray-800">
+                Made with ❤️ for the Azure community
+              </p>
+              <p className="text-sm text-gray-600">
+                Optimize your Azure OpenAI costs with confidence using real data and intelligent analysis.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+
+
+
 
         {/* Mobile Action Buttons */}
         {deviceInfo.isMobile && (
