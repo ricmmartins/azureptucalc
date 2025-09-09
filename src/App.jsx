@@ -1456,11 +1456,7 @@ AzureMetrics
             </div>
           </CardContent>
         </Card>
-
-<div style={{ marginTop: '2rem', padding: '1rem', background: '#f8f8f8', borderRadius: '8px', color: '#333', fontSize: '0.95rem', textAlign: 'center' }}>
-  <strong>Disclaimer:</strong> The information provided on this website is for informational purposes only. While we strive for accuracy, no guarantee is made regarding the completeness or correctness of the data. Microsoft and the site operators are not responsible for any errors, omissions, or decisions made based on this information. Users should verify all information independently before making any decisions.
-</div>
-        
+       
         {/* Footer */}
         <Card className="mt-8 border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
           <CardContent className="p-6 text-center">
@@ -1474,6 +1470,10 @@ AzureMetrics
             </div>
           </CardContent>
         </Card>
+
+        <div style={{ marginTop: '2rem', padding: '1rem', background: '#f8f8f8', borderRadius: '8px', color: '#333', fontSize: '0.95rem', textAlign: 'center' }}>
+          <strong>Disclaimer:</strong> The information provided on this website is for informational purposes only. While we strive for accuracy, no guarantee is made regarding the completeness or correctness of the data. Microsoft and the site operators are not responsible for any errors, omissions, or decisions made based on this information. Users should verify all information independently before making any decisions.
+        </div>
 
         {/* Mobile Action Buttons */}
         {deviceInfo.isMobile && (
