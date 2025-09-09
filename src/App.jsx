@@ -1490,6 +1490,25 @@ AzureMetrics
             />
         )}
 
+        
+        {/* Footer */}
+        <Card className="mt-8 border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+          <CardContent className="p-6 text-center">
+            <div className="space-y-2">
+              <p className="text-lg font-medium text-gray-800">
+                Made with ❤️ for the Azure community
+              </p>
+              <p className="text-sm text-gray-600">
+                Optimize your Azure OpenAI costs with confidence using real data and intelligent analysis.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+
+
+
+
         {/* Mobile Action Buttons */}
         {deviceInfo.isMobile && (
           <div className="fixed bottom-4 right-4 z-40 space-y-2">
