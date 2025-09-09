@@ -218,7 +218,7 @@ AzureMetrics
    git add .
    git commit -m "Initial commit"
    git branch -M main
-   git remote add origin https://github.com/yourusername/azure-openai-ptu-estimator.git
+   git remote add origin https://github.com/ricmmartins/azureptucalc.git
    git push -u origin main
    ```
 
@@ -270,7 +270,7 @@ az login
 az staticwebapp create \
   --name azure-openai-ptu-estimator \
   --resource-group your-resource-group \
-  --source https://github.com/your-username/azure-openai-ptu-estimator \
+  --source https://github.com/ricmmartins/azureptucalc \
   --location "East US 2" \
   --branch main \
   --app-location "/" \
