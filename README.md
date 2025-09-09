@@ -82,7 +82,7 @@ Optimize your Azure OpenAI costs by analyzing real usage patterns and comparing 
 ### Local Development
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/azure-openai-ptu-estimator.git
+git clone https://github.com/ricmmartins/azureptucalc.git
 cd azure-openai-ptu-estimator
 
 # Install dependencies
