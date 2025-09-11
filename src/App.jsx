@@ -1530,6 +1530,10 @@ AzureMetrics
           </CardContent>
         </Card>
 
+        <div style={{ marginTop: '2rem', padding: '1rem', background: '#f8f8f8', borderRadius: '8px', color: '#333', fontSize: '0.95rem', textAlign: 'center' }}>
+          <strong>Disclaimer:</strong> The information provided on this website is for informational purposes only. While we strive for accuracy, no guarantee is made regarding the completeness or correctness of the data. Microsoft and the site operators are not responsible for any errors, omissions, or decisions made based on this information. Users should verify all information independently before making any decisions.
+        </div>
+        
         {/* Mobile Action Buttons */}
         {deviceInfo.isMobile && (
           <div className="fixed bottom-4 right-4 z-40 space-y-2">
