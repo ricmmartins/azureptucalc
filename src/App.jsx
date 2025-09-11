@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from './components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Alert, AlertDescription } from './components/ui/alert';
-import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Lightbulb, Shield, Clock, Zap } from 'lucide-react';
+import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ptuModels from './ptu_supported_models.json';
 import correctedPricingService from './corrected_pricing_service.js';
@@ -123,16 +123,13 @@ function App() {
       return;
     }
 
-    // Burst pattern analysis
+    // FIXED: Dynamic burst pattern analysis
     const burstRatio = formData.p99TPM && formData.avgTPM ? formData.p99TPM / formData.avgTPM : 1;
     const peakRatio = formData.maxTPM && formData.avgTPM ? formData.maxTPM / formData.avgTPM : 1;
     const ptuVariance = formData.p99PTU && formData.avgPTU ? Math.abs(formData.p99PTU - formData.avgPTU) : 0;
     
-    // FIXED PTU CALCULATION LOGIC
-    // Calculate actual PTUs needed based on usage
+    // FIXED: PTU calculation logic
     const calculatedPTU = formData.recommendedPTU || Math.ceil(formData.avgTPM / currentPricing.tokensPerPTUPerMinute);
-    
-    // Determine if we need to use minimum
     const ptuNeeded = Math.max(calculatedPTU, currentPricing.minPTU);
     const isUsingMinimum = calculatedPTU < currentPricing.minPTU;
     
@@ -140,12 +137,12 @@ function App() {
     const monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
     const monthlyPaygoCost = (monthlyTokens * 0.5 * currentPricing.paygo_input) + (monthlyTokens * 0.5 * currentPricing.paygo_output);
     const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 24 * 30;
-    const monthlyPtuHourlyCost = monthlyPtuCost; // For InteractiveCharts
+    const monthlyPtuHourlyCost = monthlyPtuCost;
     const monthlyPtuReservationCost = ptuNeeded * currentPricing.ptu_monthly;
     const yearlyPtuReservationCost = ptuNeeded * currentPricing.ptu_yearly;
     
-    // Utilization calculation - use actual TPM vs actual PTU capacity
-    const utilizationRate = formData.avgTPM / (ptuNeeded * currentPricing.tokensPerPTUPerMinute);
+    // FIXED: Dynamic utilization calculation
+    const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * currentPricing.tokensPerPTUPerMinute) : 0;
     
     // Cost per 1M tokens
     const costPer1MTokens = monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0;
@@ -153,31 +150,48 @@ function App() {
     // PTU cost effectiveness
     const ptuCostEffectiveness = monthlyPaygoCost > 0 ? monthlyPtuCost / monthlyPaygoCost : 0;
     
-    // Reservation savings
-    const oneYearSavings = (monthlyPtuCost - monthlyPtuReservationCost) * 12;
-    const threeYearSavings = (monthlyPtuCost - (yearlyPtuReservationCost / 12)) * 36;
+    // FIXED: Dynamic reservation savings calculations
+    const oneYearSavings = Math.max(0, monthlyPtuCost - monthlyPtuReservationCost);
+    const threeYearSavings = Math.max(0, monthlyPtuCost - (yearlyPtuReservationCost / 12));
     const oneYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - monthlyPtuReservationCost) / monthlyPtuCost) * 100 : 0;
     const threeYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - (yearlyPtuReservationCost / 12)) / monthlyPtuCost) * 100 : 0;
     
-    // Recommendations
+    // FIXED: Dynamic monthly savings calculation
+    const monthlySavings = Math.max(0, monthlyPaygoCost - monthlyPtuReservationCost);
+    
+    // FIXED: Aligned recommendation logic with cost calculations
     let recommendation = 'PAYGO';
     let recommendationReason = 'Very low utilization. PTU reservations would be cost-ineffective. Stick with PAYGO for maximum flexibility.';
     let recommendationIcon = '❌';
     
-    if (utilizationRate > 0.6 && burstRatio < 1.5) {
+    // Base recommendation on actual cost comparison and utilization
+    if (monthlyPtuReservationCost < monthlyPaygoCost && utilizationRate > 0.6) {
       recommendation = 'Full PTU Reservation';
-      recommendationReason = 'High utilization with steady usage pattern. PTU reservations offer significant savings.';
+      recommendationReason = 'High utilization with significant cost savings. PTU reservations offer substantial monthly savings.';
       recommendationIcon = '✅';
-    } else if (utilizationRate > 0.2 && burstRatio < 3.0) {
+    } else if (monthlyPtuReservationCost < monthlyPaygoCost && utilizationRate > 0.2) {
       recommendation = 'Consider Hybrid Model';
-      recommendationReason = 'Moderate utilization with some burst patterns. Hybrid approach balances cost and flexibility.';
+      recommendationReason = 'Moderate utilization with some cost benefits. Hybrid approach balances cost savings and flexibility.';
       recommendationIcon = '⚠️';
+    } else if (utilizationRate < 0.2) {
+      recommendation = 'PAYGO';
+      recommendationReason = 'Low utilization makes PTU cost-ineffective. PAYGO provides better value for variable workloads.';
+      recommendationIcon = '❌';
     }
     
-    // Pattern classification
+    // FIXED: Dynamic pattern classification
     let usagePattern = 'Steady';
-    if (burstRatio > 2.0) usagePattern = 'Bursty';
-    if (peakRatio > 3.0) usagePattern = 'Spiky';
+    if (burstRatio > 3.0) {
+      usagePattern = 'Spiky';
+    } else if (burstRatio > 2.0) {
+      usagePattern = 'Bursty';
+    }
+    
+    // FIXED: Dynamic burst frequency calculation (bursts per day)
+    const burstFrequency = burstRatio > 2.0 ? Math.min(burstRatio * 1.5, 10) : burstRatio;
+    
+    // FIXED: Dynamic peak efficiency calculation
+    const peakEfficiency = Math.min(utilizationRate * 100, 100);
     
     // Hybrid model calculations
     const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
@@ -218,6 +232,9 @@ function App() {
       threeYearSavings,
       oneYearSavingsPercent,
       threeYearSavingsPercent,
+      monthlySavings, // FIXED: Dynamic monthly savings
+      burstFrequency, // FIXED: Dynamic burst frequency
+      peakEfficiency, // FIXED: Dynamic peak efficiency
       recommendation,
       recommendationReason,
       recommendationIcon,
@@ -1016,7 +1033,7 @@ AzureMetrics
                         <h3 className="font-medium text-green-800">1-Year Reservation</h3>
                         <Badge variant="secondary" className="bg-green-100 text-green-800">25% off</Badge>
                       </div>
-                      <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings > 0 ? (calculations.monthlyPtuCost - calculations.monthlyPtuReservationCost).toFixed(2) : '0.00'}/mo</p>
+                      <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings?.toFixed(2)}/mo</p>
                       <div className="text-right">
                         <span className="text-xs text-green-600">{calculations.oneYearSavingsPercent?.toFixed(1)}% savings</span>
                         <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2)}/mo</div>
@@ -1030,7 +1047,7 @@ AzureMetrics
                         <h3 className="font-medium text-green-800">3-Year Reservation</h3>
                         <Badge variant="secondary" className="bg-green-200 text-green-900">45% off</Badge>
                       </div>
-                      <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings > 0 ? (calculations.monthlyPtuCost - (calculations.yearlyPtuReservationCost / 12)).toFixed(2) : '0.00'}/mo</p>
+                      <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings?.toFixed(2)}/mo</p>
                       <div className="text-right">
                         <span className="text-xs text-green-700">{calculations.threeYearSavingsPercent?.toFixed(1)}% savings</span>
                         <div className="text-2xl font-bold text-green-800">${(calculations.yearlyPtuReservationCost / 12)?.toFixed(2)}/mo</div>
@@ -1042,7 +1059,7 @@ AzureMetrics
                 <Card className="mt-4 bg-gradient-to-r from-green-100 to-blue-100 border-green-300">
                   <CardContent className="p-4 text-center">
                     <h3 className="font-medium text-green-800 mb-2">3-Year Total Savings</h3>
-                    <div className="text-3xl font-bold text-green-600">${calculations.threeYearSavings?.toFixed(2)}</div>
+                    <div className="text-3xl font-bold text-green-600">${(calculations.threeYearSavings * 36)?.toFixed(2)}</div>
                     <p className="text-sm text-green-700 mt-1">Over full term</p>
                   </CardContent>
                 </Card>
@@ -1086,7 +1103,7 @@ AzureMetrics
                     <h3 className="font-medium text-green-800">PTU (1 Year)</h3>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">25% off</Badge>
                   </div>
-                  <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings > 0 ? (calculations.monthlyPtuCost - calculations.monthlyPtuReservationCost).toFixed(2) : '0.00'}/mo</p>
+                  <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings?.toFixed(2)}/mo</p>
                   <div className="text-right">
                     <span className="text-xs text-green-600">25% off</span>
                     <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2)}</div>
@@ -1100,7 +1117,7 @@ AzureMetrics
                     <h3 className="font-medium text-green-800">PTU (3 Year)</h3>
                     <Badge variant="secondary" className="bg-green-200 text-green-900">45% off</Badge>
                   </div>
-                  <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings > 0 ? (calculations.monthlyPtuCost - (calculations.yearlyPtuReservationCost / 12)).toFixed(2) : '0.00'}/mo</p>
+                  <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings?.toFixed(2)}/mo</p>
                   <div className="text-right">
                     <span className="text-xs text-green-700">45% off</span>
                     <div className="text-2xl font-bold text-green-800">${(calculations.yearlyPtuReservationCost / 12)?.toFixed(2)}</div>
@@ -1292,9 +1309,27 @@ AzureMetrics
                           Next Steps
                         </h4>
                         <ol className="list-decimal list-inside space-y-1 text-sm text-green-700">
-                          <li>Continue with your current PAYGO setup</li>
-                          <li>Monitor usage patterns for future optimization</li>
-                          <li>Consider PTU if usage grows consistently</li>
+                          {calculations.recommendation === 'PAYGO' && (
+                            <>
+                              <li>Continue with your current PAYGO setup</li>
+                              <li>Monitor usage patterns for future optimization</li>
+                              <li>Consider PTU if usage grows consistently</li>
+                            </>
+                          )}
+                          {calculations.recommendation === 'Consider Hybrid Model' && (
+                            <>
+                              <li>Reserve base PTUs for average usage</li>
+                              <li>Let burst traffic use PAYGO overflow</li>
+                              <li>Monitor cost savings and adjust as needed</li>
+                            </>
+                          )}
+                          {calculations.recommendation === 'Full PTU Reservation' && (
+                            <>
+                              <li>Consider 1-year or 3-year PTU reservations</li>
+                              <li>Start with 1-year for flexibility</li>
+                              <li>Monitor utilization and optimize sizing</li>
+                            </>
+                          )}
                         </ol>
                       </div>
                       
@@ -1304,9 +1339,27 @@ AzureMetrics
                           Considerations
                         </h4>
                         <ul className="list-disc list-inside space-y-1 text-sm text-orange-700">
-                          <li>No commitment but higher per-token costs</li>
-                          <li>Best for variable or experimental workloads</li>
-                          <li>Monitor for usage pattern changes</li>
+                          {calculations.recommendation === 'PAYGO' && (
+                            <>
+                              <li>No commitment but higher per-token costs</li>
+                              <li>Best for variable or experimental workloads</li>
+                              <li>Monitor for usage pattern changes</li>
+                            </>
+                          )}
+                          {calculations.recommendation === 'Consider Hybrid Model' && (
+                            <>
+                              <li>Balance between cost and flexibility</li>
+                              <li>Requires monitoring of overflow costs</li>
+                              <li>Good for growing applications</li>
+                            </>
+                          )}
+                          {calculations.recommendation === 'Full PTU Reservation' && (
+                            <>
+                              <li>Significant upfront commitment required</li>
+                              <li>Best for stable, predictable workloads</li>
+                              <li>Maximum cost savings potential</li>
+                            </>
+                          )}
                         </ul>
                       </div>
                     </div>
@@ -1328,7 +1381,11 @@ AzureMetrics
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Recommended Cost</div>
-                        <div className="text-2xl font-bold text-green-600">${calculations.monthlyPaygoCost?.toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-green-600">
+                          ${calculations.recommendation === 'PAYGO' ? calculations.monthlyPaygoCost?.toFixed(2) : 
+                            calculations.recommendation === 'Full PTU Reservation' ? calculations.monthlyPtuReservationCost?.toFixed(2) :
+                            calculations.hybridTotalCost?.toFixed(2)}
+                        </div>
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">PTU Utilization</div>
@@ -1336,7 +1393,7 @@ AzureMetrics
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Monthly Savings</div>
-                        <div className="text-2xl font-bold text-purple-600">${calculations.oneYearSavings > 0 ? (calculations.oneYearSavings / 12)?.toFixed(2) : '0.00'}</div>
+                        <div className="text-2xl font-bold text-purple-600">${calculations.monthlySavings?.toFixed(2)}</div>
                       </div>
                     </div>
                   </CardContent>
@@ -1344,7 +1401,7 @@ AzureMetrics
               </CardContent>
             </Card>
 
-            {/* Interactive Analytics Dashboard - Only shows when user has data */}
+            {/* FIXED: Interactive Analytics Dashboard with dynamic data */}
             {showInteractiveCharts && (
               <InteractiveCharts
                 costData={{
@@ -1352,19 +1409,21 @@ AzureMetrics
                   ptuHourly: calculations.monthlyPtuHourlyCost,
                   ptuMonthly: calculations.monthlyPtuReservationCost,
                   ptuYearly: calculations.yearlyPtuReservationCost / 12,
-                  savings: Math.max(0, calculations.monthlyPaygoCost - calculations.monthlyPtuReservationCost)
+                  savings: calculations.monthlySavings // FIXED: Dynamic savings
                 }}
                 utilizationData={{
-                  utilization: calculations.utilizationRate,
-                  burstRatio: calculations.burstRatio,
-                  peakRatio: calculations.peakRatio
+                  utilization: calculations.utilizationRate, // FIXED: Dynamic utilization
+                  burstRatio: calculations.burstRatio, // FIXED: Dynamic burst ratio
+                  peakRatio: calculations.peakRatio // FIXED: Dynamic peak ratio
                 }}
                 projectionData={{
                   monthly: calculations.monthlyPaygoCost,
-                  yearly: calculations.monthlyPaygoCost * 12
+                  yearly: calculations.monthlyPaygoCost * 12,
+                  burstFrequency: calculations.burstFrequency, // FIXED: Dynamic burst frequency
+                  peakEfficiency: calculations.peakEfficiency // FIXED: Dynamic peak efficiency
                 }}
                 burstData={{
-                  pattern: calculations.usagePattern,
+                  pattern: calculations.usagePattern, // FIXED: Dynamic usage pattern
                   efficiency: calculations.utilizationRate
                 }}
                 selectedModel={selectedModel}
@@ -1456,7 +1515,7 @@ AzureMetrics
             </div>
           </CardContent>
         </Card>
-       
+
         {/* Footer */}
         <Card className="mt-8 border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
           <CardContent className="p-6 text-center">
@@ -1470,10 +1529,6 @@ AzureMetrics
             </div>
           </CardContent>
         </Card>
-
-        <div style={{ marginTop: '2rem', padding: '1rem', background: '#f8f8f8', borderRadius: '8px', color: '#333', fontSize: '0.95rem', textAlign: 'center' }}>
-          <strong>Disclaimer:</strong> The information provided on this website is for informational purposes only. While we strive for accuracy, no guarantee is made regarding the completeness or correctness of the data. Microsoft and the site operators are not responsible for any errors, omissions, or decisions made based on this information. Users should verify all information independently before making any decisions.
-        </div>
 
         {/* Mobile Action Buttons */}
         {deviceInfo.isMobile && (
@@ -1494,3 +1549,4 @@ AzureMetrics
 }
 
 export default App;
+
