@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -71,7 +71,7 @@ function App() {
   const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0;
 
   // Get current pricing from service
-  const getCurrentPricing = useCallback(() => {
+  const getCurrentPricing = () => {
     if (useCustomPricing) {
       return {
         paygo_input: customPricing.paygo_input,
@@ -107,13 +107,13 @@ function App() {
         tokensPerPTUPerMinute: 50000
       };
     }
-  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing]);
+  };
 
   // Update pricing when selections change
   useEffect(() => {
     const pricing = getCurrentPricing();
     setCurrentPricing(pricing);
-  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing, getCurrentPricing]);
+  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing]);
 
   // Calculate costs and recommendations
   useEffect(() => {
@@ -1129,10 +1129,12 @@ AzureMetrics
             {/* PTU Requirements Explanation */}
             {calculations.isUsingMinimum && (
               <Alert className="border-orange-200 bg-orange-50">
-                <Info className="h-4 w-4 text-orange-600" />
-                <AlertDescription className="text-orange-800">
-                  <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU} PTU(s), but Azure requires a minimum of {currentPricing.minPTU} PTUs for this model. You'll pay for {calculations.ptuNeeded} PTUs but get extra capacity for bursts.
-                </AlertDescription>
+                <div className="flex items-start gap-3">
+                  <Info className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                  <AlertDescription className="text-orange-800">
+                    <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU} PTU(s), but Azure requires a minimum of {currentPricing.minPTU} PTUs for this model. You'll pay for {calculations.ptuNeeded} PTUs but get extra capacity for bursts.
+                  </AlertDescription>
+                </div>
               </Alert>
             )}
 
