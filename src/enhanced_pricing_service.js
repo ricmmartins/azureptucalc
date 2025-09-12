@@ -159,7 +159,7 @@ class AzureOpenAIPricingService {
 
     // Process each pricing item
     for (const item of items) {
-      const productName = item.productName?.toLowerCase() || '';
+      const UNUSED_productName = item.productName?.toLowerCase() || '';
       const skuName = item.skuName?.toLowerCase() || '';
       const meterName = item.meterName?.toLowerCase() || '';
       const unitPrice = item.unitPrice || 0;
@@ -225,7 +225,7 @@ class AzureOpenAIPricingService {
   }
 
   // Get fallback pricing when API fails
-  getFallbackPricing(model, deploymentType) {
+  getFallbackPricing(model) {
     const fallback = this.fallbackPricing[model];
     
     if (!fallback) {

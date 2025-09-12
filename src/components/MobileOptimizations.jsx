@@ -28,13 +28,12 @@ import {
 
 const MobileOptimizations = ({ 
   children, 
-  isMobile = false, 
   onViewportChange,
   currentSection = 'dashboard' 
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [UNUSED_isCollapsed, UNUSED_setIsCollapsed] = useState(false);
   const [activeSection, setActiveSection] = useState(currentSection);
-  const [showMobileNav, setShowMobileNav] = useState(false);
+  const [UNUSED_showMobileNav, UNUSED_setShowMobileNav] = useState(false);
   const [viewMode, setViewMode] = useState('auto'); // auto, mobile, tablet, desktop
   const [orientation, setOrientation] = useState('portrait');
   const [zoomLevel, setZoomLevel] = useState(100);
@@ -68,7 +67,7 @@ const MobileOptimizations = ({
       window.removeEventListener('resize', checkViewport);
       window.removeEventListener('orientationchange', checkViewport);
     };
-  }, [viewMode, onViewportChange]);
+  }, [viewMode, onViewportChange, orientation]);
 
   // Mobile navigation items
   const navigationItems = [
@@ -369,7 +368,7 @@ const MobileOptimizations = ({
   const SwipeIndicator = () => (
     <div className="flex justify-center py-2 md:hidden">
       <div className="flex gap-1">
-        {navigationItems.map((item, index) => (
+        {navigationItems.map((item) => (
           <div
             key={item.id}
             className={`w-2 h-2 rounded-full transition-colors ${
@@ -393,7 +392,7 @@ const MobileOptimizations = ({
 
         {/* Content sections */}
         <div className="space-y-4">
-          {React.Children.map(children, (child, index) => {
+          {React.Children.map(children, (child) => {
             if (React.isValidElement(child)) {
               return React.cloneElement(child, {
                 viewMode,

@@ -22,7 +22,6 @@ const ShareAnalysis = ({
   analysisData, 
   onGenerateShareLink, 
   onExportData,
-  currentUrl = window.location.href 
 }) => {
   const [shareUrl, setShareUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -126,10 +125,11 @@ const ShareAnalysis = ({
       case 'json':
         downloadFile(JSON.stringify(exportData, null, 2), 'azure-openai-analysis.json', 'application/json');
         break;
-      case 'csv':
+      case 'csv': {
         const csvData = convertToCSV(exportData);
         downloadFile(csvData, 'azure-openai-analysis.csv', 'text/csv');
         break;
+      }
       case 'pdf':
         // In a real implementation, this would generate a PDF report
         alert('PDF export would be implemented with a PDF generation library');

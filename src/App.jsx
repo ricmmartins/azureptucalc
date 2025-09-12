@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -71,7 +71,7 @@ function App() {
   const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0;
 
   // Get current pricing from service
-  const getCurrentPricing = () => {
+  const getCurrentPricing = useCallback(() => {
     if (useCustomPricing) {
       return {
         paygo_input: customPricing.paygo_input,
@@ -107,13 +107,13 @@ function App() {
         tokensPerPTUPerMinute: 50000
       };
     }
-  };
+  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing]);
 
   // Update pricing when selections change
   useEffect(() => {
     const pricing = getCurrentPricing();
     setCurrentPricing(pricing);
-  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing]);
+  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing, getCurrentPricing]);
 
   // Calculate costs and recommendations
   useEffect(() => {

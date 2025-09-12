@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 
 const WizardMode = ({ 
-  onComplete, 
   initialData = {}, 
   onDataChange,
   isWizardMode = false,
@@ -124,7 +123,7 @@ const WizardMode = ({
     onDataChange?.(newData);
   };
 
-  const isStepComplete = (stepIndex) => {
+  const UNUSED_isStepComplete = (stepIndex) => {
     return completedSteps.has(stepIndex);
   };
 
