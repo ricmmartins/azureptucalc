@@ -1128,13 +1128,11 @@ AzureMetrics
 
             {/* PTU Requirements Explanation */}
             {calculations.isUsingMinimum && (
-              <Alert className="border-orange-200 bg-orange-50">
-                <div className="flex items-start gap-3">
-                  <Info className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                  <AlertDescription className="text-orange-800">
-                    <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU} PTU(s), but Azure requires a minimum of {currentPricing.minPTU} PTUs for this model. You'll pay for {calculations.ptuNeeded} PTUs but get extra capacity for bursts.
-                  </AlertDescription>
-                </div>
+              <Alert className="border-orange-200 bg-orange-50 flex items-center gap-2">
+                <Info className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                <AlertDescription className="text-orange-800">
+                  <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU} PTU(s), but Azure requires a minimum of {currentPricing.minPTU} PTUs for this model. You'll pay for {calculations.ptuNeeded} PTUs but get extra capacity for bursts.
+                </AlertDescription>
               </Alert>
             )}
 
