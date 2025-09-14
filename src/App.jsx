@@ -12,6 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import ptuModels from './ptu_supported_models.json';
 import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
 import correctedPricingService from "./corrected_pricing_service.js";
+import enhancedModelConfig from "./enhanced_model_config.json";
 import InteractiveCharts from './components/InteractiveCharts';
 import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
 import './App.css';
@@ -109,6 +110,44 @@ function App() {
       }));
     }
   };
+  // Enhanced PTU calculation with model-specific minimums and increments
+  const calculateEnhancedPTU = (avgTPM, model, deploymentType) => {
+    const modelConfig = enhancedModelConfig.models[model];
+    if (!modelConfig) {
+      console.warn(`Model ${model} not found in enhanced config`);
+      return { calculatedPTU: 0, ptuNeeded: 0, isUsingMinimum: false, increment: 1, throughput: 50000 };
+    }
+
+    const deployment = modelConfig.deployments[deploymentType];
+    if (!deployment) {
+      console.warn(`Deployment ${deploymentType} not available for ${model}`);
+      return { calculatedPTU: 0, ptuNeeded: 0, isUsingMinimum: false, increment: 1, throughput: 50000 };
+    }
+
+    const throughput = modelConfig.throughput_per_ptu || 50000;
+    const minPTU = deployment.min_ptu;
+    const increment = deployment.increment;
+
+    // Calculate raw PTU requirement based on throughput
+    const rawPTU = avgTPM > 0 ? Math.ceil(avgTPM / throughput) : 0;
+    
+    // Apply minimum requirement
+    const afterMinimum = Math.max(rawPTU, minPTU);
+    
+    // Round up to nearest increment
+    const finalPTU = Math.ceil(afterMinimum / increment) * increment;
+    
+    return {
+      calculatedPTU: rawPTU,
+      ptuNeeded: finalPTU,
+      isUsingMinimum: rawPTU < minPTU,
+      increment: increment,
+      throughput: throughput,
+      minPTU: minPTU
+    };
+  };
+
+
   const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0;
 
   // Load live pricing data when model or deployment changes
@@ -203,16 +242,17 @@ function App() {
       setCalculations({});
       return;
     }
-
     // FIXED: Dynamic burst pattern analysis
     const burstRatio = formData.p99TPM && formData.avgTPM ? formData.p99TPM / formData.avgTPM : 1;
     const peakRatio = formData.maxTPM && formData.avgTPM ? formData.maxTPM / formData.avgTPM : 1;
     const ptuVariance = formData.p99PTU && formData.avgPTU ? Math.abs(formData.p99PTU - formData.avgPTU) : 0;
     
     // FIXED: PTU calculation logic
-    const calculatedPTU = formData.recommendedPTU || Math.ceil(formData.avgTPM / currentPricing.tokensPerPTUPerMinute);
-    const ptuNeeded = Math.max(calculatedPTU, currentPricing.minPTU);
-    const isUsingMinimum = calculatedPTU < currentPricing.minPTU;
+    // Use enhanced PTU calculation
+    const enhancedPTUData = calculateEnhancedPTU(formData.avgTPM, selectedModel, selectedDeployment);
+    const calculatedPTU = formData.recommendedPTU || enhancedPTUData.calculatedPTU;
+    const ptuNeeded = formData.recommendedPTU || enhancedPTUData.ptuNeeded;
+    const isUsingMinimum = enhancedPTUData.isUsingMinimum;
     
     // Monthly calculations
     const monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
@@ -223,7 +263,7 @@ function App() {
     const yearlyPtuReservationCost = ptuNeeded * currentPricing.ptu_yearly;
     
     // FIXED: Dynamic utilization calculation
-    const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * currentPricing.tokensPerPTUPerMinute) : 0;
+    const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
     
     // Cost per 1M tokens
     const costPer1MTokens = monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0;
@@ -294,6 +334,7 @@ function App() {
     ];
     
     setCalculations({
+      enhancedPTUData,
       burstRatio,
       peakRatio,
       ptuVariance,
@@ -1167,7 +1208,7 @@ AzureMetrics
                     {calculations.ptuNeeded} PTUs needed
                     {calculations.isUsingMinimum && (
                       <span className="block text-xs text-orange-600 mt-1">
-                        (Minimum: {currentPricing.minPTU} PTUs)
+                        (Minimum: {calculations.enhancedPTUData?.minPTU} PTUs, Increment: {calculations.enhancedPTUData?.increment})
                       </span>
                     )}
                   </p>
@@ -1212,7 +1253,7 @@ AzureMetrics
               <Alert className="border-orange-200 bg-orange-50 flex items-center gap-2">
                 <Info className="h-4 w-4 text-orange-600 flex-shrink-0" />
                 <AlertDescription className="text-orange-800">
-                  <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU} PTU(s), but Azure requires a minimum of {currentPricing.minPTU} PTUs for this model. You'll pay for {calculations.ptuNeeded} PTUs but get extra capacity for bursts.
+                  <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU} PTU(s), but Azure requires a minimum of {calculations.enhancedPTUData.minPTU} PTUs for this model and deployment type. You'll pay for {calculations.ptuNeeded} PTUs but get extra capacity for bursts.
                 </AlertDescription>
               </Alert>
             )}
