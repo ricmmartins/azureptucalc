@@ -458,7 +458,7 @@ AzureMetrics
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-sm">{pricingStatus.usingLiveData ? "Live pricing data from Azure API" : "Static pricing data (expires in 3 hours)"}</span>
+                <span className="text-sm">{pricingStatus.usingLiveData ? "Live pricing data from Azure API (prices.azure.com/api/retail/prices)" : "Static pricing data (expires in 3 hours)"}</span>
               </div>
               <div className="text-sm text-gray-600">
                 Last refreshed: {pricingStatus.lastRefreshed}
@@ -466,7 +466,7 @@ AzureMetrics
               <div className="text-sm text-gray-600">
                 <strong>Data Sources:</strong>
                 <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li>Azure OpenAI Service official pricing documentation</li>
+                  <li>Azure Retail Prices API (prices.azure.com/api/retail/prices) - Live pricing data</li>
                   <li>Official Azure pricing pages and calculators</li>
                   <li>Microsoft Learn documentation for PTU rates</li>
                   <li>Azure service deployment and availability data</li>
