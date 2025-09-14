@@ -10,7 +10,8 @@ import { Alert, AlertDescription } from './components/ui/alert';
 import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ptuModels from './ptu_supported_models.json';
-import correctedPricingService from './corrected_pricing_service.js';
+import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
+import correctedPricingService from "./corrected_pricing_service.js";
 import InteractiveCharts from './components/InteractiveCharts';
 import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
 import './App.css';
@@ -19,6 +20,9 @@ function App() {
   // Enhanced features state
   const [showInteractiveCharts, setShowInteractiveCharts] = useState(true);
   const deviceInfo = useMobileDetection();
+
+  // Initialize enhanced pricing service
+  const pricingService = new AzureOpenAIPricingService();
   
   // State management
   const [selectedRegion, setSelectedRegion] = useState('east-us-2');
@@ -67,8 +71,84 @@ function App() {
     dataExpiry: new Date(Date.now() + 3 * 60 * 60 * 1000).toLocaleString() // 3 hours from now
   });
 
+  // Enhanced pricing data state
+  const [livePricingData, setLivePricingData] = useState(null);
   // Check if user has entered valid data
+
+  // Function to refresh pricing data
+  const refreshPricingData = async () => {
+    if (!selectedModel) return;
+    
+    setPricingStatus(prev => ({ ...prev, isLoading: true }));
+    
+    try {
+      // Clear cache and fetch fresh data
+      pricingService.cache.clear();
+      
+      const deploymentTypeMap = {
+        global: "global",
+        dataZone: "data-zone",
+        regional: "regional"
+      };
+      
+      const enhancedDeploymentType = deploymentTypeMap[selectedDeployment] || "data-zone";
+      const pricing = await pricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType);
+      
+      setLivePricingData(pricing);
+      setPricingStatus(prev => ({
+        ...prev,
+        isLoading: false,
+        usingLiveData: true,
+        lastRefreshed: new Date().toLocaleString()
+      }));
+    } catch (error) {
+      console.warn("Failed to refresh pricing:", error);
+      setPricingStatus(prev => ({
+        ...prev,
+        isLoading: false
+      }));
+    }
+  };
   const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0;
+
+  // Load live pricing data when model or deployment changes
+  useEffect(() => {
+    const loadPricingData = async () => {
+      if (!selectedModel) return;
+      
+      setPricingStatus(prev => ({ ...prev, isLoading: true }));
+      
+      try {
+        // Map deployment types to enhanced service format
+        const deploymentTypeMap = {
+          global: "global",
+          dataZone: "data-zone", 
+          regional: "regional"
+        };
+        
+        const enhancedDeploymentType = deploymentTypeMap[selectedDeployment] || "data-zone";
+        const pricing = await pricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType);
+        
+        setLivePricingData(pricing);
+        setPricingStatus(prev => ({
+          ...prev,
+          isLoading: false,
+          usingLiveData: true,
+          lastRefreshed: new Date().toLocaleString()
+        }));
+      } catch (error) {
+        console.warn("Failed to load live pricing, using fallback:", error);
+        setLivePricingData(null);
+        setPricingStatus(prev => ({
+          ...prev,
+          isLoading: false,
+          usingLiveData: false
+        }));
+      }
+    };
+    
+    loadPricingData();
+  }, [selectedModel, selectedDeployment, selectedRegion]);
 
   // Get current pricing from service
   const getCurrentPricing = () => {
@@ -85,7 +165,8 @@ function App() {
     }
     
     try {
-      const pricing = correctedPricingService.getModelPricing(selectedModel, selectedDeployment);
+      // Use live pricing data if available, otherwise fallback to static data
+      const pricing = livePricingData || correctedPricingService.getModelPricing(selectedModel, selectedDeployment);
       return {
         paygo_input: pricing.paygo.input,
         paygo_output: pricing.paygo.output,
@@ -364,7 +445,7 @@ AzureMetrics
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => window.location.reload()}
+                onClick={refreshPricingData}
                 disabled={pricingStatus.isLoading}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${pricingStatus.isLoading ? 'animate-spin' : ''}`} />
@@ -377,7 +458,7 @@ AzureMetrics
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-sm">Current pricing data loaded (expires in 3 hours)</span>
+                <span className="text-sm">{pricingStatus.usingLiveData ? "Live pricing data from Azure API" : "Static pricing data (expires in 3 hours)"}</span>
               </div>
               <div className="text-sm text-gray-600">
                 Last refreshed: {pricingStatus.lastRefreshed}

@@ -286,6 +286,8 @@ class AzureOpenAIPricingService {
 }
 
 // Export for use in React app
+export default AzureOpenAIPricingService;
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = AzureOpenAIPricingService;
 } else if (typeof window !== 'undefined') {
