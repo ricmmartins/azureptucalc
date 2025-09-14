@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -10,9 +10,7 @@ import { Alert, AlertDescription } from './components/ui/alert';
 import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ptuModels from './ptu_supported_models.json';
-import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
-import correctedPricingService from "./corrected_pricing_service.js";
-import enhancedModelConfig from "./enhanced_model_config.json";
+import correctedPricingService from './corrected_pricing_service.js';
 import InteractiveCharts from './components/InteractiveCharts';
 import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
 import './App.css';
@@ -21,9 +19,6 @@ function App() {
   // Enhanced features state
   const [showInteractiveCharts, setShowInteractiveCharts] = useState(true);
   const deviceInfo = useMobileDetection();
-
-  // Initialize enhanced pricing service
-  const pricingService = new AzureOpenAIPricingService();
   
   // State management
   const [selectedRegion, setSelectedRegion] = useState('east-us-2');
@@ -72,125 +67,11 @@ function App() {
     dataExpiry: new Date(Date.now() + 3 * 60 * 60 * 1000).toLocaleString() // 3 hours from now
   });
 
-  // Enhanced pricing data state
-  const [livePricingData, setLivePricingData] = useState(null);
   // Check if user has entered valid data
-
-  // Function to refresh pricing data
-  const refreshPricingData = async () => {
-    if (!selectedModel) return;
-    
-    setPricingStatus(prev => ({ ...prev, isLoading: true }));
-    
-    try {
-      // Clear cache and fetch fresh data
-      pricingService.cache.clear();
-      
-      const deploymentTypeMap = {
-        global: "global",
-        dataZone: "data-zone",
-        regional: "regional"
-      };
-      
-      const enhancedDeploymentType = deploymentTypeMap[selectedDeployment] || "data-zone";
-      const pricing = await pricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType);
-      
-      setLivePricingData(pricing);
-      setPricingStatus(prev => ({
-        ...prev,
-        isLoading: false,
-        usingLiveData: true,
-        lastRefreshed: new Date().toLocaleString()
-      }));
-    } catch (error) {
-      console.warn("Failed to refresh pricing:", error);
-      setPricingStatus(prev => ({
-        ...prev,
-        isLoading: false
-      }));
-    }
-  };
-  // Enhanced PTU calculation with model-specific minimums and increments
-  const calculateEnhancedPTU = (avgTPM, model, deploymentType) => {
-    const modelConfig = enhancedModelConfig.models[model];
-    if (!modelConfig) {
-      console.warn(`Model ${model} not found in enhanced config`);
-      return { calculatedPTU: 0, ptuNeeded: 0, isUsingMinimum: false, increment: 1, throughput: 50000 };
-    }
-
-    const deployment = modelConfig.deployments[deploymentType];
-    if (!deployment) {
-      console.warn(`Deployment ${deploymentType} not available for ${model}`);
-      return { calculatedPTU: 0, ptuNeeded: 0, isUsingMinimum: false, increment: 1, throughput: 50000 };
-    }
-
-    const throughput = modelConfig.throughput_per_ptu || 50000;
-    const minPTU = deployment.min_ptu;
-    const increment = deployment.increment;
-
-    // Calculate raw PTU requirement based on throughput
-    const rawPTU = avgTPM > 0 ? Math.ceil(avgTPM / throughput) : 0;
-    
-    // Apply minimum requirement
-    const afterMinimum = Math.max(rawPTU, minPTU);
-    
-    // Round up to nearest increment
-    const finalPTU = Math.ceil(afterMinimum / increment) * increment;
-    
-    return {
-      calculatedPTU: rawPTU,
-      ptuNeeded: finalPTU,
-      isUsingMinimum: rawPTU < minPTU,
-      increment: increment,
-      throughput: throughput,
-      minPTU: minPTU
-    };
-  };
-
-
   const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0;
 
-  // Load live pricing data when model or deployment changes
-  useEffect(() => {
-    const loadPricingData = async () => {
-      if (!selectedModel) return;
-      
-      setPricingStatus(prev => ({ ...prev, isLoading: true }));
-      
-      try {
-        // Map deployment types to enhanced service format
-        const deploymentTypeMap = {
-          global: "global",
-          dataZone: "data-zone", 
-          regional: "regional"
-        };
-        
-        const enhancedDeploymentType = deploymentTypeMap[selectedDeployment] || "data-zone";
-        const pricing = await pricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType);
-        
-        setLivePricingData(pricing);
-        setPricingStatus(prev => ({
-          ...prev,
-          isLoading: false,
-          usingLiveData: true,
-          lastRefreshed: new Date().toLocaleString()
-        }));
-      } catch (error) {
-        console.warn("Failed to load live pricing, using fallback:", error);
-        setLivePricingData(null);
-        setPricingStatus(prev => ({
-          ...prev,
-          isLoading: false,
-          usingLiveData: false
-        }));
-      }
-    };
-    
-    loadPricingData();
-  }, [selectedModel, selectedDeployment, selectedRegion]);
-
   // Get current pricing from service
-  const getCurrentPricing = () => {
+  const getCurrentPricing = useCallback(() => {
     if (useCustomPricing) {
       return {
         paygo_input: customPricing.paygo_input,
@@ -204,8 +85,7 @@ function App() {
     }
     
     try {
-      // Use live pricing data if available, otherwise fallback to static data
-      const pricing = livePricingData || correctedPricingService.getModelPricing(selectedModel, selectedDeployment);
+      const pricing = correctedPricingService.getModelPricing(selectedModel, selectedDeployment);
       return {
         paygo_input: pricing.paygo.input,
         paygo_output: pricing.paygo.output,
@@ -227,13 +107,13 @@ function App() {
         tokensPerPTUPerMinute: 50000
       };
     }
-  };
+  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing]);
 
   // Update pricing when selections change
   useEffect(() => {
     const pricing = getCurrentPricing();
     setCurrentPricing(pricing);
-  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing]);
+  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing, getCurrentPricing]);
 
   // Calculate costs and recommendations
   useEffect(() => {
@@ -242,17 +122,16 @@ function App() {
       setCalculations({});
       return;
     }
+
     // FIXED: Dynamic burst pattern analysis
     const burstRatio = formData.p99TPM && formData.avgTPM ? formData.p99TPM / formData.avgTPM : 1;
     const peakRatio = formData.maxTPM && formData.avgTPM ? formData.maxTPM / formData.avgTPM : 1;
     const ptuVariance = formData.p99PTU && formData.avgPTU ? Math.abs(formData.p99PTU - formData.avgPTU) : 0;
     
     // FIXED: PTU calculation logic
-    // Use enhanced PTU calculation
-    const enhancedPTUData = calculateEnhancedPTU(formData.avgTPM, selectedModel, selectedDeployment);
-    const calculatedPTU = formData.recommendedPTU || enhancedPTUData.calculatedPTU;
-    const ptuNeeded = formData.recommendedPTU || enhancedPTUData.ptuNeeded;
-    const isUsingMinimum = enhancedPTUData.isUsingMinimum;
+    const calculatedPTU = formData.recommendedPTU || Math.ceil(formData.avgTPM / currentPricing.tokensPerPTUPerMinute);
+    const ptuNeeded = Math.max(calculatedPTU, currentPricing.minPTU);
+    const isUsingMinimum = calculatedPTU < currentPricing.minPTU;
     
     // Monthly calculations
     const monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
@@ -263,7 +142,7 @@ function App() {
     const yearlyPtuReservationCost = ptuNeeded * currentPricing.ptu_yearly;
     
     // FIXED: Dynamic utilization calculation
-    const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
+    const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * currentPricing.tokensPerPTUPerMinute) : 0;
     
     // Cost per 1M tokens
     const costPer1MTokens = monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0;
@@ -334,7 +213,6 @@ function App() {
     ];
     
     setCalculations({
-      enhancedPTUData,
       burstRatio,
       peakRatio,
       ptuVariance,
@@ -486,7 +364,7 @@ AzureMetrics
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={refreshPricingData}
+                onClick={() => window.location.reload()}
                 disabled={pricingStatus.isLoading}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${pricingStatus.isLoading ? 'animate-spin' : ''}`} />
@@ -499,7 +377,7 @@ AzureMetrics
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-sm">{pricingStatus.usingLiveData ? "Live pricing data from Azure API (prices.azure.com/api/retail/prices)" : "Static pricing data (expires in 3 hours)"}</span>
+                <span className="text-sm">Current pricing data loaded (expires in 3 hours)</span>
               </div>
               <div className="text-sm text-gray-600">
                 Last refreshed: {pricingStatus.lastRefreshed}
@@ -507,7 +385,7 @@ AzureMetrics
               <div className="text-sm text-gray-600">
                 <strong>Data Sources:</strong>
                 <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li>Azure Retail Prices API (prices.azure.com/api/retail/prices) - Live pricing data</li>
+                  <li>Azure OpenAI Service official pricing documentation</li>
                   <li>Official Azure pricing pages and calculators</li>
                   <li>Microsoft Learn documentation for PTU rates</li>
                   <li>Azure service deployment and availability data</li>
@@ -748,7 +626,7 @@ AzureMetrics
                       <SelectContent>
                         {getAvailableRegions().map(region => (
                           <SelectItem key={region.id} value={region.id}>
-                            {region.name}
+                            {region.name} ({region.modelCount} PTU models)
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1208,7 +1086,7 @@ AzureMetrics
                     {calculations.ptuNeeded} PTUs needed
                     {calculations.isUsingMinimum && (
                       <span className="block text-xs text-orange-600 mt-1">
-                        (Minimum: {calculations.enhancedPTUData?.minPTU} PTUs, Increment: {calculations.enhancedPTUData?.increment})
+                        (Minimum: {currentPricing.minPTU} PTUs)
                       </span>
                     )}
                   </p>
@@ -1250,13 +1128,13 @@ AzureMetrics
 
             {/* PTU Requirements Explanation */}
             {calculations.isUsingMinimum && (
-              <Alert className="border-orange-200 bg-orange-50 flex items-center gap-2">
-                <Info className="h-4 w-4 text-orange-600 flex-shrink-0" />
-                <AlertDescription className="text-orange-800">
-                  <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU} PTU(s), but Azure requires a minimum of {calculations.enhancedPTUData.minPTU} PTUs for this model and deployment type. You'll pay for {calculations.ptuNeeded} PTUs but get extra capacity for bursts.
-                </AlertDescription>
-              </Alert>
-            )}
+              <Alert className="border-orange-200 bg-orange-50">
+                <div className="flex items-start gap-3">
+                  <Info className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                  <AlertDescription className="text-orange-800">
+                    <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU} PTU(s), but Azure requires a minimum of {currentPricing.minPTU} PTUs for this model. You'll pay for {calculations.ptuNeeded} PTUs but get extra capacity for bursts.
+                  </AlertDescription>
+                </div>
 
             {/* Cost Comparison Chart */}
             <Card>
