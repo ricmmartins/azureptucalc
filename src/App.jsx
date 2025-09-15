@@ -14,6 +14,7 @@ import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
 import correctedPricingService from "./corrected_pricing_service.js";
 import enhancedModelConfig from "./enhanced_model_config.json";
 import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTUPricing.js";
+import { TOKEN_PRICING, getTokenPricing, calculatePAYGCost, calculateTokenSplit } from "./tokenPricing.js";
 import InteractiveCharts from './components/InteractiveCharts';
 import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
 import './App.css';
@@ -42,7 +43,10 @@ function App() {
     maxPTU: 0,
     recommendedPTU: 0,
     monthlyMinutes: 43800,
-    basePTUs: 0
+    basePTUs: 0,
+    // New fields for input/output token breakdown
+    monthlyInputTokens: 0,
+    monthlyOutputTokens: 0
   });
   
   // Custom pricing data - aligned with official PTU pricing structure
@@ -151,6 +155,20 @@ function App() {
 
   const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0;
 
+  // Auto-populate token fields when TPM data changes (temporarily disabled for debugging)
+  /*
+  useEffect(() => {
+    if (formData.avgTPM > 0 && formData.monthlyMinutes > 0 && formData.monthlyInputTokens === 0 && formData.monthlyOutputTokens === 0) {
+      const tokenSplit = calculateTokenSplit(formData.avgTPM, formData.monthlyMinutes, 0.5);
+      setFormData(prev => ({
+        ...prev,
+        monthlyInputTokens: Math.round(tokenSplit.inputTokens * 1000) / 1000, // Round to 3 decimal places
+        monthlyOutputTokens: Math.round(tokenSplit.outputTokens * 1000) / 1000
+      }));
+    }
+  }, [formData.avgTPM, formData.monthlyMinutes]);
+  */
+
   // Load live pricing data when model or deployment changes
   useEffect(() => {
     const loadPricingData = async () => {
@@ -245,6 +263,18 @@ function App() {
     setCurrentPricing(pricing);
   }, [selectedModel, selectedDeployment, useCustomPricing, customPricing]);
 
+  // Auto-populate token fields when TPM changes
+  useEffect(() => {
+    if (formData.avgTPM > 0 && (formData.monthlyInputTokens === 0 && formData.monthlyOutputTokens === 0)) {
+      const { inputTokens, outputTokens } = calculateTokenSplit(formData.avgTPM, formData.monthlyMinutes);
+      setFormData(prev => ({
+        ...prev,
+        monthlyInputTokens: inputTokens,
+        monthlyOutputTokens: outputTokens
+      }));
+    }
+  }, [formData.avgTPM, formData.monthlyMinutes]);
+
   // Calculate costs and recommendations
   useEffect(() => {
     // Only calculate if user has entered valid data
@@ -266,7 +296,88 @@ function App() {
     
     // Monthly calculations
     const monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
-    const monthlyPaygoCost = (monthlyTokens * 0.5 * currentPricing.paygo_input) + (monthlyTokens * 0.5 * currentPricing.paygo_output);
+    
+    // Enhanced PAYG calculation using actual token pricing
+    let monthlyPaygoCost, paygoCostBreakdown;
+    
+    if (formData.monthlyInputTokens > 0 || formData.monthlyOutputTokens > 0) {
+      // Use user-specified token breakdown
+      const inputTokensInMillions = formData.monthlyInputTokens / 1000000;
+      const outputTokensInMillions = formData.monthlyOutputTokens / 1000000;
+      
+      const tokenPricing = getTokenPricing(selectedModel);
+      if (tokenPricing) {
+        const inputCost = inputTokensInMillions * tokenPricing.input;
+        const outputCost = outputTokensInMillions * tokenPricing.output;
+        monthlyPaygoCost = inputCost + outputCost;
+        
+        paygoCostBreakdown = {
+          inputCost,
+          outputCost,
+          totalCost: monthlyPaygoCost,
+          totalTokens: inputTokensInMillions + outputTokensInMillions,
+          effectiveCostPerMillion: (inputTokensInMillions + outputTokensInMillions) > 0 ? 
+            monthlyPaygoCost / (inputTokensInMillions + outputTokensInMillions) : 0,
+          breakdown: {
+            inputRate: tokenPricing.input,
+            outputRate: tokenPricing.output,
+            inputTokens: formData.monthlyInputTokens,
+            outputTokens: formData.monthlyOutputTokens
+          }
+        };
+      } else {
+        // Fallback to original calculation if token pricing not available
+        monthlyPaygoCost = (monthlyTokens * 0.5 * currentPricing.paygo_input) + (monthlyTokens * 0.5 * currentPricing.paygo_output);
+        paygoCostBreakdown = {
+          inputCost: monthlyTokens * 0.5 * currentPricing.paygo_input,
+          outputCost: monthlyTokens * 0.5 * currentPricing.paygo_output,
+          totalCost: monthlyPaygoCost,
+          totalTokens: monthlyTokens,
+          effectiveCostPerMillion: monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0,
+          breakdown: {
+            inputRate: currentPricing.paygo_input,
+            outputRate: currentPricing.paygo_output
+          }
+        };
+      }
+    } else {
+      // Use equal split assumption from TPM
+      const tokenPricing = getTokenPricing(selectedModel);
+      if (tokenPricing) {
+        const { inputTokens, outputTokens } = calculateTokenSplit(formData.avgTPM, formData.monthlyMinutes);
+        monthlyPaygoCost = calculatePAYGCost(inputTokens, outputTokens, selectedModel);
+        
+        paygoCostBreakdown = {
+          inputCost: (inputTokens / 1000000) * tokenPricing.input,
+          outputCost: (outputTokens / 1000000) * tokenPricing.output,
+          totalCost: monthlyPaygoCost,
+          totalTokens: (inputTokens + outputTokens) / 1000000,
+          effectiveCostPerMillion: ((inputTokens + outputTokens) / 1000000) > 0 ? 
+            monthlyPaygoCost / ((inputTokens + outputTokens) / 1000000) : 0,
+          breakdown: {
+            inputRate: tokenPricing.input,
+            outputRate: tokenPricing.output,
+            inputTokens: inputTokens,
+            outputTokens: outputTokens
+          }
+        };
+      } else {
+        // Fallback to original calculation
+        monthlyPaygoCost = (monthlyTokens * 0.5 * currentPricing.paygo_input) + (monthlyTokens * 0.5 * currentPricing.paygo_output);
+        paygoCostBreakdown = {
+          inputCost: monthlyTokens * 0.5 * currentPricing.paygo_input,
+          outputCost: monthlyTokens * 0.5 * currentPricing.paygo_output,
+          totalCost: monthlyPaygoCost,
+          totalTokens: monthlyTokens,
+          effectiveCostPerMillion: monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0,
+          breakdown: {
+            inputRate: currentPricing.paygo_input,
+            outputRate: currentPricing.paygo_output
+          }
+        };
+      }
+    }
+    
     const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 24 * 30;
     const monthlyPtuHourlyCost = monthlyPtuCost;
     const monthlyPtuReservationCost = ptuNeeded * currentPricing.ptu_monthly;
@@ -275,7 +386,7 @@ function App() {
     // FIXED: Dynamic utilization calculation
     const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
     
-    // Cost per 1M tokens
+    // Cost per 1M tokens - temporary revert
     const costPer1MTokens = monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0;
     
     // PTU cost effectiveness
@@ -328,7 +439,10 @@ function App() {
     const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
     const hybridOverflowTPM = Math.max(0, formData.p99TPM - (hybridBasePTU * currentPricing.tokensPerPTUPerMinute));
     const hybridOverflowTokensMonthly = (hybridOverflowTPM * formData.monthlyMinutes) / 1000000;
+    
+    // TEMPORARY: Revert to original calculation for debugging
     const hybridOverflowCost = (hybridOverflowTokensMonthly * 0.5 * currentPricing.paygo_input) + (hybridOverflowTokensMonthly * 0.5 * currentPricing.paygo_output);
+    
     const hybridBaseCost = hybridBasePTU * currentPricing.ptu_monthly;
     const hybridTotalCost = hybridBaseCost + hybridOverflowCost;
     
@@ -353,6 +467,10 @@ function App() {
       isUsingMinimum,
       monthlyTokens,
       monthlyPaygoCost,
+      // NEW: Add detailed PAYG breakdown
+      paygoCostBreakdown,
+      inputTokensInMillions,
+      outputTokensInMillions,
       monthlyPtuCost,
       monthlyPtuHourlyCost,
       monthlyPtuReservationCost,
@@ -1061,6 +1179,32 @@ AzureMetrics
                 />
                 <p className="text-sm text-gray-600 mt-1">Base PTU reservation for hybrid approach</p>
               </div>
+              
+              {/* New Token Input Fields */}
+              <div>
+                <Label htmlFor="monthlyInputTokens">Monthly Input Tokens (millions)</Label>
+                <Input
+                  id="monthlyInputTokens"
+                  type="number"
+                  step="0.001"
+                  value={formData.monthlyInputTokens}
+                  onChange={(e) => handleInputChange('monthlyInputTokens', e.target.value)}
+                  placeholder="Auto-calculated or enter custom"
+                />
+                <p className="text-sm text-gray-600 mt-1">Input tokens consumed per month (in millions)</p>
+              </div>
+              <div>
+                <Label htmlFor="monthlyOutputTokens">Monthly Output Tokens (millions)</Label>
+                <Input
+                  id="monthlyOutputTokens"
+                  type="number"
+                  step="0.001"
+                  value={formData.monthlyOutputTokens}
+                  onChange={(e) => handleInputChange('monthlyOutputTokens', e.target.value)}
+                  placeholder="Auto-calculated or enter custom"
+                />
+                <p className="text-sm text-gray-600 mt-1">Output tokens generated per month (in millions)</p>
+              </div>
             </div>
 
             <Alert className="mt-6 border-green-200 bg-green-50">
@@ -1229,11 +1373,44 @@ AzureMetrics
             {/* Cost Comparison Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="bg-gray-50 border-gray-200">
-                <CardContent className="p-4 text-center">
-                  <h3 className="font-medium text-gray-800">PAYGO</h3>
-                  <p className="text-xs text-gray-600 mb-2">No commitment required</p>
-                  <div className="text-right">
-                    <span className="text-xs text-gray-600">Pay-as-you-go</span>
+                <CardContent className="p-4">
+                  <h3 className="font-medium text-gray-800 text-center">PAYGO</h3>
+                  <p className="text-xs text-gray-600 mb-3 text-center">No commitment required</p>
+                  
+                  {/* Enhanced PAYG Breakdown */}
+                  {calculations.paygoCostBreakdown && (
+                    <div className="space-y-2 mb-3">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-600">Input tokens:</span>
+                        <span className="font-medium">{calculations.inputTokensInMillions?.toFixed(3)}M @ ${calculations.paygoCostBreakdown.breakdown.inputRate}/M</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-600">Output tokens:</span>
+                        <span className="font-medium">{calculations.outputTokensInMillions?.toFixed(3)}M @ ${calculations.paygoCostBreakdown.breakdown.outputRate}/M</span>
+                      </div>
+                      <div className="border-t border-gray-200 pt-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">Input cost:</span>
+                          <span className="font-medium">${calculations.paygoCostBreakdown.inputCost?.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">Output cost:</span>
+                          <span className="font-medium">${calculations.paygoCostBreakdown.outputCost?.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>Total tokens:</span>
+                          <span>{calculations.paygoCostBreakdown.totalTokens?.toFixed(3)}M</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>Effective rate:</span>
+                          <span>${calculations.paygoCostBreakdown.effectiveCostPerMillionTokens?.toFixed(2)}/M</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="text-right border-t border-gray-200 pt-2">
+                    <span className="text-xs text-gray-600">Monthly Total</span>
                     <div className="text-2xl font-bold text-gray-600">${calculations.monthlyPaygoCost?.toFixed(2)}</div>
                   </div>
                 </CardContent>
