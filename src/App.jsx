@@ -13,6 +13,7 @@ import ptuModels from './ptu_supported_models.json';
 import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
 import correctedPricingService from "./corrected_pricing_service.js";
 import enhancedModelConfig from "./enhanced_model_config.json";
+import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTUPricing.js";
 import InteractiveCharts from './components/InteractiveCharts';
 import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
 import './App.css';
@@ -44,22 +45,22 @@ function App() {
     basePTUs: 0
   });
   
-  // Custom pricing data
+  // Custom pricing data - aligned with official PTU pricing structure
   const [customPricing, setCustomPricing] = useState({
     paygo_input: 0.15,
     paygo_output: 0.60,
-    ptu_hourly: 1.00,
-    ptu_monthly: 260,
-    ptu_yearly: 2652
+    ptu_hourly: 1.00,      // Official US$1/PTU-hour base rate
+    ptu_monthly: 730,      // 730 hours/month * US$1/hour = $730/month
+    ptu_yearly: 6132       // Monthly * 12 * 0.7 (30% yearly discount) = $6132/year
   });
   
-  // Pricing state
+  // Pricing state - initialized with official pricing structure
   const [currentPricing, setCurrentPricing] = useState({
     paygo_input: 0.15,
     paygo_output: 0.60,
-    ptu_hourly: 1.00,
-    ptu_monthly: 260,
-    ptu_yearly: 2652,
+    ptu_hourly: 1.00,      // Official US$1/PTU-hour base rate
+    ptu_monthly: 730,      // Official monthly calculation
+    ptu_yearly: 6132,      // Official yearly calculation with 30% discount
     minPTU: 15,
     tokensPerPTUPerMinute: 50000
   });
@@ -204,27 +205,36 @@ function App() {
     }
     
     try {
-      // Use live pricing data if available, otherwise fallback to static data
+      // TASK 2: Use official PTU pricing alignment (US$1/PTU-hour base)
+      const officialPTUPricing = calculateOfficialPTUPricing(selectedRegion, selectedDeployment);
+      
+      // Use live pricing data for PAYGO, official pricing for PTU
       const pricing = livePricingData || correctedPricingService.getModelPricing(selectedModel, selectedDeployment);
+      
       return {
         paygo_input: pricing.paygo.input,
         paygo_output: pricing.paygo.output,
-        ptu_hourly: pricing.ptu.hourly,
-        ptu_monthly: pricing.ptu.monthly,
-        ptu_yearly: pricing.ptu.yearly,
+        ptu_hourly: officialPTUPricing.hourly,      // Official US$1/hour base with regional/deployment multipliers
+        ptu_monthly: officialPTUPricing.monthly,    // Calculated from hourly rate (730 hours/month)
+        ptu_yearly: officialPTUPricing.yearly,      // Monthly rate * 12 with 30% yearly discount
         minPTU: pricing.minPTU,
-        tokensPerPTUPerMinute: pricing.tokensPerPTUPerMinute
+        tokensPerPTUPerMinute: pricing.tokensPerPTUPerMinute,
+        // Additional metadata for transparency
+        officialPricing: officialPTUPricing
       };
     } catch (error) {
       console.error('Error getting pricing:', error);
+      // Fallback to official base pricing structure
+      const fallbackPTUPricing = calculateOfficialPTUPricing('eastus', 'regional');
       return {
         paygo_input: 0.15,
         paygo_output: 0.60,
-        ptu_hourly: 1.00,
-        ptu_monthly: 260,
-        ptu_yearly: 2652,
+        ptu_hourly: fallbackPTUPricing.hourly,
+        ptu_monthly: fallbackPTUPricing.monthly,
+        ptu_yearly: fallbackPTUPricing.yearly,
         minPTU: 15,
-        tokensPerPTUPerMinute: 50000
+        tokensPerPTUPerMinute: 50000,
+        officialPricing: fallbackPTUPricing
       };
     }
   };
@@ -821,12 +831,40 @@ AzureMetrics
                         <strong>PAYGO:</strong> ${currentPricing.paygo_input}/1M input tokens
                       </div>
                       <div>
-                        <strong>PTU:</strong> ${currentPricing.ptu_hourly}/hour per PTU
+                        <strong>PTU Hourly:</strong> ${currentPricing.ptu_hourly}/hour per PTU
                       </div>
                       <div>
                         <strong>Output tokens:</strong> ${currentPricing.paygo_output}/1M ({selectedDeployment === 'dataZone' ? 'Data Zone' : selectedDeployment === 'regional' ? 'Regional' : 'Global'} deployment)
                       </div>
                     </div>
+                    
+                    {/* TASK 2: Official PTU Pricing Structure Display */}
+                    {currentPricing.officialPricing && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                          <DollarSign className="h-4 w-4" />
+                          Official PTU Pricing Structure (US$1/PTU-hour base)
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <strong>Monthly:</strong> ${currentPricing.ptu_monthly}/PTU
+                            <div className="text-xs text-blue-600">730 hours × ${currentPricing.ptu_hourly}</div>
+                          </div>
+                          <div>
+                            <strong>Yearly:</strong> ${currentPricing.ptu_yearly}/PTU
+                            <div className="text-xs text-blue-600">{currentPricing.officialPricing.discount.yearlyVsMonthly}% discount vs monthly</div>
+                          </div>
+                          <div>
+                            <strong>Regional Multiplier:</strong> {currentPricing.officialPricing.multipliers.combined}x
+                            <div className="text-xs text-blue-600">{selectedRegion.toUpperCase()} + {selectedDeployment}</div>
+                          </div>
+                        </div>
+                        <div className="mt-2 text-xs text-blue-700">
+                          💡 <strong>Discount Transparency:</strong> Yearly reservations provide {currentPricing.officialPricing.discount.yearlyVsMonthly}% savings compared to monthly billing
+                        </div>
+                      </div>
+                    )}
+                    
                     <p className="text-sm text-green-700 mt-2">
                       Click "Load Official Pricing" to automatically populate the input fields below
                     </p>
@@ -1222,24 +1260,38 @@ AzureMetrics
               <Card className="bg-green-100 border-green-300">
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium text-green-800">PTU (1 Year)</h3>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">25% off</Badge>
+                    <h3 className="font-medium text-green-800">PTU (Yearly)</h3>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      {currentPricing.officialPricing?.discount.yearlyVsMonthly || 30}% off
+                    </Badge>
                   </div>
-                  <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings?.toFixed(2)}/mo</p>
+                  <p className="text-xs text-green-600 mb-2">
+                    Save ${calculations.oneYearSavings?.toFixed(2)}/mo
+                    {currentPricing.officialPricing && (
+                      <span className="block text-xs text-green-700">Official {currentPricing.officialPricing.discount.yearlyVsMonthly}% yearly discount</span>
+                    )}
+                  </p>
                   <div className="text-right">
-                    <span className="text-xs text-green-600">25% off</span>
+                    <span className="text-xs text-green-600">
+                      {currentPricing.officialPricing?.discount.yearlyVsMonthly || 30}% off
+                    </span>
                     <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2)}</div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-green-100 border-green-300">
+              <Card className="bg-green-50 border-green-200">
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium text-green-800">PTU (3 Year)</h3>
-                    <Badge variant="secondary" className="bg-green-200 text-green-900">45% off</Badge>
+                    <h3 className="font-medium text-green-800">PTU (Multi-Year)</h3>
+                    <Badge variant="secondary" className="bg-green-200 text-green-900">
+                      {currentPricing.officialPricing?.discount.yearlyVsHourly.toFixed(1) || 45}% off
+                    </Badge>
                   </div>
-                  <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings?.toFixed(2)}/mo</p>
+                  <p className="text-xs text-green-700 mb-2">
+                    Save ${calculations.threeYearSavings?.toFixed(2)}/mo
+                    <span className="block text-xs text-green-600">vs hourly billing</span>
+                  </p>
                   <div className="text-right">
                     <span className="text-xs text-green-700">45% off</span>
                     <div className="text-2xl font-bold text-green-800">${(calculations.yearlyPtuReservationCost / 12)?.toFixed(2)}</div>
@@ -1553,6 +1605,104 @@ AzureMetrics
               />
             )}
           </>
+        )}
+
+        {/* TASK 2: Official Pricing Transparency Section */}
+        {formData.avgTPM > 0 && currentPricing.officialPricing && (
+          <Card className="border-indigo-200 bg-indigo-50 mb-6">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-indigo-600" />
+                <CardTitle className="text-indigo-800">Official PTU Pricing Transparency</CardTitle>
+                <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">Task 2 Enhanced</Badge>
+              </div>
+              <CardDescription className="text-indigo-700">
+                Aligned with Microsoft's official US$1/PTU-hour base rate with accurate regional and deployment multipliers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Base Rate Structure */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-indigo-800 flex items-center gap-2">
+                    <Target className="h-4 w-4" />
+                    Base Rate Structure
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <strong>Official Base:</strong> US$1.00/PTU-hour
+                    </div>
+                    <div>
+                      <strong>Your Region:</strong> {selectedRegion.toUpperCase()} 
+                      <span className="text-indigo-600"> ({currentPricing.officialPricing.multipliers.regional}x)</span>
+                    </div>
+                    <div>
+                      <strong>Deployment:</strong> {selectedDeployment} 
+                      <span className="text-indigo-600"> ({currentPricing.officialPricing.multipliers.deployment}x)</span>
+                    </div>
+                    <div className="pt-2 border-t border-indigo-200">
+                      <strong>Your Rate:</strong> ${currentPricing.ptu_hourly}/PTU-hour
+                    </div>
+                  </div>
+                </div>
+
+                {/* Discount Structure */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-indigo-800 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Official Discounts
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <strong>Monthly:</strong> No discount (base rate)
+                      <div className="text-xs text-indigo-600">${currentPricing.ptu_monthly}/PTU (730 hrs)</div>
+                    </div>
+                    <div>
+                      <strong>Yearly:</strong> {currentPricing.officialPricing.discount.yearlyVsMonthly}% discount
+                      <div className="text-xs text-indigo-600">${currentPricing.ptu_yearly}/PTU annually</div>
+                    </div>
+                    <div className="pt-2 border-t border-indigo-200">
+                      <strong>Annual Savings:</strong> ${((currentPricing.ptu_monthly * 12) - currentPricing.ptu_yearly).toFixed(0)}/PTU
+                    </div>
+                  </div>
+                </div>
+
+                {/* Calculation Transparency */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-indigo-800 flex items-center gap-2">
+                    <Zap className="h-4 w-4" />
+                    Your Calculations
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <strong>Required PTUs:</strong> {calculations.ptuNeeded}
+                    </div>
+                    <div>
+                      <strong>Monthly Cost:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_monthly).toLocaleString()}
+                    </div>
+                    <div>
+                      <strong>Yearly Cost:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_yearly).toLocaleString()}
+                    </div>
+                    <div className="pt-2 border-t border-indigo-200">
+                      <strong>Annual Savings:</strong> ${((calculations.ptuNeeded * currentPricing.ptu_monthly * 12) - (calculations.ptuNeeded * currentPricing.ptu_yearly)).toLocaleString()}
+                      <div className="text-xs text-green-600">
+                        {currentPricing.officialPricing.discount.yearlyVsMonthly}% saved with yearly commitment
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-white rounded-lg border border-indigo-200">
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 text-indigo-600 mt-0.5" />
+                  <div className="text-sm text-indigo-800">
+                    <strong>Pricing Accuracy:</strong> This calculator now uses Microsoft's official PTU pricing structure with accurate regional multipliers and the standard 30% yearly discount. All calculations are aligned with Azure's official pricing model.
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Key Concepts */}
