@@ -3,7 +3,7 @@
     "gpt-4o": {
       "name": "GPT-4o",
       "description": "Latest multimodal model with text and image capabilities",
-      "throughput_per_ptu": 50000,
+      "throughput_per_ptu": 2500,
       "deployments": {
         "global": {
           "min_ptu": 15,
@@ -26,7 +26,7 @@
     "gpt-4o-mini": {
       "name": "GPT-4o Mini",
       "description": "Smaller, faster version of GPT-4o with cost optimization",
-      "throughput_per_ptu": 59400,
+      "throughput_per_ptu": 37000,
       "deployments": {
         "global": {
           "min_ptu": 15,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -10,22 +10,24 @@ import { Alert, AlertDescription } from './components/ui/alert';
 import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ptuModels from './ptu_supported_models.json';
-import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
-import correctedPricingService from "./corrected_pricing_service.js";
+// import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
+// import correctedPricingService from "./corrected_pricing_service.js";
 import enhancedModelConfig from "./enhanced_model_config.json";
 import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTUPricing.js";
-import { TOKEN_PRICING, getTokenPricing, calculatePAYGCost, calculateTokenSplit } from "./tokenPricing.js";
+import { REGION_MODEL_AVAILABILITY, getRegionsByZone } from "./regionModelAvailability.js";
+// Temporarily comment out complex components
 import InteractiveCharts from './components/InteractiveCharts';
-import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
+// import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
 import './App.css';
 
 function App() {
   // Enhanced features state
+  console.log('🎯 FULL AZURE PTU CALCULATOR APP IS LOADING! Time:', new Date().toLocaleTimeString());
   const [showInteractiveCharts, setShowInteractiveCharts] = useState(true);
-  const deviceInfo = useMobileDetection();
+  // const deviceInfo = useMobileDetection(); // Commented out since import is disabled
 
-  // Initialize enhanced pricing service
-  const pricingService = new AzureOpenAIPricingService();
+  // Initialize enhanced pricing service with useMemo to prevent re-instantiation
+  // const pricingService = useMemo(() => new AzureOpenAIPricingService(), []); // Commented out since import is disabled
   
   // State management
   const [selectedRegion, setSelectedRegion] = useState('east-us-2');
@@ -43,10 +45,7 @@ function App() {
     maxPTU: 0,
     recommendedPTU: 0,
     monthlyMinutes: 43800,
-    basePTUs: 0,
-    // New fields for input/output token breakdown
-    monthlyInputTokens: 0,
-    monthlyOutputTokens: 0
+    basePTUs: 0
   });
   
   // Custom pricing data - aligned with official PTU pricing structure
@@ -89,7 +88,7 @@ function App() {
     
     try {
       // Clear cache and fetch fresh data
-      pricingService.cache.clear();
+      // pricingService.cache.clear(); // Commented out since pricingService is disabled
       
       const deploymentTypeMap = {
         global: "global",
@@ -98,7 +97,16 @@ function App() {
       };
       
       const enhancedDeploymentType = deploymentTypeMap[selectedDeployment] || "data-zone";
-      const pricing = await pricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType);
+      // const pricing = await pricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType); // Commented out since pricingService is disabled
+      
+      // Use fallback pricing for now
+      const pricing = {
+        paygo_input: 0.002,
+        paygo_output: 0.006,
+        ptu_hourly: 10,
+        ptu_monthly: 8,
+        ptu_yearly: 6
+      };
       
       setLivePricingData(pricing);
       setPricingStatus(prev => ({
@@ -154,20 +162,6 @@ function App() {
 
 
   const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0;
-
-  // Auto-populate token fields when TPM data changes (temporarily disabled for debugging)
-  /*
-  useEffect(() => {
-    if (formData.avgTPM > 0 && formData.monthlyMinutes > 0 && formData.monthlyInputTokens === 0 && formData.monthlyOutputTokens === 0) {
-      const tokenSplit = calculateTokenSplit(formData.avgTPM, formData.monthlyMinutes, 0.5);
-      setFormData(prev => ({
-        ...prev,
-        monthlyInputTokens: Math.round(tokenSplit.inputTokens * 1000) / 1000, // Round to 3 decimal places
-        monthlyOutputTokens: Math.round(tokenSplit.outputTokens * 1000) / 1000
-      }));
-    }
-  }, [formData.avgTPM, formData.monthlyMinutes]);
-  */
 
   // Load live pricing data when model or deployment changes
   useEffect(() => {
@@ -227,7 +221,14 @@ function App() {
       const officialPTUPricing = calculateOfficialPTUPricing(selectedRegion, selectedDeployment);
       
       // Use live pricing data for PAYGO, official pricing for PTU
-      const pricing = livePricingData || correctedPricingService.getModelPricing(selectedModel, selectedDeployment);
+      // const pricing = livePricingData || correctedPricingService.getModelPricing(selectedModel, selectedDeployment);
+      const pricing = livePricingData || { // Fallback pricing while correctedPricingService is disabled
+        paygo_input: 0.002,
+        paygo_output: 0.006,
+        ptu_hourly: 10,
+        ptu_monthly: 8,
+        ptu_yearly: 6
+      };
       
       return {
         paygo_input: pricing.paygo.input,
@@ -263,18 +264,6 @@ function App() {
     setCurrentPricing(pricing);
   }, [selectedModel, selectedDeployment, useCustomPricing, customPricing]);
 
-  // Auto-populate token fields when TPM changes
-  useEffect(() => {
-    if (formData.avgTPM > 0 && (formData.monthlyInputTokens === 0 && formData.monthlyOutputTokens === 0)) {
-      const { inputTokens, outputTokens } = calculateTokenSplit(formData.avgTPM, formData.monthlyMinutes);
-      setFormData(prev => ({
-        ...prev,
-        monthlyInputTokens: inputTokens,
-        monthlyOutputTokens: outputTokens
-      }));
-    }
-  }, [formData.avgTPM, formData.monthlyMinutes]);
-
   // Calculate costs and recommendations
   useEffect(() => {
     // Only calculate if user has entered valid data
@@ -292,92 +281,15 @@ function App() {
     const enhancedPTUData = calculateEnhancedPTU(formData.avgTPM, selectedModel, selectedDeployment);
     const calculatedPTU = formData.recommendedPTU || enhancedPTUData.calculatedPTU;
     const ptuNeeded = formData.recommendedPTU || enhancedPTUData.ptuNeeded;
-    const isUsingMinimum = enhancedPTUData.isUsingMinimum;
+    
+    // FIXED: Check if manual PTU is below minimum (not automatic calculation)
+    const isUsingMinimum = formData.recommendedPTU 
+      ? formData.recommendedPTU < enhancedPTUData.minPTU 
+      : enhancedPTUData.isUsingMinimum;
     
     // Monthly calculations
     const monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
-    
-    // Enhanced PAYG calculation using actual token pricing
-    let monthlyPaygoCost, paygoCostBreakdown;
-    
-    if (formData.monthlyInputTokens > 0 || formData.monthlyOutputTokens > 0) {
-      // Use user-specified token breakdown
-      const inputTokensInMillions = formData.monthlyInputTokens / 1000000;
-      const outputTokensInMillions = formData.monthlyOutputTokens / 1000000;
-      
-      const tokenPricing = getTokenPricing(selectedModel);
-      if (tokenPricing) {
-        const inputCost = inputTokensInMillions * tokenPricing.input;
-        const outputCost = outputTokensInMillions * tokenPricing.output;
-        monthlyPaygoCost = inputCost + outputCost;
-        
-        paygoCostBreakdown = {
-          inputCost,
-          outputCost,
-          totalCost: monthlyPaygoCost,
-          totalTokens: inputTokensInMillions + outputTokensInMillions,
-          effectiveCostPerMillion: (inputTokensInMillions + outputTokensInMillions) > 0 ? 
-            monthlyPaygoCost / (inputTokensInMillions + outputTokensInMillions) : 0,
-          breakdown: {
-            inputRate: tokenPricing.input,
-            outputRate: tokenPricing.output,
-            inputTokens: formData.monthlyInputTokens,
-            outputTokens: formData.monthlyOutputTokens
-          }
-        };
-      } else {
-        // Fallback to original calculation if token pricing not available
-        monthlyPaygoCost = (monthlyTokens * 0.5 * currentPricing.paygo_input) + (monthlyTokens * 0.5 * currentPricing.paygo_output);
-        paygoCostBreakdown = {
-          inputCost: monthlyTokens * 0.5 * currentPricing.paygo_input,
-          outputCost: monthlyTokens * 0.5 * currentPricing.paygo_output,
-          totalCost: monthlyPaygoCost,
-          totalTokens: monthlyTokens,
-          effectiveCostPerMillion: monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0,
-          breakdown: {
-            inputRate: currentPricing.paygo_input,
-            outputRate: currentPricing.paygo_output
-          }
-        };
-      }
-    } else {
-      // Use equal split assumption from TPM
-      const tokenPricing = getTokenPricing(selectedModel);
-      if (tokenPricing) {
-        const { inputTokens, outputTokens } = calculateTokenSplit(formData.avgTPM, formData.monthlyMinutes);
-        monthlyPaygoCost = calculatePAYGCost(inputTokens, outputTokens, selectedModel);
-        
-        paygoCostBreakdown = {
-          inputCost: (inputTokens / 1000000) * tokenPricing.input,
-          outputCost: (outputTokens / 1000000) * tokenPricing.output,
-          totalCost: monthlyPaygoCost,
-          totalTokens: (inputTokens + outputTokens) / 1000000,
-          effectiveCostPerMillion: ((inputTokens + outputTokens) / 1000000) > 0 ? 
-            monthlyPaygoCost / ((inputTokens + outputTokens) / 1000000) : 0,
-          breakdown: {
-            inputRate: tokenPricing.input,
-            outputRate: tokenPricing.output,
-            inputTokens: inputTokens,
-            outputTokens: outputTokens
-          }
-        };
-      } else {
-        // Fallback to original calculation
-        monthlyPaygoCost = (monthlyTokens * 0.5 * currentPricing.paygo_input) + (monthlyTokens * 0.5 * currentPricing.paygo_output);
-        paygoCostBreakdown = {
-          inputCost: monthlyTokens * 0.5 * currentPricing.paygo_input,
-          outputCost: monthlyTokens * 0.5 * currentPricing.paygo_output,
-          totalCost: monthlyPaygoCost,
-          totalTokens: monthlyTokens,
-          effectiveCostPerMillion: monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0,
-          breakdown: {
-            inputRate: currentPricing.paygo_input,
-            outputRate: currentPricing.paygo_output
-          }
-        };
-      }
-    }
-    
+    const monthlyPaygoCost = (monthlyTokens * 0.5 * currentPricing.paygo_input) + (monthlyTokens * 0.5 * currentPricing.paygo_output);
     const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 24 * 30;
     const monthlyPtuHourlyCost = monthlyPtuCost;
     const monthlyPtuReservationCost = ptuNeeded * currentPricing.ptu_monthly;
@@ -386,7 +298,7 @@ function App() {
     // FIXED: Dynamic utilization calculation
     const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
     
-    // Cost per 1M tokens - temporary revert
+    // Cost per 1M tokens
     const costPer1MTokens = monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0;
     
     // PTU cost effectiveness
@@ -439,10 +351,7 @@ function App() {
     const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
     const hybridOverflowTPM = Math.max(0, formData.p99TPM - (hybridBasePTU * currentPricing.tokensPerPTUPerMinute));
     const hybridOverflowTokensMonthly = (hybridOverflowTPM * formData.monthlyMinutes) / 1000000;
-    
-    // TEMPORARY: Revert to original calculation for debugging
     const hybridOverflowCost = (hybridOverflowTokensMonthly * 0.5 * currentPricing.paygo_input) + (hybridOverflowTokensMonthly * 0.5 * currentPricing.paygo_output);
-    
     const hybridBaseCost = hybridBasePTU * currentPricing.ptu_monthly;
     const hybridTotalCost = hybridBaseCost + hybridOverflowCost;
     
@@ -467,10 +376,6 @@ function App() {
       isUsingMinimum,
       monthlyTokens,
       monthlyPaygoCost,
-      // NEW: Add detailed PAYG breakdown
-      paygoCostBreakdown,
-      inputTokensInMillions,
-      outputTokensInMillions,
       monthlyPtuCost,
       monthlyPtuHourlyCost,
       monthlyPtuReservationCost,
@@ -499,6 +404,7 @@ function App() {
 
   // Handle form input changes
   const handleInputChange = (field, value) => {
+    console.log(`Input change: ${field} = ${value}`);
     setFormData(prev => ({
       ...prev,
       [field]: parseFloat(value) || 0
@@ -539,23 +445,67 @@ function App() {
 
   // Get available models
   const getAvailableModels = () => {
-    return Object.entries(ptuModels.ptu_supported_models).map(([id, model]) => ({
-      id,
-      name: model.name,
-      minPTU: model.min_ptu
-    }));
+    try {
+      if (!ptuModels || !ptuModels.ptu_supported_models) {
+        console.warn('ptuModels not loaded, using fallback models');
+        return [
+          { id: 'gpt-4o', name: 'GPT-4o', minPTU: 15 },
+          { id: 'gpt-4o-mini', name: 'GPT-4o Mini', minPTU: 10 },
+          { id: 'gpt-35-turbo', name: 'GPT-3.5 Turbo', minPTU: 5 }
+        ];
+      }
+      
+      return Object.entries(ptuModels.ptu_supported_models).map(([id, model]) => ({
+        id,
+        name: model.name,
+        minPTU: model.min_ptu
+      }));
+    } catch (error) {
+      console.error('Error in getAvailableModels:', error);
+      return [
+        { id: 'gpt-4o', name: 'GPT-4o', minPTU: 15 },
+        { id: 'gpt-4o-mini', name: 'GPT-4o Mini', minPTU: 10 }
+      ];
+    }
   };
 
-  // Get available regions
+  // Enhanced: Get available regions organized by zone with region-specific model availability
   const getAvailableRegions = () => {
-    const selectedModelData = ptuModels.ptu_supported_models[selectedModel];
-    if (!selectedModelData) return [];
-    
-    return selectedModelData.regions.map(region => ({
-      id: region,
-      name: region.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      modelCount: Object.keys(ptuModels.ptu_supported_models).length
-    }));
+    try {
+      console.log('🔍 Attempting to load regions...');
+      const regionsByZone = getRegionsByZone();
+      console.log('✅ Regions loaded successfully:', regionsByZone);
+      
+      return Object.entries(regionsByZone).map(([zoneName, regions]) => ({
+        zone: zoneName === 'US' ? 'North America' : 
+              zoneName === 'EU' ? 'Europe' : 
+              zoneName === 'APAC' ? 'Asia Pacific' : 
+              zoneName === 'CA' ? 'Canada' : 
+              zoneName === 'LATAM' ? 'South America' :
+              zoneName === 'ME' ? 'Middle East' : zoneName,
+        regions: regions.map(region => ({
+          id: region.code,
+          name: region.displayName,
+          modelCount: Object.keys(region.available_models).length,
+          capacity: region.available_models['gpt-4o']?.capacity || 'medium'
+        }))
+      }));
+    } catch (error) {
+      console.error('❌ Error loading regions:', error);
+      console.warn('Error loading regions, using fallback:', error);
+      // Fallback to simplified list if regionModelAvailability fails
+      return [
+        {
+          zone: "All Regions",
+          regions: [
+            { id: 'eastus2', name: 'East US 2', modelCount: 8, capacity: 'high' },
+            { id: 'westus', name: 'West US', modelCount: 8, capacity: 'high' },
+            { id: 'westeurope', name: 'West Europe', modelCount: 6, capacity: 'medium' },
+            { id: 'southeastasia', name: 'Southeast Asia', modelCount: 6, capacity: 'medium' }
+          ]
+        }
+      ];
+    }
   };
 
   // KQL Query code
@@ -594,7 +544,7 @@ AzureMetrics
             <div className="flex items-center justify-center gap-2 mb-2">
               <Brain className="h-8 w-8 text-blue-600" />
               <CardTitle className="text-3xl font-bold text-blue-600">
-                Azure OpenAI PTU Estimator
+                Azure OpenAI PTU Calculator
               </CardTitle>
             </div>
             <CardDescription className="text-lg">
@@ -874,10 +824,21 @@ AzureMetrics
                         <SelectValue placeholder="Select a region" />
                       </SelectTrigger>
                       <SelectContent>
-                        {getAvailableRegions().map(region => (
-                          <SelectItem key={region.id} value={region.id}>
-                            {region.name}
-                          </SelectItem>
+                        {getAvailableRegions().map(zone => (
+                          zone.regions.length > 0 && (
+                            <div key={zone.zone}>
+                              <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-100">
+                                {zone.zone}
+                              </div>
+                              {zone.regions.map(region => (
+                                <SelectItem key={region.id} value={region.id}>
+                                  <div className="flex items-center justify-between w-full">
+                                    <span>{region.name}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </div>
+                          )
                         ))}
                       </SelectContent>
                     </Select>
@@ -937,7 +898,7 @@ AzureMetrics
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-medium text-green-800">
-                        {ptuModels.ptu_supported_models[selectedModel]?.name.toUpperCase()} - Official Pricing Available
+                        {(ptuModels.ptu_supported_models?.[selectedModel]?.name || 'Unknown Model').toString().toUpperCase()} - Official Pricing Available
                       </h3>
                       <Badge variant="default" className="bg-green-600">Official</Badge>
                     </div>
@@ -970,15 +931,15 @@ AzureMetrics
                           </div>
                           <div>
                             <strong>Yearly:</strong> ${currentPricing.ptu_yearly}/PTU
-                            <div className="text-xs text-blue-600">{currentPricing.officialPricing.discount.yearlyVsMonthly}% discount vs monthly</div>
+                            <div className="text-xs text-blue-600">{currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% discount vs monthly</div>
                           </div>
                           <div>
-                            <strong>Regional Multiplier:</strong> {currentPricing.officialPricing.multipliers.combined}x
+                            <strong>Regional Multiplier:</strong> {currentPricing.officialPricing?.multipliers?.combined || 1}x
                             <div className="text-xs text-blue-600">{selectedRegion.toUpperCase()} + {selectedDeployment}</div>
                           </div>
                         </div>
                         <div className="mt-2 text-xs text-blue-700">
-                          💡 <strong>Discount Transparency:</strong> Yearly reservations provide {currentPricing.officialPricing.discount.yearlyVsMonthly}% savings compared to monthly billing
+                          💡 <strong>Discount Transparency:</strong> Yearly reservations provide {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% savings compared to monthly billing
                         </div>
                       </div>
                     )}
@@ -1179,32 +1140,6 @@ AzureMetrics
                 />
                 <p className="text-sm text-gray-600 mt-1">Base PTU reservation for hybrid approach</p>
               </div>
-              
-              {/* New Token Input Fields */}
-              <div>
-                <Label htmlFor="monthlyInputTokens">Monthly Input Tokens (millions)</Label>
-                <Input
-                  id="monthlyInputTokens"
-                  type="number"
-                  step="0.001"
-                  value={formData.monthlyInputTokens}
-                  onChange={(e) => handleInputChange('monthlyInputTokens', e.target.value)}
-                  placeholder="Auto-calculated or enter custom"
-                />
-                <p className="text-sm text-gray-600 mt-1">Input tokens consumed per month (in millions)</p>
-              </div>
-              <div>
-                <Label htmlFor="monthlyOutputTokens">Monthly Output Tokens (millions)</Label>
-                <Input
-                  id="monthlyOutputTokens"
-                  type="number"
-                  step="0.001"
-                  value={formData.monthlyOutputTokens}
-                  onChange={(e) => handleInputChange('monthlyOutputTokens', e.target.value)}
-                  placeholder="Auto-calculated or enter custom"
-                />
-                <p className="text-sm text-gray-600 mt-1">Output tokens generated per month (in millions)</p>
-              </div>
             </div>
 
             <Alert className="mt-6 border-green-200 bg-green-50">
@@ -1292,11 +1227,12 @@ AzureMetrics
                   <Card className="bg-blue-50 border-blue-200">
                     <CardContent className="p-4 text-center">
                       <h3 className="font-medium text-blue-800">Usage Pattern</h3>
-                      <div className="text-2xl font-bold text-blue-600 mt-2">{calculations.usagePattern}</div>
+                      <div className="text-2xl font-bold text-blue-600 mt-2">{calculations.usagePattern || 'N/A'}</div>
                       <p className="text-sm text-blue-600 mt-1">
                         {calculations.usagePattern === 'Steady' && 'Consistent usage with minimal spikes'}
                         {calculations.usagePattern === 'Bursty' && 'Moderate spikes in usage patterns'}
                         {calculations.usagePattern === 'Spiky' && 'High variability with significant peaks'}
+                        {!calculations.usagePattern && 'Enter TPM values to see usage pattern analysis'}
                       </p>
                     </CardContent>
                   </Card>
@@ -1304,7 +1240,7 @@ AzureMetrics
                   <Card className="bg-green-50 border-green-200">
                     <CardContent className="p-4 text-center">
                       <h3 className="font-medium text-green-800">Burst Ratio</h3>
-                      <div className="text-2xl font-bold text-green-600 mt-2">{calculations.burstRatio?.toFixed(1)}x</div>
+                      <div className="text-2xl font-bold text-green-600 mt-2">{calculations.burstRatio?.toFixed(1) || '0.0'}x</div>
                       <p className="text-sm text-green-600 mt-1">P99 vs Average TPM</p>
                     </CardContent>
                   </Card>
@@ -1312,7 +1248,7 @@ AzureMetrics
                   <Card className="bg-purple-50 border-purple-200">
                     <CardContent className="p-4 text-center">
                       <h3 className="font-medium text-purple-800">Peak Ratio</h3>
-                      <div className="text-2xl font-bold text-purple-600 mt-2">{calculations.peakRatio?.toFixed(1)}x</div>
+                      <div className="text-2xl font-bold text-purple-600 mt-2">{calculations.peakRatio?.toFixed(1) || '0.0'}x</div>
                       <p className="text-sm text-purple-600 mt-1">Max vs Average TPM</p>
                     </CardContent>
                   </Card>
@@ -1337,10 +1273,10 @@ AzureMetrics
                         <h3 className="font-medium text-green-800">1-Year Reservation</h3>
                         <Badge variant="secondary" className="bg-green-100 text-green-800">25% off</Badge>
                       </div>
-                      <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings?.toFixed(2)}/mo</p>
+                      <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings?.toFixed(2) || '0.00'}/mo</p>
                       <div className="text-right">
-                        <span className="text-xs text-green-600">{calculations.oneYearSavingsPercent?.toFixed(1)}% savings</span>
-                        <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2)}/mo</div>
+                        <span className="text-xs text-green-600">{calculations.oneYearSavingsPercent?.toFixed(1) || '0.0'}% savings</span>
+                        <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00'}/mo</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -1351,10 +1287,10 @@ AzureMetrics
                         <h3 className="font-medium text-green-800">3-Year Reservation</h3>
                         <Badge variant="secondary" className="bg-green-200 text-green-900">45% off</Badge>
                       </div>
-                      <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings?.toFixed(2)}/mo</p>
+                      <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings?.toFixed(2) || '0.00'}/mo</p>
                       <div className="text-right">
-                        <span className="text-xs text-green-700">{calculations.threeYearSavingsPercent?.toFixed(1)}% savings</span>
-                        <div className="text-2xl font-bold text-green-800">${(calculations.yearlyPtuReservationCost / 12)?.toFixed(2)}/mo</div>
+                        <span className="text-xs text-green-700">{calculations.threeYearSavingsPercent?.toFixed(1) || '0.0'}% savings</span>
+                        <div className="text-2xl font-bold text-green-800">${((calculations.yearlyPtuReservationCost || 0) / 12).toFixed(2)}/mo</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -1363,7 +1299,7 @@ AzureMetrics
                 <Card className="mt-4 bg-gradient-to-r from-green-100 to-blue-100 border-green-300">
                   <CardContent className="p-4 text-center">
                     <h3 className="font-medium text-green-800 mb-2">3-Year Total Savings</h3>
-                    <div className="text-3xl font-bold text-green-600">${(calculations.threeYearSavings * 36)?.toFixed(2)}</div>
+                    <div className="text-3xl font-bold text-green-600">${((calculations.threeYearSavings || 0) * 36).toFixed(2)}</div>
                     <p className="text-sm text-green-700 mt-1">Over full term</p>
                   </CardContent>
                 </Card>
@@ -1373,45 +1309,12 @@ AzureMetrics
             {/* Cost Comparison Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="bg-gray-50 border-gray-200">
-                <CardContent className="p-4">
-                  <h3 className="font-medium text-gray-800 text-center">PAYGO</h3>
-                  <p className="text-xs text-gray-600 mb-3 text-center">No commitment required</p>
-                  
-                  {/* Enhanced PAYG Breakdown */}
-                  {calculations.paygoCostBreakdown && (
-                    <div className="space-y-2 mb-3">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-600">Input tokens:</span>
-                        <span className="font-medium">{calculations.inputTokensInMillions?.toFixed(3)}M @ ${calculations.paygoCostBreakdown.breakdown.inputRate}/M</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-600">Output tokens:</span>
-                        <span className="font-medium">{calculations.outputTokensInMillions?.toFixed(3)}M @ ${calculations.paygoCostBreakdown.breakdown.outputRate}/M</span>
-                      </div>
-                      <div className="border-t border-gray-200 pt-2">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-600">Input cost:</span>
-                          <span className="font-medium">${calculations.paygoCostBreakdown.inputCost?.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-600">Output cost:</span>
-                          <span className="font-medium">${calculations.paygoCostBreakdown.outputCost?.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                          <span>Total tokens:</span>
-                          <span>{calculations.paygoCostBreakdown.totalTokens?.toFixed(3)}M</span>
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>Effective rate:</span>
-                          <span>${calculations.paygoCostBreakdown.effectiveCostPerMillionTokens?.toFixed(2)}/M</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="text-right border-t border-gray-200 pt-2">
-                    <span className="text-xs text-gray-600">Monthly Total</span>
-                    <div className="text-2xl font-bold text-gray-600">${calculations.monthlyPaygoCost?.toFixed(2)}</div>
+                <CardContent className="p-4 text-center">
+                  <h3 className="font-medium text-gray-800">PAYGO</h3>
+                  <p className="text-xs text-gray-600 mb-2">No commitment required</p>
+                  <div className="text-right">
+                    <span className="text-xs text-gray-600">Pay-as-you-go</span>
+                    <div className="text-2xl font-bold text-gray-600">${calculations.monthlyPaygoCost?.toFixed(2) || '0.00'}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -1420,16 +1323,16 @@ AzureMetrics
                 <CardContent className="p-4 text-center">
                   <h3 className="font-medium text-blue-800">PTU (On-Demand)</h3>
                   <p className="text-xs text-blue-600 mb-2">
-                    {calculations.ptuNeeded} PTUs needed
+                    {calculations.ptuNeeded || 0} PTUs needed
                     {calculations.isUsingMinimum && (
                       <span className="block text-xs text-orange-600 mt-1">
-                        (Minimum: {calculations.enhancedPTUData?.minPTU} PTUs, Increment: {calculations.enhancedPTUData?.increment})
+                        (Minimum: {calculations.enhancedPTUData?.minPTU || 0} PTUs, Increment: {calculations.enhancedPTUData?.increment || 1})
                       </span>
                     )}
                   </p>
                   <div className="text-right">
                     <span className="text-xs text-blue-600">Reserved</span>
-                    <div className="text-2xl font-bold text-blue-600">${calculations.monthlyPtuCost?.toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-blue-600">${calculations.monthlyPtuCost?.toFixed(2) || '0.00'}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -1443,16 +1346,16 @@ AzureMetrics
                     </Badge>
                   </div>
                   <p className="text-xs text-green-600 mb-2">
-                    Save ${calculations.oneYearSavings?.toFixed(2)}/mo
+                    Save ${calculations.oneYearSavings?.toFixed(2) || '0.00'}/mo
                     {currentPricing.officialPricing && (
-                      <span className="block text-xs text-green-700">Official {currentPricing.officialPricing.discount.yearlyVsMonthly}% yearly discount</span>
+                      <span className="block text-xs text-green-700">Official {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% yearly discount</span>
                     )}
                   </p>
                   <div className="text-right">
                     <span className="text-xs text-green-600">
                       {currentPricing.officialPricing?.discount.yearlyVsMonthly || 30}% off
                     </span>
-                    <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00'}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -1462,16 +1365,16 @@ AzureMetrics
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium text-green-800">PTU (Multi-Year)</h3>
                     <Badge variant="secondary" className="bg-green-200 text-green-900">
-                      {currentPricing.officialPricing?.discount.yearlyVsHourly.toFixed(1) || 45}% off
+                      {(currentPricing.officialPricing?.discount?.yearlyVsHourly?.toFixed(1)) || '45'}% off
                     </Badge>
                   </div>
                   <p className="text-xs text-green-700 mb-2">
-                    Save ${calculations.threeYearSavings?.toFixed(2)}/mo
+                    Save ${calculations.threeYearSavings?.toFixed(2) || '0.00'}/mo
                     <span className="block text-xs text-green-600">vs hourly billing</span>
                   </p>
                   <div className="text-right">
                     <span className="text-xs text-green-700">45% off</span>
-                    <div className="text-2xl font-bold text-green-800">${(calculations.yearlyPtuReservationCost / 12)?.toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-green-800">${((calculations.yearlyPtuReservationCost || 0) / 12).toFixed(2)}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -1482,7 +1385,7 @@ AzureMetrics
               <Alert className="border-orange-200 bg-orange-50 flex items-center gap-2">
                 <Info className="h-4 w-4 text-orange-600 flex-shrink-0" />
                 <AlertDescription className="text-orange-800">
-                  <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU} PTU(s), but Azure requires a minimum of {calculations.enhancedPTUData.minPTU} PTUs for this model and deployment type. You'll pay for {calculations.ptuNeeded} PTUs but get extra capacity for bursts.
+                  <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU || 0} PTU(s), but Azure requires a minimum of {calculations.enhancedPTUData?.minPTU || 0} PTUs for this model and deployment type. You'll pay for {calculations.ptuNeeded || 0} PTUs but get extra capacity for bursts.
                 </AlertDescription>
               </Alert>
             )}
@@ -1494,7 +1397,7 @@ AzureMetrics
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={calculations.chartData}>
+                  <BarChart data={calculations.chartData || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
@@ -1523,15 +1426,15 @@ AzureMetrics
                     </div>
                     <div className="flex justify-between">
                       <span>Calculated PTUs:</span>
-                      <span className="font-semibold">{calculations.calculatedPTU}</span>
+                      <span className="font-semibold">{calculations.calculatedPTU || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>PTUs Needed:</span>
-                      <span className="font-semibold">{calculations.ptuNeeded}</span>
+                      <span className="font-semibold">{calculations.ptuNeeded || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Monthly Tokens:</span>
-                      <span className="font-semibold">{calculations.monthlyTokens?.toFixed(1)}M</span>
+                      <span className="font-semibold">{calculations.monthlyTokens?.toFixed(1) || '0.0'}M</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1548,11 +1451,11 @@ AzureMetrics
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Cost per 1M tokens:</span>
-                      <span className="font-semibold">${calculations.costPer1MTokens?.toFixed(2)}</span>
+                      <span className="font-semibold">${calculations.costPer1MTokens?.toFixed(2) || '0.00'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Utilization:</span>
-                      <span className="font-semibold">{(calculations.utilizationRate * 100)?.toFixed(1)}%</span>
+                      <span className="font-semibold">{((calculations.utilizationRate || 0) * 100).toFixed(1)}%</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1626,7 +1529,7 @@ AzureMetrics
                   <CardContent>
                     <ul className="space-y-2 text-sm">
                       <li><strong>• Usage Consistency:</strong> PTUs work best for predictable, sustained workloads</li>
-                      <li><strong>• Capacity Planning:</strong> Each PTU = 50,000 tokens/minute guaranteed throughput</li>
+                      <li><strong>• Capacity Planning:</strong> Each PTU provides guaranteed throughput capacity (varies by model)</li>
                       <li><strong>• Break-Even Point:</strong> PTUs typically become cost-effective at 60%+ utilization</li>
                       <li><strong>• Growth Projections:</strong> Consider future usage patterns, not just current needs</li>
                     </ul>
@@ -1648,10 +1551,10 @@ AzureMetrics
                 <Card className="bg-yellow-50 border-yellow-200 mb-4">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">{calculations.recommendationIcon}</span>
-                      <h3 className="font-medium text-yellow-800">Recommended: {calculations.recommendation}</h3>
+                      <span className="text-2xl">{calculations.recommendationIcon || '❓'}</span>
+                      <h3 className="font-medium text-yellow-800">Recommended: {calculations.recommendation || 'N/A'}</h3>
                     </div>
-                    <p className="text-yellow-700 mb-4">{calculations.recommendationReason}</p>
+                    <p className="text-yellow-700 mb-4">{calculations.recommendationReason || 'Enter TPM values to see recommendations'}</p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -1733,18 +1636,18 @@ AzureMetrics
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Recommended Cost</div>
                         <div className="text-2xl font-bold text-green-600">
-                          ${calculations.recommendation === 'PAYGO' ? calculations.monthlyPaygoCost?.toFixed(2) : 
-                            calculations.recommendation === 'Full PTU Reservation' ? calculations.monthlyPtuReservationCost?.toFixed(2) :
-                            calculations.hybridTotalCost?.toFixed(2)}
+                          ${calculations.recommendation === 'PAYGO' ? (calculations.monthlyPaygoCost?.toFixed(2) || '0.00') : 
+                            calculations.recommendation === 'Full PTU Reservation' ? (calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00') :
+                            (calculations.hybridTotalCost?.toFixed(2) || '0.00')}
                         </div>
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">PTU Utilization</div>
-                        <div className="text-2xl font-bold text-orange-600">{(calculations.utilizationRate * 100)?.toFixed(1)}%</div>
+                        <div className="text-2xl font-bold text-orange-600">{((calculations.utilizationRate || 0) * 100).toFixed(1)}%</div>
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Monthly Savings</div>
-                        <div className="text-2xl font-bold text-purple-600">${calculations.monthlySavings?.toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-purple-600">${calculations.monthlySavings?.toFixed(2) || '0.00'}</div>
                       </div>
                     </div>
                   </CardContent>
@@ -1753,7 +1656,7 @@ AzureMetrics
             </Card>
 
             {/* FIXED: Interactive Analytics Dashboard with dynamic data */}
-            {showInteractiveCharts && (
+            {false && showInteractiveCharts && false && (
               <InteractiveCharts
                 costData={{
                   paygo: calculations.monthlyPaygoCost,
@@ -1785,7 +1688,7 @@ AzureMetrics
         )}
 
         {/* TASK 2: Official Pricing Transparency Section */}
-        {formData.avgTPM > 0 && currentPricing.officialPricing && (
+        {formData.avgTPM > 0 && currentPricing?.officialPricing && (
           <Card className="border-indigo-200 bg-indigo-50 mb-6">
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -1811,11 +1714,11 @@ AzureMetrics
                     </div>
                     <div>
                       <strong>Your Region:</strong> {selectedRegion.toUpperCase()} 
-                      <span className="text-indigo-600"> ({currentPricing.officialPricing.multipliers.regional}x)</span>
+                      <span className="text-indigo-600"> ({currentPricing.officialPricing?.multipliers?.regional || 1}x)</span>
                     </div>
                     <div>
                       <strong>Deployment:</strong> {selectedDeployment} 
-                      <span className="text-indigo-600"> ({currentPricing.officialPricing.multipliers.deployment}x)</span>
+                      <span className="text-indigo-600"> ({currentPricing.officialPricing?.multipliers?.deployment || 1}x)</span>
                     </div>
                     <div className="pt-2 border-t border-indigo-200">
                       <strong>Your Rate:</strong> ${currentPricing.ptu_hourly}/PTU-hour
@@ -1835,7 +1738,7 @@ AzureMetrics
                       <div className="text-xs text-indigo-600">${currentPricing.ptu_monthly}/PTU (730 hrs)</div>
                     </div>
                     <div>
-                      <strong>Yearly:</strong> {currentPricing.officialPricing.discount.yearlyVsMonthly}% discount
+                      <strong>Yearly:</strong> {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% discount
                       <div className="text-xs text-indigo-600">${currentPricing.ptu_yearly}/PTU annually</div>
                     </div>
                     <div className="pt-2 border-t border-indigo-200">
@@ -1852,7 +1755,7 @@ AzureMetrics
                   </h4>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <strong>Required PTUs:</strong> {calculations.ptuNeeded}
+                      <strong>Required PTUs:</strong> {calculations.ptuNeeded || 0}
                     </div>
                     <div>
                       <strong>Monthly Cost:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_monthly).toLocaleString()}
@@ -1863,7 +1766,7 @@ AzureMetrics
                     <div className="pt-2 border-t border-indigo-200">
                       <strong>Annual Savings:</strong> ${((calculations.ptuNeeded * currentPricing.ptu_monthly * 12) - (calculations.ptuNeeded * currentPricing.ptu_yearly)).toLocaleString()}
                       <div className="text-xs text-green-600">
-                        {currentPricing.officialPricing.discount.yearlyVsMonthly}% saved with yearly commitment
+                        {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% saved with yearly commitment
                       </div>
                     </div>
                   </div>
@@ -1895,10 +1798,10 @@ AzureMetrics
               <div className="space-y-4">
                 <div className="bg-white p-4 rounded-lg border border-purple-200">
                   <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                    🔢 PTU Conversion Rate (50,000)
+                    🔢 PTU Conversion Rate
                   </h4>
                   <p className="text-sm text-purple-700">
-                    Microsoft's official standard - each PTU provides exactly 50,000 tokens/minute of sustained throughput capacity according to Azure OpenAI documentation.
+                    Each PTU represents a unit of provisioned throughput capacity. The actual tokens/minute varies by model - for example, GPT-4 provides different throughput than GPT-3.5-Turbo per PTU based on model complexity and resource requirements.
                   </p>
                 </div>
                 
@@ -1984,7 +1887,8 @@ AzureMetrics
         </div>
         
         {/* Mobile Action Buttons */}
-        {deviceInfo.isMobile && (
+        {/* Mobile optimization disabled while useMobileDetection is not available */}
+        {false && (
           <div className="fixed bottom-4 right-4 z-40 space-y-2">
             <Button
               onClick={() => setShowInteractiveCharts(!showInteractiveCharts)}
