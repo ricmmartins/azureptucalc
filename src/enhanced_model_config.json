@@ -4,6 +4,7 @@
       "name": "GPT-4o",
       "description": "Latest multimodal model with text and image capabilities",
       "throughput_per_ptu": 2500,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": {
           "min_ptu": 15,
@@ -27,6 +28,7 @@
       "name": "GPT-4o Mini",
       "description": "Smaller, faster version of GPT-4o with cost optimization",
       "throughput_per_ptu": 37000,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": {
           "min_ptu": 15,
@@ -46,10 +48,11 @@
       },
       "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
     },
-    "gpt-4": {
-      "name": "GPT-4",
-      "description": "Advanced language model with superior reasoning capabilities",
+    "gpt-4.1": {
+      "name": "GPT-4.1",
+      "description": "Latest GPT-4 series with improved performance and capabilities",
       "throughput_per_ptu": 3000,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": {
           "min_ptu": 15,
@@ -62,17 +65,114 @@
           "available": true
         },
         "regional": {
-          "min_ptu": 100,
-          "increment": 100,
+          "min_ptu": 50,
+          "increment": 50,
           "available": true
         }
       },
       "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
     },
-    "gpt-35-turbo": {
-      "name": "GPT-3.5 Turbo",
-      "description": "Fast and efficient model for general tasks",
-      "throughput_per_ptu": 50000,
+    "gpt-4.1-mini": {
+      "name": "GPT-4.1 Mini",
+      "description": "Smaller, faster version of GPT-4.1 with optimized performance",
+      "throughput_per_ptu": 14900,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": {
+          "min_ptu": 15,
+          "increment": 5,
+          "available": true
+        },
+        "dataZone": {
+          "min_ptu": 15,
+          "increment": 5,
+          "available": true
+        },
+        "regional": {
+          "min_ptu": 25,
+          "increment": 25,
+          "available": true
+        }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+    },
+    "gpt-4.1-nano": {
+      "name": "GPT-4.1 Nano",
+      "description": "Ultra-efficient version of GPT-4.1 for high-throughput applications",
+      "throughput_per_ptu": 59400,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": {
+          "min_ptu": 15,
+          "increment": 5,
+          "available": true
+        },
+        "dataZone": {
+          "min_ptu": 15,
+          "increment": 5,
+          "available": true
+        },
+        "regional": {
+          "min_ptu": 25,
+          "increment": 25,
+          "available": true
+        }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+    },
+    "o1": {
+      "name": "o1",
+      "description": "Reasoning-focused model for complex problem solving",
+      "throughput_per_ptu": 230,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": {
+          "min_ptu": 15,
+          "increment": 5,
+          "available": true
+        },
+        "dataZone": {
+          "min_ptu": 15,
+          "increment": 5,
+          "available": true
+        },
+        "regional": {
+          "min_ptu": 25,
+          "increment": 50,
+          "available": true
+        }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+    },
+    "o3": {
+      "name": "o3",
+      "description": "Advanced reasoning model with enhanced problem-solving capabilities",
+      "throughput_per_ptu": 3000,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": {
+          "min_ptu": 15,
+          "increment": 5,
+          "available": true
+        },
+        "dataZone": {
+          "min_ptu": 15,
+          "increment": 5,
+          "available": true
+        },
+        "regional": {
+          "min_ptu": 50,
+          "increment": 50,
+          "available": true
+        }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+    },
+    "o3-mini": {
+      "name": "o3 Mini",
+      "description": "Compact reasoning model for efficient problem solving",
+      "throughput_per_ptu": 2500,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": {
           "min_ptu": 15,

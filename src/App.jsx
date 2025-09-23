@@ -30,7 +30,7 @@ function App() {
   // const pricingService = useMemo(() => new AzureOpenAIPricingService(), []); // Commented out since import is disabled
   
   // State management
-  const [selectedRegion, setSelectedRegion] = useState('east-us-2');
+  const [selectedRegion, setSelectedRegion] = useState('eastus');
   const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const [selectedDeployment, setSelectedDeployment] = useState('global');
   const [useCustomPricing, setUseCustomPricing] = useState(false);
@@ -57,6 +57,12 @@ function App() {
     ptu_yearly: 6132       // Monthly * 12 * 0.7 (30% yearly discount) = $6132/year
   });
   
+  // Helper function to get current model throughput
+  const getCurrentModelThroughput = () => {
+    const modelConfig = enhancedModelConfig.models[formData.model];
+    return modelConfig?.throughput_per_ptu || 50000; // fallback for legacy models
+  };
+
   // Pricing state - initialized with official pricing structure
   const [currentPricing, setCurrentPricing] = useState({
     paygo_input: 0.15,
@@ -65,7 +71,7 @@ function App() {
     ptu_monthly: 730,      // Official monthly calculation
     ptu_yearly: 6132,      // Official yearly calculation with 30% discount
     minPTU: 15,
-    tokensPerPTUPerMinute: 50000
+    tokensPerPTUPerMinute: 50000  // Will be updated dynamically
   });
   
   const [calculations, setCalculations] = useState({});
@@ -212,7 +218,7 @@ function App() {
         ptu_monthly: customPricing.ptu_monthly,
         ptu_yearly: customPricing.ptu_yearly,
         minPTU: 15,
-        tokensPerPTUPerMinute: 50000
+        tokensPerPTUPerMinute: getCurrentModelThroughput()
       };
     }
     
@@ -252,7 +258,7 @@ function App() {
         ptu_monthly: fallbackPTUPricing.monthly,
         ptu_yearly: fallbackPTUPricing.yearly,
         minPTU: 15,
-        tokensPerPTUPerMinute: 50000,
+        tokensPerPTUPerMinute: getCurrentModelThroughput(),
         officialPricing: fallbackPTUPricing
       };
     }
@@ -262,7 +268,7 @@ function App() {
   useEffect(() => {
     const pricing = getCurrentPricing();
     setCurrentPricing(pricing);
-  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing]);
+  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing, formData.model]);
 
   // Calculate costs and recommendations
   useEffect(() => {
@@ -508,9 +514,10 @@ function App() {
     }
   };
 
-  // KQL Query code
+  // KQL Query code - Dynamic based on selected model
   const kqlQuery = `// Burst-Aware Azure OpenAI PTU Sizing Analysis
 // Run this query in Azure Monitor Log Analytics for accurate capacity planning
+// PTU calculator for model: ${formData.model}
 
 let window = 1m;              // granularity for burst detection
 let p = 0.99;                 // percentile for burst sizing
@@ -524,9 +531,9 @@ AzureMetrics
     P99TPM = percentile(Tokens, p),
     MaxTPM = max(Tokens)
 | extend
-    AvgPTU = ceiling(AvgTPM / 50000.0),
-    P99PTU = ceiling(P99TPM / 50000.0),
-    MaxPTU = ceiling(MaxTPM / 50000.0)
+    AvgPTU = ceiling(AvgTPM / ${getCurrentModelThroughput()}.0),
+    P99PTU = ceiling(P99TPM / ${getCurrentModelThroughput()}.0),
+    MaxPTU = ceiling(MaxTPM / ${getCurrentModelThroughput()}.0)
 | extend RecommendedPTU = max_of(AvgPTU, P99PTU)  // higher value covers bursts
 | project AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`;
 
@@ -603,7 +610,7 @@ AzureMetrics
               <CardTitle>Step 1: Get Your Token Data</CardTitle>
             </div>
             <CardDescription>
-              Run this KQL query in your Azure Log Analytics workspace to calculate your average tokens per minute (TPM)
+              Run this KQL query in your Azure Log Analytics workspace to calculate PTU requirements for <strong>{formData.model}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -746,9 +753,9 @@ AzureMetrics
                 </ol>
               </div>
 
-              <Alert className="border-blue-300 bg-blue-50">
-                <CheckCircle className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-blue-800">
+              <Alert className="border-blue-300 bg-blue-50 flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                <AlertDescription className="text-blue-800 ml-1">
                   <strong>Pro Tip:</strong> Start conservative with your estimates. You can always scale up PTU reservations later, but it's harder to scale down.
                 </AlertDescription>
               </Alert>
