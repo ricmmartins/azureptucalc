@@ -14,7 +14,10 @@ import ptuModels from './ptu_supported_models.json';
 // import correctedPricingService from "./corrected_pricing_service.js";
 import enhancedModelConfig from "./enhanced_model_config.json";
 import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTUPricing.js";
+import { getTokenPricing, calculatePAYGCost, OFFICIAL_TOKEN_PRICING } from "./official_token_pricing.js";
 import { REGION_MODEL_AVAILABILITY, getRegionsByZone } from "./regionModelAvailability.js";
+import ExternalPricingService from './ExternalPricingService.js';
+import ExportService from './ExportService.js';
 // Temporarily comment out complex components
 import InteractiveCharts from './components/InteractiveCharts';
 // import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
@@ -45,7 +48,11 @@ function App() {
     maxPTU: 0,
     recommendedPTU: 0,
     monthlyMinutes: 43800,
-    basePTUs: 0
+    basePTUs: 0,
+    // Task 3: Input/Output token fields for PAYG calculation
+    inputTokensMonthly: 0,
+    outputTokensMonthly: 0,
+    inputOutputRatio: 0.5  // Default 50/50 split
   });
   
   // Custom pricing data - aligned with official PTU pricing structure
@@ -56,11 +63,128 @@ function App() {
     ptu_monthly: 730,      // 730 hours/month * US$1/hour = $730/month
     ptu_yearly: 6132       // Monthly * 12 * 0.7 (30% yearly discount) = $6132/year
   });
+
+  // Task 7: Load custom pricing from localStorage on component mount
+  useEffect(() => {
+    const savedCustomPricing = localStorage.getItem('azurePTUCustomPricing');
+    if (savedCustomPricing) {
+      try {
+        setCustomPricing(JSON.parse(savedCustomPricing));
+      } catch (error) {
+        console.warn('Failed to load custom pricing from localStorage:', error);
+      }
+    }
+    
+    const savedUseCustomPricing = localStorage.getItem('azurePTUUseCustomPricing');
+    if (savedUseCustomPricing) {
+      setUseCustomPricing(savedUseCustomPricing === 'true');
+    }
+  }, []);
+
+  // Task 7: Save custom pricing to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('azurePTUCustomPricing', JSON.stringify(customPricing));
+  }, [customPricing]);
+
+  // Task 7: Save custom pricing toggle to localStorage
+  useEffect(() => {
+    localStorage.setItem('azurePTUUseCustomPricing', useCustomPricing.toString());
+  }, [useCustomPricing]);
+  
+  // Task 9: External Pricing Service initialization
+  const externalPricingService = useMemo(() => new ExternalPricingService(), []);
+  const exportService = useMemo(() => new ExportService(), []);
+  
+  // Task 9: External pricing data state
+  const [externalPricingData, setExternalPricingData] = useState(null);
+  const [pricingUpdateInfo, setPricingUpdateInfo] = useState(null);
+  const [isLoadingExternalPricing, setIsLoadingExternalPricing] = useState(false);
+  
+  // Task 9: Load external pricing data on component mount
+  useEffect(() => {
+    const loadExternalPricing = async () => {
+      setIsLoadingExternalPricing(true);
+      try {
+        const data = await externalPricingService.loadPricingData();
+        setExternalPricingData(data);
+        
+        // Check for updates
+        const updateInfo = await externalPricingService.checkForUpdates();
+        setPricingUpdateInfo(updateInfo);
+      } catch (error) {
+        console.warn('Failed to load external pricing:', error);
+      } finally {
+        setIsLoadingExternalPricing(false);
+      }
+    };
+    
+    loadExternalPricing();
+  }, [externalPricingService]);
   
   // Helper function to get current model throughput
   const getCurrentModelThroughput = () => {
-    const modelConfig = enhancedModelConfig.models[formData.model];
+    const modelConfig = enhancedModelConfig.models[selectedModel];
     return modelConfig?.throughput_per_ptu || 50000; // fallback for legacy models
+  };
+
+  // Task 4: PTU validation function
+  const validatePTUInput = (ptuValue, fieldName) => {
+    if (!ptuValue || ptuValue <= 0) return null;
+    
+    const modelConfig = enhancedModelConfig.models[selectedModel];
+    if (!modelConfig) return null;
+    
+    const deployment = modelConfig.deployments[selectedDeployment];
+    if (!deployment) return null;
+    
+    const minPTU = deployment.min_ptu;
+    const increment = deployment.increment;
+    const warnings = [];
+    
+    // Check minimum requirement
+    if (ptuValue < minPTU) {
+      warnings.push(`Below minimum of ${minPTU} PTUs for ${selectedModel} (${selectedDeployment} deployment)`);
+    }
+    
+    // Check increment alignment
+    if (ptuValue % increment !== 0) {
+      const rounded = Math.ceil(ptuValue / increment) * increment;
+      warnings.push(`Must be in increments of ${increment}. Suggested: ${rounded} PTUs`);
+    }
+    
+    // Check realistic maximum (warning at 1000+ PTUs)
+    if (ptuValue > 1000) {
+      warnings.push(`Very high PTU count (${ptuValue}). Please verify this is correct.`);
+    }
+    
+    return warnings.length > 0 ? warnings : null;
+  };
+
+  // Get PTU validation warnings for display
+  const getPTUValidationWarnings = () => {
+    const warnings = [];
+    
+    if (formData.avgPTU > 0) {
+      const avgWarnings = validatePTUInput(formData.avgPTU, 'Average PTU');
+      if (avgWarnings) warnings.push({ field: 'Average PTU', warnings: avgWarnings });
+    }
+    
+    if (formData.p99PTU > 0) {
+      const p99Warnings = validatePTUInput(formData.p99PTU, 'P99 PTU');
+      if (p99Warnings) warnings.push({ field: 'P99 PTU', warnings: p99Warnings });
+    }
+    
+    if (formData.maxPTU > 0) {
+      const maxWarnings = validatePTUInput(formData.maxPTU, 'Max PTU');
+      if (maxWarnings) warnings.push({ field: 'Max PTU', warnings: maxWarnings });
+    }
+    
+    if (formData.recommendedPTU > 0) {
+      const recWarnings = validatePTUInput(formData.recommendedPTU, 'Recommended PTU');
+      if (recWarnings) warnings.push({ field: 'Recommended PTU', warnings: recWarnings });
+    }
+    
+    return warnings;
   };
 
   // Pricing state - initialized with official pricing structure
@@ -226,24 +350,17 @@ function App() {
       // TASK 2: Use official PTU pricing alignment (US$1/PTU-hour base)
       const officialPTUPricing = calculateOfficialPTUPricing(selectedRegion, selectedDeployment);
       
-      // Use live pricing data for PAYGO, official pricing for PTU
-      // const pricing = livePricingData || correctedPricingService.getModelPricing(selectedModel, selectedDeployment);
-      const pricing = livePricingData || { // Fallback pricing while correctedPricingService is disabled
-        paygo_input: 0.002,
-        paygo_output: 0.006,
-        ptu_hourly: 10,
-        ptu_monthly: 8,
-        ptu_yearly: 6
-      };
+      // Use official token pricing for PAYG
+      const tokenPricing = getTokenPricing(selectedModel);
       
       return {
-        paygo_input: pricing.paygo.input,
-        paygo_output: pricing.paygo.output,
+        paygo_input: tokenPricing.input,
+        paygo_output: tokenPricing.output,
         ptu_hourly: officialPTUPricing.hourly,      // Official US$1/hour base with regional/deployment multipliers
         ptu_monthly: officialPTUPricing.monthly,    // Calculated from hourly rate (730 hours/month)
         ptu_yearly: officialPTUPricing.yearly,      // Monthly rate * 12 with 30% yearly discount
-        minPTU: pricing.minPTU,
-        tokensPerPTUPerMinute: pricing.tokensPerPTUPerMinute,
+        minPTU: 15, // Will be overridden by model-specific logic
+        tokensPerPTUPerMinute: getCurrentModelThroughput(),
         // Additional metadata for transparency
         officialPricing: officialPTUPricing
       };
@@ -251,9 +368,10 @@ function App() {
       console.error('Error getting pricing:', error);
       // Fallback to official base pricing structure
       const fallbackPTUPricing = calculateOfficialPTUPricing('eastus', 'regional');
+      const fallbackTokenPricing = getTokenPricing(selectedModel);
       return {
-        paygo_input: 0.15,
-        paygo_output: 0.60,
+        paygo_input: fallbackTokenPricing.input,
+        paygo_output: fallbackTokenPricing.output,
         ptu_hourly: fallbackPTUPricing.hourly,
         ptu_monthly: fallbackPTUPricing.monthly,
         ptu_yearly: fallbackPTUPricing.yearly,
@@ -282,20 +400,71 @@ function App() {
     const peakRatio = formData.maxTPM && formData.avgTPM ? formData.maxTPM / formData.avgTPM : 1;
     const ptuVariance = formData.p99PTU && formData.avgPTU ? Math.abs(formData.p99PTU - formData.avgPTU) : 0;
     
-    // FIXED: PTU calculation logic
+    // FIXED: PTU calculation logic with Task 4 manual PTU support
     // Use enhanced PTU calculation
     const enhancedPTUData = calculateEnhancedPTU(formData.avgTPM, selectedModel, selectedDeployment);
-    const calculatedPTU = formData.recommendedPTU || enhancedPTUData.calculatedPTU;
-    const ptuNeeded = formData.recommendedPTU || enhancedPTUData.ptuNeeded;
+    
+    // Task 4: Determine which PTU value to use (priority order)
+    let manualPTU = 0;
+    let manualPTUSource = '';
+    
+    if (formData.recommendedPTU > 0) {
+      manualPTU = formData.recommendedPTU;
+      manualPTUSource = 'Recommended PTU';
+    } else if (formData.maxPTU > 0) {
+      manualPTU = formData.maxPTU;
+      manualPTUSource = 'Max PTU';
+    } else if (formData.p99PTU > 0) {
+      manualPTU = formData.p99PTU;
+      manualPTUSource = 'P99 PTU';
+    } else if (formData.avgPTU > 0) {
+      manualPTU = formData.avgPTU;
+      manualPTUSource = 'Average PTU';
+    }
+    
+    // Apply minimum and increment validation to manual PTU if provided
+    let finalPTU, finalCalculatedPTU;
+    if (manualPTU > 0) {
+      const minPTU = enhancedPTUData.minPTU;
+      const increment = enhancedPTUData.increment;
+      finalCalculatedPTU = manualPTU;
+      finalPTU = Math.max(Math.ceil(manualPTU / increment) * increment, minPTU);
+    } else {
+      finalCalculatedPTU = enhancedPTUData.calculatedPTU;
+      finalPTU = enhancedPTUData.ptuNeeded;
+    }
+    
+    const calculatedPTU = finalCalculatedPTU;
+    const ptuNeeded = finalPTU;
     
     // FIXED: Check if manual PTU is below minimum (not automatic calculation)
-    const isUsingMinimum = formData.recommendedPTU 
-      ? formData.recommendedPTU < enhancedPTUData.minPTU 
+    const isUsingMinimum = manualPTU > 0 
+      ? manualPTU < enhancedPTUData.minPTU 
       : enhancedPTUData.isUsingMinimum;
     
     // Monthly calculations
-    const monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
-    const monthlyPaygoCost = (monthlyTokens * 0.5 * currentPricing.paygo_input) + (monthlyTokens * 0.5 * currentPricing.paygo_output);
+    // Task 3: Enhanced PAYG calculation using official token pricing
+    let monthlyTokens, monthlyPaygoCost, paygoBreakdown;
+    
+    if (formData.inputTokensMonthly > 0 || formData.outputTokensMonthly > 0) {
+      // Use explicit input/output token counts if provided
+      const inputTokensInMillions = formData.inputTokensMonthly / 1000000;
+      const outputTokensInMillions = formData.outputTokensMonthly / 1000000;
+      paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions);
+      monthlyPaygoCost = paygoBreakdown.totalCost;
+      monthlyTokens = formData.inputTokensMonthly + formData.outputTokensMonthly;
+    } else if (formData.avgTPM > 0) {
+      // Calculate from TPM using input/output ratio
+      monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
+      const inputTokensInMillions = monthlyTokens * formData.inputOutputRatio;
+      const outputTokensInMillions = monthlyTokens * (1 - formData.inputOutputRatio);
+      paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions);
+      monthlyPaygoCost = paygoBreakdown.totalCost;
+    } else {
+      monthlyTokens = 0;
+      monthlyPaygoCost = 0;
+      paygoBreakdown = { inputCost: 0, outputCost: 0, totalCost: 0, pricing: getTokenPricing(selectedModel) };
+    }
     const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 24 * 30;
     const monthlyPtuHourlyCost = monthlyPtuCost;
     const monthlyPtuReservationCost = ptuNeeded * currentPricing.ptu_monthly;
@@ -303,6 +472,24 @@ function App() {
     
     // FIXED: Dynamic utilization calculation
     const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
+    
+    // Task 6: Break-even analysis calculations
+    const breakEvenAnalysis = (() => {
+      if (monthlyPaygoCost === 0 || currentPricing.ptu_monthly === 0) {
+        return { breakEvenPTUs: 0, breakEvenTPM: 0, utilizationAtBreakEven: 0 };
+      }
+      
+      // Break-even PTU count: where PTU monthly cost equals PAYG monthly cost
+      const breakEvenPTUs = Math.ceil(monthlyPaygoCost / currentPricing.ptu_monthly);
+      
+      // Break-even TPM: TPM needed to justify PTU reservation
+      const breakEvenTPM = breakEvenPTUs * enhancedPTUData.throughput;
+      
+      // Utilization at break-even point
+      const utilizationAtBreakEven = breakEvenTPM > 0 ? formData.avgTPM / breakEvenTPM : 0;
+      
+      return { breakEvenPTUs, breakEvenTPM, utilizationAtBreakEven };
+    })();
     
     // Cost per 1M tokens
     const costPer1MTokens = monthlyTokens > 0 ? monthlyPaygoCost / monthlyTokens : 0;
@@ -380,6 +567,9 @@ function App() {
       calculatedPTU,
       ptuNeeded,
       isUsingMinimum,
+      // Task 4: Manual PTU information
+      manualPTU,
+      manualPTUSource,
       monthlyTokens,
       monthlyPaygoCost,
       monthlyPtuCost,
@@ -387,6 +577,8 @@ function App() {
       monthlyPtuReservationCost,
       yearlyPtuReservationCost,
       utilizationRate,
+      // Task 6: Break-even analysis
+      breakEvenAnalysis,
       costPer1MTokens,
       ptuCostEffectiveness,
       oneYearSavings,
@@ -404,9 +596,11 @@ function App() {
       hybridOverflowCost,
       hybridBaseCost,
       hybridTotalCost,
-      chartData
+      chartData,
+      // Task 3: PAYG breakdown for detailed cost display
+      paygoBreakdown
     });
-  }, [formData, currentPricing, hasValidData]);
+  }, [formData, currentPricing, hasValidData, selectedModel, selectedDeployment]);
 
   // Handle form input changes
   const handleInputChange = (field, value) => {
@@ -423,6 +617,100 @@ function App() {
       ...prev,
       [field]: parseFloat(value) || 0
     }));
+  };
+
+  // Task 10: Export functionality handlers
+  const handleExportCSV = () => {
+    try {
+      const reportData = {
+        model: selectedModel,
+        region: selectedRegion,
+        deployment: selectedDeployment,
+        ptuCount: calculations.ptuNeeded || formData.manualPTU || 0,
+        usageScenario: calculations.usagePattern || 'Unknown',
+        throughputNeeded: formData.avgTPM,
+        ptuCostCalculation: {
+          hourly: calculations.monthlyPtuHourlyCost / 730,
+          monthly: calculations.monthlyPtuCost,
+          yearly: calculations.yearlyPtuReservationCost,
+          yearlyDiscount: currentPricing.officialPricing?.discount?.yearlyVsHourly || 0
+        },
+        paygCostCalculation: calculations.paygoBreakdown || {
+          inputCost: 0,
+          outputCost: 0,
+          total: calculations.monthlyPaygoCost,
+          inputTokens: formData.inputTokensMonthly,
+          outputTokens: formData.outputTokensMonthly,
+          inputPricePerK: currentPricing.token?.input || 0,
+          outputPricePerK: currentPricing.token?.output || 0
+        },
+        breakEvenAnalysis: calculations.breakEvenAnalysis || {},
+        customPricing: { enabled: useCustomPricing },
+        validationWarnings: calculations.validationWarnings || []
+      };
+      
+      exportService.generateReport(reportData);
+      exportService.downloadCSV();
+    } catch (error) {
+      console.error('Export CSV failed:', error);
+      alert('Failed to export CSV. Please try again.');
+    }
+  };
+
+  const handleExportJSON = () => {
+    try {
+      const reportData = {
+        model: selectedModel,
+        region: selectedRegion,
+        deployment: selectedDeployment,
+        ptuCount: calculations.ptuNeeded || formData.manualPTU || 0,
+        usageScenario: calculations.usagePattern || 'Unknown',
+        throughputNeeded: formData.avgTPM,
+        ptuCostCalculation: {
+          hourly: calculations.monthlyPtuHourlyCost / 730,
+          monthly: calculations.monthlyPtuCost,
+          yearly: calculations.yearlyPtuReservationCost,
+          yearlyDiscount: currentPricing.officialPricing?.discount?.yearlyVsHourly || 0
+        },
+        paygCostCalculation: calculations.paygoBreakdown || {
+          inputCost: 0,
+          outputCost: 0,
+          total: calculations.monthlyPaygoCost,
+          inputTokens: formData.inputTokensMonthly,
+          outputTokens: formData.outputTokensMonthly,
+          inputPricePerK: currentPricing.token?.input || 0,
+          outputPricePerK: currentPricing.token?.output || 0
+        },
+        breakEvenAnalysis: calculations.breakEvenAnalysis || {},
+        customPricing: { enabled: useCustomPricing },
+        validationWarnings: calculations.validationWarnings || []
+      };
+      
+      exportService.generateReport(reportData);
+      exportService.downloadJSON();
+    } catch (error) {
+      console.error('Export JSON failed:', error);
+      alert('Failed to export JSON. Please try again.');
+    }
+  };
+
+  // Task 9: External pricing update handler
+  const handleUpdateExternalPricing = async () => {
+    setIsLoadingExternalPricing(true);
+    try {
+      const updatedData = await externalPricingService.updatePricingData();
+      setExternalPricingData(updatedData);
+      
+      const updateInfo = await externalPricingService.checkForUpdates();
+      setPricingUpdateInfo(updateInfo);
+      
+      alert('Pricing data updated successfully!');
+    } catch (error) {
+      console.error('Failed to update pricing:', error);
+      alert('Failed to update pricing data. Please try again.');
+    } finally {
+      setIsLoadingExternalPricing(false);
+    }
   };
 
   // Load official pricing
@@ -979,7 +1267,7 @@ AzureMetrics
                   </AlertDescription>
                 </Alert>
 
-                {/* Custom Pricing Toggle */}
+                {/* Task 7: Enhanced Custom Pricing Toggle with better labeling */}
                 <div className="flex items-center gap-2 mt-4">
                   <input
                     type="checkbox"
@@ -989,57 +1277,98 @@ AzureMetrics
                     className="rounded"
                   />
                   <Label htmlFor="customPricing" className="text-red-600">
-                    Use Custom Pricing (for negotiated rates with Microsoft)
+                    Use Custom Pricing
                   </Label>
                 </div>
+                
+                {/* Task 7: Enhanced help text for custom pricing */}
+                <Alert className="mt-2 border-red-200 bg-red-50">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription className="text-red-700">
+                    <strong>Custom Pricing:</strong> Use this section only if you have negotiated rates with Microsoft 
+                    or special enterprise agreements. Default values shown are official Microsoft pricing. 
+                    Custom pricing will override all calculations below.
+                  </AlertDescription>
+                </Alert>
 
-                {/* Custom Pricing Inputs */}
+                {/* Task 7: Enhanced Custom Pricing Inputs with defaults and descriptions */}
                 {useCustomPricing && (
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <div>
-                      <Label className="text-sm">PAYGO Input ($/1M)</Label>
+                      <Label className="text-sm font-medium">PAYGO Input ($/1M tokens)</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={customPricing.paygo_input}
                         onChange={(e) => handleCustomPricingChange('paygo_input', e.target.value)}
+                        placeholder={getTokenPricing(selectedModel).input.toString()}
                       />
+                      <p className="text-xs text-red-600 mt-1">Default: ${getTokenPricing(selectedModel).input}/M</p>
                     </div>
                     <div>
-                      <Label className="text-sm">PAYGO Output ($/1M)</Label>
+                      <Label className="text-sm font-medium">PAYGO Output ($/1M tokens)</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={customPricing.paygo_output}
                         onChange={(e) => handleCustomPricingChange('paygo_output', e.target.value)}
+                        placeholder={getTokenPricing(selectedModel).output.toString()}
                       />
+                      <p className="text-xs text-red-600 mt-1">Default: ${getTokenPricing(selectedModel).output}/M</p>
                     </div>
                     <div>
-                      <Label className="text-sm">PTU Hourly ($/hour)</Label>
+                      <Label className="text-sm font-medium">PTU Hourly ($/hour)</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={customPricing.ptu_hourly}
                         onChange={(e) => handleCustomPricingChange('ptu_hourly', e.target.value)}
+                        placeholder="1.00"
                       />
+                      <p className="text-xs text-red-600 mt-1">Official: $1.00/hour base</p>
                     </div>
                     <div>
-                      <Label className="text-sm">PTU Monthly ($/month)</Label>
+                      <Label className="text-sm font-medium">PTU Monthly ($/month)</Label>
                       <Input
                         type="number"
                         step="1"
                         value={customPricing.ptu_monthly}
                         onChange={(e) => handleCustomPricingChange('ptu_monthly', e.target.value)}
+                        placeholder="730"
                       />
+                      <p className="text-xs text-red-600 mt-1">Official: $730/month</p>
                     </div>
                     <div>
-                      <Label className="text-sm">PTU Yearly ($/year)</Label>
+                      <Label className="text-sm font-medium">PTU Yearly ($/year)</Label>
                       <Input
                         type="number"
                         step="1"
                         value={customPricing.ptu_yearly}
                         onChange={(e) => handleCustomPricingChange('ptu_yearly', e.target.value)}
+                        placeholder="6132"
                       />
+                      <p className="text-xs text-red-600 mt-1">Official: $6,132/year (30% discount)</p>
+                    </div>
+                    
+                    {/* Task 7: Reset button for custom pricing */}
+                    <div className="col-span-full">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          const official = calculateOfficialPTUPricing(selectedRegion, selectedDeployment);
+                          const tokens = getTokenPricing(selectedModel);
+                          setCustomPricing({
+                            paygo_input: tokens.input,
+                            paygo_output: tokens.output,
+                            ptu_hourly: official.hourly,
+                            ptu_monthly: official.monthly,
+                            ptu_yearly: official.yearly
+                          });
+                        }}
+                        className="mt-2"
+                      >
+                        Reset to Official Pricing
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -1148,6 +1477,94 @@ AzureMetrics
                 <p className="text-sm text-gray-600 mt-1">Base PTU reservation for hybrid approach</p>
               </div>
             </div>
+
+            {/* Task 4: PTU Validation Warnings */}
+            {(() => {
+              const validationWarnings = getPTUValidationWarnings();
+              return validationWarnings.length > 0 && (
+                <Alert className="mt-4 border-orange-200 bg-orange-50">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <strong className="text-orange-800">PTU Input Validation:</strong>
+                      {validationWarnings.map((warning, index) => (
+                        <div key={index} className="ml-4">
+                          <div className="font-medium text-orange-800">{warning.field}:</div>
+                          <ul className="ml-4 text-orange-700">
+                            {warning.warnings.map((msg, msgIndex) => (
+                              <li key={msgIndex} className="text-sm">• {msg}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              );
+            })()}
+
+            {/* Task 3: PAYG Token-based Pricing Inputs */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  PAYG Token Usage (Alternative to TPM)
+                </CardTitle>
+                <CardDescription>
+                  Specify input/output token usage for more accurate PAYG cost calculation.
+                  Leave blank to use TPM-based estimation with ratio below.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="inputTokensMonthly">Monthly Input Tokens</Label>
+                    <Input
+                      id="inputTokensMonthly"
+                      type="number"
+                      value={formData.inputTokensMonthly}
+                      onChange={(e) => handleInputChange('inputTokensMonthly', e.target.value)}
+                      placeholder="0"
+                    />
+                    <p className="text-sm text-gray-600 mt-1">Total input tokens per month</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="outputTokensMonthly">Monthly Output Tokens</Label>
+                    <Input
+                      id="outputTokensMonthly"
+                      type="number"
+                      value={formData.outputTokensMonthly}
+                      onChange={(e) => handleInputChange('outputTokensMonthly', e.target.value)}
+                      placeholder="0"
+                    />
+                    <p className="text-sm text-gray-600 mt-1">Total output tokens per month</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="inputOutputRatio">Input/Output Ratio</Label>
+                    <Input
+                      id="inputOutputRatio"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="1"
+                      value={formData.inputOutputRatio}
+                      onChange={(e) => handleInputChange('inputOutputRatio', e.target.value)}
+                      placeholder="0.5"
+                    />
+                    <p className="text-sm text-gray-600 mt-1">Ratio of input to total tokens (0.5 = 50/50 split)</p>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 border border-blue-200 bg-blue-50 rounded-lg">
+                  <div className="flex items-start">
+                    <Info className="h-4 w-4 mt-0.5 text-blue-600 flex-shrink-0 mr-1" />
+                    <div className="text-blue-700">
+                      <strong>Usage:</strong> If you specify monthly token counts above, they will be used for PAYG calculation.
+                      Otherwise, TPM values will be used with the input/output ratio.
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Alert className="mt-6 border-green-200 bg-green-50">
               <AlertDescription>
@@ -1319,6 +1736,19 @@ AzureMetrics
                 <CardContent className="p-4 text-center">
                   <h3 className="font-medium text-gray-800">PAYGO</h3>
                   <p className="text-xs text-gray-600 mb-2">No commitment required</p>
+                  {/* Task 3: Enhanced PAYGO breakdown */}
+                  {calculations.paygoBreakdown && (
+                    <div className="text-xs text-gray-600 mb-2 space-y-1">
+                      <div>Input: ${calculations.paygoBreakdown.inputCost?.toFixed(2) || '0.00'}</div>
+                      <div>Output: ${calculations.paygoBreakdown.outputCost?.toFixed(2) || '0.00'}</div>
+                      {calculations.paygoBreakdown.pricing && (
+                        <div className="mt-1 pt-1 border-t border-gray-300">
+                          <div>${calculations.paygoBreakdown.pricing.input}/M input</div>
+                          <div>${calculations.paygoBreakdown.pricing.output}/M output</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="text-right">
                     <span className="text-xs text-gray-600">Pay-as-you-go</span>
                     <div className="text-2xl font-bold text-gray-600">${calculations.monthlyPaygoCost?.toFixed(2) || '0.00'}</div>
@@ -1413,6 +1843,203 @@ AzureMetrics
                     <Bar dataKey="cost" fill="#8884d8" />
                   </BarChart>
                 </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Task 10: Export Functionality */}
+            <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Download className="h-5 w-5 text-blue-600" />
+                  <CardTitle className="text-blue-800">Export Analysis Report</CardTitle>
+                </div>
+                <CardDescription>Download comprehensive cost analysis and recommendations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-gray-800">Report Contents:</h4>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        Configuration summary ({selectedModel}, {selectedRegion}, {selectedDeployment})
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        Cost breakdown (PTU vs PAYG)
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        Break-even analysis and recommendations
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        Usage pattern analysis
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        Throughput and utilization metrics
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-gray-800">Export Options:</h4>
+                    <div className="space-y-2">
+                      <Button 
+                        onClick={handleExportCSV}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        variant="default"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export as CSV
+                      </Button>
+                      <Button 
+                        onClick={handleExportJSON}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        variant="default"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export as JSON
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Files include timestamp and are ready for sharing or further analysis
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Task 9: External Pricing Data Status */}
+            <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-purple-600" />
+                    <CardTitle className="text-purple-800">External Pricing Data</CardTitle>
+                  </div>
+                  {pricingUpdateInfo?.hasUpdate && (
+                    <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                      Update Available
+                    </Badge>
+                  )}
+                </div>
+                <CardDescription>Current pricing data version and status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {externalPricingData ? (
+                  <div className="space-y-4">
+                    {/* Pricing Data Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <span className="text-sm text-gray-600">Version</span>
+                        <div className="text-sm font-medium">{externalPricingData.version}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-sm text-gray-600">Last Updated</span>
+                        <div className="text-sm font-medium">
+                          {new Date(externalPricingData.lastUpdated).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-sm text-gray-600">Status</span>
+                        <div className="text-sm font-medium">
+                          {pricingUpdateInfo ? pricingUpdateInfo.message : 'Recently checked'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Source Information */}
+                    {externalPricingData.sourceUrl && (
+                      <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium text-gray-700">Data Source</span>
+                        </div>
+                        <div className="text-sm text-gray-600 break-all">
+                          <a 
+                            href={externalPricingData.sourceUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            {externalPricingData.sourceUrl}
+                          </a>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Official Microsoft Learn documentation
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Update Button */}
+                    <div className="flex justify-center">
+                      <Button 
+                        onClick={handleUpdateExternalPricing}
+                        disabled={isLoadingExternalPricing}
+                        className="min-w-[200px]"
+                        variant="outline"
+                      >
+                        {isLoadingExternalPricing ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                        )}
+                        {isLoadingExternalPricing ? 'Updating...' : 'Check for Updates'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-center py-6">
+                      <RefreshCw className={`h-8 w-8 mx-auto text-gray-400 mb-3 ${isLoadingExternalPricing ? 'animate-spin' : ''}`} />
+                      <p className="text-gray-600">
+                        {isLoadingExternalPricing ? 'Loading external pricing data...' : 'External pricing data unavailable'}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Using fallback pricing configuration
+                      </p>
+                    </div>
+                    
+                    {/* Fallback source information */}
+                    <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-700">Data Source</span>
+                      </div>
+                      <div className="text-sm text-gray-600 break-all">
+                        <a 
+                          href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding
+                        </a>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Official Microsoft Learn documentation
+                      </div>
+                    </div>
+                    
+                    {/* Update Button */}
+                    <div className="flex justify-center">
+                      <Button 
+                        onClick={handleUpdateExternalPricing}
+                        disabled={isLoadingExternalPricing}
+                        className="min-w-[200px]"
+                        variant="outline"
+                      >
+                        {isLoadingExternalPricing ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                        )}
+                        {isLoadingExternalPricing ? 'Loading...' : 'Load External Data'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
