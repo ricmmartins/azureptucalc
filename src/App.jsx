@@ -2328,7 +2328,6 @@ AzureMetrics
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-indigo-600" />
                 <CardTitle className="text-indigo-800">Official PTU Pricing Transparency</CardTitle>
-                <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">Task 2 Enhanced</Badge>
               </div>
               <CardDescription className="text-indigo-700">
                 Aligned with Microsoft's official US$1/PTU-hour base rate with accurate regional and deployment multipliers
