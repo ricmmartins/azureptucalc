@@ -30,7 +30,7 @@ const InteractiveCharts = ({
   calculations
 }) => {
   const [selectedTab, setSelectedTab] = useState('costs');
-  const [selectedTimeframe, setSelectedTimeframe] = useState('monthly');
+  // No internal state needed - all data comes from props
 
   // Enhanced cost comparison data
   const costComparisonData = useMemo(() => {
@@ -195,19 +195,8 @@ const InteractiveCharts = ({
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Interactive Cost Comparison</h3>
                 <div className="flex gap-2">
-                  <Badge 
-                    variant={selectedTimeframe === 'monthly' ? 'default' : 'outline'}
-                    className="cursor-pointer"
-                    onClick={() => setSelectedTimeframe('monthly')}
-                  >
-                    Monthly
-                  </Badge>
-                  <Badge 
-                    variant={selectedTimeframe === 'yearly' ? 'default' : 'outline'}
-                    className="cursor-pointer"
-                    onClick={() => setSelectedTimeframe('yearly')}
-                  >
-                    Yearly
+                  <Badge variant="default" className="bg-blue-100 text-blue-800">
+                    Monthly Costs
                   </Badge>
                 </div>
               </div>
@@ -417,17 +406,36 @@ const InteractiveCharts = ({
               </p>
               
               <div className="flex justify-center">
-                <ResponsiveContainer width={400} height={300}>
+                <ResponsiveContainer width={500} height={400}>
                   <PieChart>
                     <Pie
                       data={usagePatternData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={120}
+                      innerRadius={70}
+                      outerRadius={140}
                       paddingAngle={5}
                       dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}%`}
+                      label={({ name, value, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                        const RADIAN = Math.PI / 180;
+                        const radius = outerRadius + 30;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        
+                        return (
+                          <text 
+                            x={x} 
+                            y={y} 
+                            fill="#374151" 
+                            textAnchor={x > cx ? 'start' : 'end'} 
+                            dominantBaseline="central"
+                            fontSize="12"
+                            fontWeight="500"
+                          >
+                            {`${name}: ${value}%`}
+                          </text>
+                        );
+                      }}
                       labelLine={false}
                     >
                       {usagePatternData.map((entry, index) => (
@@ -443,15 +451,15 @@ const InteractiveCharts = ({
                 <div className="flex gap-6 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-green-500 rounded"></div>
-                    <span>Steady Usage</span>
+                    <span className="text-green-600 font-medium">Steady Usage</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-orange-500 rounded"></div>
-                    <span>Burst Periods</span>
+                    <span className="text-orange-600 font-medium">Burst Periods</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-red-500 rounded"></div>
-                    <span>Peak Spikes</span>
+                    <span className="text-red-600 font-medium">Peak Spikes</span>
                   </div>
                 </div>
               </div>
