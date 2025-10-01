@@ -21,6 +21,9 @@ import ExportService from './ExportService.js';
 // Temporarily comment out complex components
 import InteractiveCharts from './components/InteractiveCharts';
 // import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
+import WelcomeModal from './components/WelcomeModal';
+import GuidedTour from './components/GuidedTour';
+import { TooltipIcon, TooltipText } from './components/Tooltip';
 import './App.css';
 
 function App() {
@@ -120,6 +123,54 @@ function App() {
     
     loadExternalPricing();
   }, [externalPricingService]);
+
+  // Onboarding state management
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showGuidedTour, setShowGuidedTour] = useState(false);
+
+  // Check if user is first-time visitor
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('azurePTUCalculatorVisited');
+    const hasCompletedOnboarding = localStorage.getItem('azurePTUOnboardingCompleted');
+    
+    if (!hasVisited && !hasCompletedOnboarding) {
+      // First-time visitor - show welcome modal
+      setShowWelcomeModal(true);
+      localStorage.setItem('azurePTUCalculatorVisited', 'true');
+    }
+  }, []);
+
+  // Onboarding handlers
+  const handleStartTour = () => {
+    setShowWelcomeModal(false);
+    setShowGuidedTour(true);
+  };
+
+  const handleCompleteTour = () => {
+    setShowGuidedTour(false);
+    localStorage.setItem('azurePTUOnboardingCompleted', 'true');
+  };
+
+  const handleSkipTour = () => {
+    setShowGuidedTour(false);
+    localStorage.setItem('azurePTUOnboardingCompleted', 'true');
+  };
+
+  const handleCloseWelcome = () => {
+    setShowWelcomeModal(false);
+    localStorage.setItem('azurePTUOnboardingCompleted', 'true');
+  };
+
+  // Function to populate sample data for the guided tour
+  const populateSampleData = () => {
+    setFormData(prev => ({
+      ...prev,
+      avgTPM: 25000,        // Sample: 25K tokens per minute
+      p99TPM: 45000,        // Sample: 45K peak tokens per minute
+      recommendedPTU: 0,    // Will be calculated
+      monthlyMinutes: 43800 // Keep existing monthly minutes
+    }));
+  };
   
   // Helper function to get current model throughput
   const getCurrentModelThroughput = () => {
@@ -1052,7 +1103,7 @@ AzureMetrics
         </Card>
 
         {/* Step 2: Configuration */}
-        <Card>
+        <Card className="region-model-section">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Globe className="h-5 w-5 text-blue-600" />
@@ -1268,7 +1319,7 @@ AzureMetrics
                 </Alert>
 
                 {/* Task 7: Enhanced Custom Pricing Toggle with better labeling */}
-                <div className="flex items-center gap-2 mt-4">
+                <div className="flex items-center gap-2 mt-4 custom-pricing-section">
                   <input
                     type="checkbox"
                     id="customPricing"
@@ -1278,6 +1329,7 @@ AzureMetrics
                   />
                   <Label htmlFor="customPricing" className="text-red-600">
                     Use Custom Pricing
+                    <TooltipIcon term="paygo" />
                   </Label>
                 </div>
                 
@@ -1376,9 +1428,12 @@ AzureMetrics
             </Card>
 
             {/* KQL Input Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 usage-inputs-section">
               <div>
-                <Label htmlFor="avgTPM">Average TPM (from KQL)</Label>
+                <Label htmlFor="avgTPM">
+                  Average TPM (from KQL)
+                  <TooltipIcon term="tpm" />
+                </Label>
                 <Input
                   id="avgTPM"
                   type="number"
@@ -1389,7 +1444,10 @@ AzureMetrics
                 <p className="text-sm text-gray-600 mt-1">AvgTPM from your KQL query results</p>
               </div>
               <div>
-                <Label htmlFor="p99TPM">P99 TPM (from KQL)</Label>
+                <Label htmlFor="p99TPM">
+                  P99 TPM (from KQL)
+                  <TooltipIcon term="p99" />
+                </Label>
                 <Input
                   id="p99TPM"
                   type="number"
@@ -1444,7 +1502,10 @@ AzureMetrics
                 <p className="text-sm text-gray-600 mt-1">MaxPTU - maximum PTU needs</p>
               </div>
               <div>
-                <Label htmlFor="recommendedPTU">Recommended PTU (from KQL)</Label>
+                <Label htmlFor="recommendedPTU">
+                  Recommended PTU (from KQL)
+                  <TooltipIcon term="ptu" />
+                </Label>
                 <Input
                   id="recommendedPTU"
                   type="number"
@@ -1638,7 +1699,7 @@ AzureMetrics
         ) : (
           <>
             {/* Burst Pattern Analysis */}
-            <Card>
+            <Card className="results-section">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-blue-600" />
@@ -1847,7 +1908,7 @@ AzureMetrics
             </Card>
 
             {/* Task 10: Export Functionality */}
-            <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+            <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200 export-section">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Download className="h-5 w-5 text-blue-600" />
@@ -2291,7 +2352,8 @@ AzureMetrics
 
             {/* Interactive Analytics Dashboard with dynamic data - Updated */}
             {showInteractiveCharts && (
-              <InteractiveCharts
+              <div className="interactive-charts-section">
+                <InteractiveCharts
                 costData={{
                   paygo: calculations.monthlyPaygoCost || 100,
                   ptuHourly: calculations.monthlyPtuHourlyCost || 80,
@@ -2324,6 +2386,7 @@ AzureMetrics
                 selectedModel={selectedModel}
                 selectedRegion={selectedRegion}
               />
+              </div>
             )}
           </>
         )}
@@ -2541,6 +2604,20 @@ AzureMetrics
           </div>
         )}
       </div>
+
+      {/* Onboarding Components */}
+      <WelcomeModal 
+        isOpen={showWelcomeModal}
+        onClose={handleCloseWelcome}
+        onStartTour={handleStartTour}
+      />
+      
+      <GuidedTour
+        isActive={showGuidedTour}
+        onComplete={handleCompleteTour}
+        onSkip={handleSkipTour}
+        onPopulateSampleData={populateSampleData}
+      />
     </div>
   );
 }

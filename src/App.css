@@ -58,3 +58,36 @@
   }
 }
 
+/* Guided Tour Styles */
+.tour-highlight {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3) !important;
+  border-radius: 8px !important;
+  position: relative !important;
+  z-index: 1000 !important;
+  transition: box-shadow 0.3s ease-in-out !important;
+}
+
+.tour-highlight::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 12px;
+  z-index: -1;
+  animation: tour-pulse 2s infinite;
+}
+
+@keyframes tour-pulse {
+  0%, 100% { 
+    background: rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% { 
+    background: rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1);
+  }
+}
+
