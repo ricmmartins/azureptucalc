@@ -28,6 +28,11 @@ import { TooltipIcon, TooltipText } from './components/Tooltip';
 import { SkeletonResultCard, SkeletonLoadingScreen } from './components/SkeletonLoader';
 import { CalculationProgress, InlineProgress, StatusIndicator } from './components/ProgressIndicators';
 import { SuccessToast, SuccessButton, CompletionFill, CelebrationAnimation } from './components/SuccessAnimations';
+// Results Presentation Components
+import ExecutiveSummary from './components/ExecutiveSummary';
+import CostComparisonTable from './components/CostComparisonTable';
+import SavingsHighlight from './components/SavingsHighlight';
+import ActionItems from './components/ActionItems';
 import { ErrorRecovery, ValidationError, HelpTooltip } from './components/ErrorRecovery';
 import './App.css';
 
@@ -1862,6 +1867,31 @@ AzureMetrics
           </div>
         ) : (
           <>
+            {/* Results Presentation - Executive Summary and Key Insights */}
+            <ExecutiveSummary 
+              calculations={calculations} 
+              currentPricing={currentPricing}
+              onExportCSV={handleExportCSV}
+              onExportJSON={handleExportJSON}
+              onShowCharts={() => setShowInteractiveCharts(true)}
+            />
+            
+            <SavingsHighlight 
+              calculations={calculations}
+            />
+            
+            <CostComparisonTable 
+              calculations={calculations} 
+              currentPricing={currentPricing}
+            />
+            
+            <ActionItems 
+              calculations={calculations}
+              selectedModel={selectedModel}
+              selectedRegion={selectedRegion}
+              currentPricing={currentPricing}
+            />
+
             {/* Burst Pattern Analysis */}
             <CompletionFill isComplete={!isCalculating && Object.keys(calculations).length > 0}>
               <Card className="results-section">
