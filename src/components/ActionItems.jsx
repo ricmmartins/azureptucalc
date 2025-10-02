@@ -53,34 +53,6 @@ const ActionItems = ({ calculations, selectedModel, selectedRegion, currentPrici
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  // Handle action item clicks
-  const handleActionClick = (item) => {
-    if (item.priority === 'High') {
-      // Show implementation guidance for high priority items
-      const message = `🚀 ${item.title}\n\n${item.description}\n\n⏱️ Timeframe: ${item.timeframe}\n\nThis high-priority action can help you achieve immediate results.`;
-      if (confirm(message + '\n\nWould you like to copy this action to your clipboard for reference?')) {
-        // Copy action details to clipboard
-        const actionText = `Action Item: ${item.title}\nCategory: ${item.category}\nPriority: ${item.priority}\nDescription: ${item.description}\nTimeframe: ${item.timeframe}`;
-        navigator.clipboard.writeText(actionText).then(() => {
-          alert('✅ Action item copied to clipboard!');
-        }).catch(() => {
-          console.log('Action details:', actionText);
-        });
-      }
-    } else {
-      // Show planning guidance for lower priority items
-      const message = `📋 Planning: ${item.title}\n\n${item.description}\n\n⏱️ Suggested timeframe: ${item.timeframe}`;
-      if (confirm(message + '\n\nWould you like to copy this to your planning notes?')) {
-        const planningText = `Planning Item: ${item.title}\nCategory: ${item.category}\nPriority: ${item.priority}\nDescription: ${item.description}\nTimeframe: ${item.timeframe}`;
-        navigator.clipboard.writeText(planningText).then(() => {
-          alert('✅ Planning item copied to clipboard!');
-        }).catch(() => {
-          console.log('Planning details:', planningText);
-        });
-      }
-    }
-  };
-
   const {
     recommendation,
     ptuNeeded,
@@ -299,7 +271,7 @@ const ActionItems = ({ calculations, selectedModel, selectedRegion, currentPrici
       <CardContent className="space-y-4">
         {/* Quick Summary Alert */}
         <Alert className="border-blue-200 bg-blue-50">
-          <Lightbulb className="h-4 w-4" />
+          <Lightbulb className="h-4 w-4 mr-2" />
           <AlertDescription>
             <div className="font-medium text-blue-800 mb-1">
               {recommendation === 'Full PTU Reservation' && 'Ready to save money with PTU reservations'}
@@ -372,19 +344,6 @@ const ActionItems = ({ calculations, selectedModel, selectedRegion, currentPrici
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* Action Button */}
-              <div className="flex items-center">
-                <Button 
-                  variant={item.priority === 'High' ? 'default' : 'outline'}
-                  size="sm"
-                  className="min-w-0"
-                  onClick={() => handleActionClick(item)}
-                >
-                  {item.priority === 'High' ? 'Start' : 'Plan'}
-                  <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
               </div>
             </div>
           ))}
