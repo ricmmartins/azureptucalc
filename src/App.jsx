@@ -24,6 +24,11 @@ import InteractiveCharts from './components/InteractiveCharts';
 import WelcomeModal from './components/WelcomeModal';
 import GuidedTour from './components/GuidedTour';
 import { TooltipIcon, TooltipText } from './components/Tooltip';
+// Visual Feedback Components
+import { SkeletonResultCard, SkeletonLoadingScreen } from './components/SkeletonLoader';
+import { CalculationProgress, InlineProgress, StatusIndicator } from './components/ProgressIndicators';
+import { SuccessToast, SuccessButton, CompletionFill, CelebrationAnimation } from './components/SuccessAnimations';
+import { ErrorRecovery, ValidationError, HelpTooltip } from './components/ErrorRecovery';
 import './App.css';
 
 function App() {
@@ -127,6 +132,27 @@ function App() {
   // Onboarding state management
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showGuidedTour, setShowGuidedTour] = useState(false);
+
+  // Visual Feedback States
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [calculationProgress, setCalculationProgress] = useState(0);
+  const [calculationSteps, setCalculationSteps] = useState([]);
+  const [currentCalculationStep, setCurrentCalculationStep] = useState(0);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [calculationError, setCalculationError] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  // Define calculation steps for progress tracking
+  const defaultCalculationSteps = [
+    { title: "Validating inputs", description: "Checking input values and constraints" },
+    { title: "Loading pricing data", description: "Fetching current Azure OpenAI pricing" },
+    { title: "Calculating PTU requirements", description: "Computing optimal PTU allocation" },
+    { title: "Analyzing cost scenarios", description: "Comparing PAYG vs PTU costs" },
+    { title: "Generating recommendations", description: "Creating cost optimization suggestions" }
+  ];
 
   // Check if user is first-time visitor
   useEffect(() => {
@@ -439,6 +465,69 @@ function App() {
     setCurrentPricing(pricing);
   }, [selectedModel, selectedDeployment, useCustomPricing, customPricing, formData.model]);
 
+  // Enhanced calculation function with progress tracking
+  const performCalculationsWithProgress = async () => {
+    if (!hasValidData) {
+      setCalculations({});
+      setIsCalculating(false);
+      return;
+    }
+
+    try {
+      setIsCalculating(true);
+      setCalculationProgress(0);
+      setCalculationSteps(defaultCalculationSteps);
+      setCurrentCalculationStep(0);
+      setCalculationError(null);
+
+      // Step 1: Validate inputs
+      setCurrentCalculationStep(0);
+      setCalculationProgress(20);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Step 2: Load pricing data
+      setCurrentCalculationStep(1);
+      setCalculationProgress(40);
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Step 3: Calculate PTU requirements
+      setCurrentCalculationStep(2);
+      setCalculationProgress(60);
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Step 4: Analyze cost scenarios  
+      setCurrentCalculationStep(3);
+      setCalculationProgress(80);
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Step 5: Generate recommendations
+      setCurrentCalculationStep(4);
+      setCalculationProgress(100);
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Show success
+      setSuccessMessage('Calculations completed successfully!');
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 3000);
+      
+      // Trigger celebration for first successful calculation
+      const hasCalculatedBefore = localStorage.getItem('azurePTUCalculationCompleted');
+      if (!hasCalculatedBefore) {
+        setShowCelebration(true);
+        setTimeout(() => setShowCelebration(false), 3000);
+        localStorage.setItem('azurePTUCalculationCompleted', 'true');
+      }
+
+    } catch (error) {
+      setCalculationError(error);
+      console.error('Calculation error:', error);
+    } finally {
+      setIsCalculating(false);
+      setCalculationProgress(0);
+      setCurrentCalculationStep(0);
+    }
+  };
+
   // Calculate costs and recommendations
   useEffect(() => {
     // Only calculate if user has entered valid data
@@ -446,6 +535,15 @@ function App() {
       setCalculations({});
       return;
     }
+
+    // Use debouncing to avoid excessive calculations during typing
+    const timeoutId = setTimeout(() => {
+      // Trigger progress-tracked calculation for user-initiated changes
+      if (formData.avgTPM > 0 || formData.p99TPM > 0) {
+        performCalculationsWithProgress();
+      }
+    }, 500);
+
     // FIXED: Dynamic burst pattern analysis
     const burstRatio = formData.p99TPM && formData.avgTPM ? formData.p99TPM / formData.avgTPM : 1;
     const peakRatio = formData.maxTPM && formData.avgTPM ? formData.maxTPM / formData.avgTPM : 1;
@@ -651,6 +749,8 @@ function App() {
       // Task 3: PAYG breakdown for detailed cost display
       paygoBreakdown
     });
+
+    return () => clearTimeout(timeoutId);
   }, [formData, currentPricing, hasValidData, selectedModel, selectedDeployment]);
 
   // Handle form input changes
@@ -883,6 +983,35 @@ AzureMetrics
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
+      {/* Visual Feedback Components */}
+      <CalculationProgress
+        isVisible={isCalculating}
+        steps={calculationSteps}
+        currentStep={currentCalculationStep}
+        title="Calculating optimal PTU configuration..."
+      />
+      
+      <SuccessToast
+        isVisible={showSuccessToast}
+        message={successMessage}
+        position="top-right"
+      />
+      
+      <CelebrationAnimation
+        isVisible={showCelebration}
+        type="confetti"
+      />
+      
+      {calculationError && (
+        <div className="fixed top-4 left-4 right-4 z-40">
+          <ErrorRecovery
+            error={calculationError}
+            onRetry={() => performCalculationsWithProgress()}
+            onDismiss={() => setCalculationError(null)}
+          />
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <Card>
@@ -1452,7 +1581,15 @@ AzureMetrics
                   value={formData.avgTPM}
                   onChange={(e) => handleInputChange('avgTPM', e.target.value)}
                   placeholder="0"
+                  className={validationErrors.avgTPM ? 'border-red-300 focus:border-red-500' : ''}
                 />
+                {validationErrors.avgTPM && (
+                  <ValidationError 
+                    field="Average TPM"
+                    message={validationErrors.avgTPM}
+                    className="mt-1"
+                  />
+                )}
                 <p className="text-sm text-gray-600 mt-1">AvgTPM from your KQL query results</p>
               </div>
               <div>
@@ -1466,7 +1603,15 @@ AzureMetrics
                   value={formData.p99TPM}
                   onChange={(e) => handleInputChange('p99TPM', e.target.value)}
                   placeholder="0"
+                  className={validationErrors.p99TPM ? 'border-red-300 focus:border-red-500' : ''}
                 />
+                {validationErrors.p99TPM && (
+                  <ValidationError 
+                    field="P99 TPM"
+                    message={validationErrors.p99TPM}
+                    className="mt-1"
+                  />
+                )}
                 <p className="text-sm text-gray-600 mt-1">P99TPM - shows burst patterns</p>
               </div>
               <div>
@@ -1708,10 +1853,18 @@ AzureMetrics
               </div>
             </CardContent>
           </Card>
+        ) : isCalculating ? (
+          /* Show skeleton loading during calculations */
+          <div className="space-y-6">
+            <SkeletonResultCard showChart={false} />
+            <SkeletonResultCard showChart={true} />
+            <SkeletonResultCard showChart={false} />
+          </div>
         ) : (
           <>
             {/* Burst Pattern Analysis */}
-            <Card className="results-section">
+            <CompletionFill isComplete={!isCalculating && Object.keys(calculations).length > 0}>
+              <Card className="results-section">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-blue-600" />
@@ -2400,6 +2553,7 @@ AzureMetrics
               />
               </div>
             )}
+            </CompletionFill>
           </>
         )}
 
