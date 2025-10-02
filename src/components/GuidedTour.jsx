@@ -206,7 +206,16 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
       <div className="fixed inset-0 bg-black bg-opacity-50" style={{ zIndex: 999999 }} />
       
       {/* Tour Step Card */}
-      <div className="fixed top-4 right-4 w-80 tour-controls" style={{ zIndex: 1000000 }}>
+      <div 
+        className="tour-controls" 
+        style={{ 
+          position: 'fixed', 
+          top: '1rem', 
+          right: '1rem', 
+          zIndex: 1000000,
+          width: '20rem'
+        }}
+      >
         <Card className="border-2 border-blue-500 shadow-2xl">
           <CardContent className="p-4">
             {/* Header */}

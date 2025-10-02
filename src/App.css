@@ -83,16 +83,15 @@
 /* Tour Controls - Absolute highest priority */
 .tour-controls {
   z-index: 1000000 !important; /* Maximum priority */
-  position: relative !important;
 }
 
 /* Global override for all high z-index elements when tour is active */
-body.tour-active [class*="z-"],
-body.tour-active [style*="z-index"],
-body.tour-active [data-radix-popper-content-wrapper],
-body.tour-active [data-radix-portal] > *,
-body.tour-active .fixed,
-body.tour-active .absolute {
+body.tour-active [class*="z-"]:not(.tour-controls),
+body.tour-active [style*="z-index"]:not(.tour-controls),
+body.tour-active [data-radix-popper-content-wrapper]:not(.tour-controls),
+body.tour-active [data-radix-portal] > *:not(.tour-controls),
+body.tour-active .fixed:not(.tour-controls),
+body.tour-active .absolute:not(.tour-controls) {
   z-index: 999998 !important; /* Just below tour */
 }
 
