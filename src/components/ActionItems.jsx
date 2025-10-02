@@ -270,9 +270,9 @@ const ActionItems = ({ calculations, selectedModel, selectedRegion, currentPrici
       
       <CardContent className="space-y-4">
         {/* Quick Summary Alert */}
-        <Alert className="border-blue-200 bg-blue-50">
-          <Lightbulb className="h-4 w-4 mr-2" />
-          <AlertDescription>
+        <Alert className="border-blue-200 bg-blue-50 !justify-items-start">
+          <Lightbulb className="h-4 w-4" />
+          <AlertDescription className="!justify-self-start !text-left">
             <div className="font-medium text-blue-800 mb-1">
               {recommendation === 'Full PTU Reservation' && 'Ready to save money with PTU reservations'}
               {recommendation === 'Consider Hybrid Model' && 'Hybrid model offers balanced cost and flexibility'}
