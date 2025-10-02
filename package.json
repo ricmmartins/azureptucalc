@@ -33,8 +33,10 @@
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.2",
+    "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-progress": "^1.1.7",
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.1",
@@ -66,4 +68,3 @@
     "node": ">=18.0.0"
   }
 }
-

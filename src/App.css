@@ -63,7 +63,7 @@
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3) !important;
   border-radius: 8px !important;
   position: relative !important;
-  z-index: 1000 !important;
+  z-index: 999999 !important; /* Extremely high priority */
   transition: box-shadow 0.3s ease-in-out !important;
 }
 
@@ -78,6 +78,55 @@
   border-radius: 12px;
   z-index: -1;
   animation: tour-pulse 2s infinite;
+}
+
+/* Tour Controls - Absolute highest priority */
+.tour-controls {
+  z-index: 1000000 !important; /* Maximum priority */
+  position: relative !important;
+}
+
+/* Global override for all high z-index elements when tour is active */
+body.tour-active [class*="z-"],
+body.tour-active [style*="z-index"],
+body.tour-active [data-radix-popper-content-wrapper],
+body.tour-active [data-radix-portal] > *,
+body.tour-active .fixed,
+body.tour-active .absolute {
+  z-index: 999998 !important; /* Just below tour */
+}
+
+/* Specific overrides for common modal/dialog patterns */
+body.tour-active .z-50,
+body.tour-active .z-40,
+body.tour-active .z-30,
+body.tour-active .z-20,
+body.tour-active .z-10 {
+  z-index: 999998 !important;
+}
+
+/* Force override for any Radix UI portals */
+body.tour-active [data-radix-portal] {
+  z-index: 999998 !important;
+}
+
+body.tour-active [data-radix-portal] * {
+  z-index: inherit !important;
+}
+
+/* Enhanced Wizard Mode Styles */
+.wizard-modal {
+  z-index: 9999 !important; /* Higher than tour highlights */
+}
+
+.wizard-overlay {
+  z-index: 9998 !important;
+  background: rgba(0, 0, 0, 0.8);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 @keyframes tour-pulse {

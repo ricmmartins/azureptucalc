@@ -8,6 +8,21 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isDataPopulated, setIsDataPopulated] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Add/remove body class when tour is active
+  useEffect(() => {
+    if (isActive) {
+      document.body.classList.add('tour-active');
+    } else {
+      document.body.classList.remove('tour-active');
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('tour-active');
+    };
+  }, [isActive]);
+  
   const [tourSteps] = useState([
     {
       id: 'region-model',
@@ -188,10 +203,10 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-40" />
+      <div className="fixed inset-0 bg-black bg-opacity-50" style={{ zIndex: 999999 }} />
       
       {/* Tour Step Card */}
-      <div className="fixed top-4 right-4 z-50 w-80">
+      <div className="fixed top-4 right-4 w-80 tour-controls" style={{ zIndex: 1000000 }}>
         <Card className="border-2 border-blue-500 shadow-2xl">
           <CardContent className="p-4">
             {/* Header */}
@@ -336,7 +351,6 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
       <style jsx global>{`
         .tour-highlight {
           position: relative;
-          z-index: 45;
           border: 2px solid #3b82f6 !important;
           border-radius: 8px;
           box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 10px 25px rgba(0, 0, 0, 0.2) !important;

@@ -896,6 +896,18 @@ AzureMetrics
             <CardDescription className="text-lg">
               Optimize your Azure OpenAI costs by analyzing real usage patterns and comparing PAYGO, PTU, and hybrid pricing models
             </CardDescription>
+            
+            {/* Quick Action Button */}
+            <div className="flex justify-center mt-4">
+              <Button 
+                onClick={handleStartTour}
+                variant="outline"
+                size="sm"
+              >
+                <Target className="h-4 w-4 mr-2" />
+                Quick Tour
+              </Button>
+            </div>
           </CardHeader>
         </Card>
 
