@@ -270,9 +270,9 @@ const ActionItems = ({ calculations, selectedModel, selectedRegion, currentPrici
       
       <CardContent className="space-y-4">
         {/* Quick Summary Alert */}
-        <Alert className="border-blue-200 bg-blue-50 !justify-items-start">
-          <Lightbulb className="h-4 w-4" />
-          <AlertDescription className="!justify-self-start !text-left">
+        <div className="border border-blue-200 bg-blue-50 rounded-lg p-4 flex items-start gap-2">
+          <Lightbulb className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
             <div className="font-medium text-blue-800 mb-1">
               {recommendation === 'Full PTU Reservation' && 'Ready to save money with PTU reservations'}
               {recommendation === 'Consider Hybrid Model' && 'Hybrid model offers balanced cost and flexibility'}
@@ -283,8 +283,8 @@ const ActionItems = ({ calculations, selectedModel, selectedRegion, currentPrici
               {recommendation === 'Consider Hybrid Model' && 'Combine base PTU capacity with PAYGO overflow for optimal cost-efficiency.'}
               {recommendation === 'PAYGO' && 'Focus on usage optimization and monitor for future PTU opportunities.'}
             </div>
-          </AlertDescription>
-        </Alert>
+          </div>
+        </div>
 
         {/* Action Items List */}
         <div className="space-y-4">
