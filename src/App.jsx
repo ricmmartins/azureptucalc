@@ -568,7 +568,7 @@ function App() {
       recommendationReason = 'High utilization with significant cost savings. PTU reservations offer substantial monthly savings.';
       recommendationIcon = '✅';
     } else if (monthlyPtuReservationCost < monthlyPaygoCost && utilizationRate > 0.2) {
-      recommendation = 'Consider Hybrid Model';
+      recommendation = 'Consider Spillover Model';
       recommendationReason = 'Moderate utilization with some cost benefits. Hybrid approach balances cost savings and flexibility.';
       recommendationIcon = '⚠️';
     } else if (utilizationRate < 0.2) {
@@ -591,7 +591,7 @@ function App() {
     // FIXED: Dynamic peak efficiency calculation
     const peakEfficiency = Math.min(utilizationRate * 100, 100);
     
-    // Hybrid model calculations
+    // Spillover model calculations
     const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
     const hybridOverflowTPM = Math.max(0, formData.p99TPM - (hybridBasePTU * currentPricing.tokensPerPTUPerMinute));
     const hybridOverflowTokensMonthly = (hybridOverflowTPM * formData.monthlyMinutes) / 1000000;
@@ -1289,7 +1289,7 @@ AzureMetrics
                           </div>
                           <div>
                             <strong>Yearly:</strong> ${currentPricing.ptu_yearly}/PTU
-                            <div className="text-xs text-blue-600">{currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% discount vs monthly</div>
+                            <div className="text-xs text-blue-600">{currentPricing.officialPricing?.discount?.yearlyVsHourly || 30}% discount vs monthly</div>
                           </div>
                           <div>
                             <strong>Regional Multiplier:</strong> {currentPricing.officialPricing?.multipliers?.combined || 1}x
@@ -1297,7 +1297,7 @@ AzureMetrics
                           </div>
                         </div>
                         <div className="mt-2 text-xs text-blue-700">
-                          💡 <strong>Discount Transparency:</strong> Yearly reservations provide {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% savings compared to monthly billing
+                          💡 <strong>Discount Transparency:</strong> Yearly reservations provide {currentPricing.officialPricing?.discount?.yearlyVsHourly || 30}% savings compared to monthly billing
                         </div>
                       </div>
                     )}
@@ -1539,7 +1539,7 @@ AzureMetrics
                 <p className="text-sm text-gray-600 mt-1">Total minutes of usage per month</p>
               </div>
               <div>
-                <Label htmlFor="basePTUs">Base PTUs (for Hybrid Model)</Label>
+                <Label htmlFor="basePTUs">Base PTUs (for Spillover)</Label>
                 <Input
                   id="basePTUs"
                   type="number"
@@ -1547,7 +1547,7 @@ AzureMetrics
                   onChange={(e) => handleInputChange('basePTUs', e.target.value)}
                   placeholder="0"
                 />
-                <p className="text-sm text-gray-600 mt-1">Base PTU reservation for hybrid approach</p>
+                <p className="text-sm text-gray-600 mt-1">Base PTU reservation for spillover approach</p>
               </div>
             </div>
 
@@ -1644,10 +1644,10 @@ AzureMetrics
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-lg font-semibold text-green-800 mb-2 flex items-center gap-2">
-                      Pro Tip: Hybrid Model Strategy
+                      Pro Tip: Spillover Strategy
                     </h4>
                     <p className="text-green-700 mb-3">
-                      <strong>Hybrid Model (Base + Spillover):</strong> Reserve base PTUs for average usage, let burst traffic "spill over" to PAYGO. 
+                      <strong>Spillover Model (Base + PAYGO overflow):</strong> Reserve base PTUs for average usage, let burst traffic "spill over" to PAYGO. 
                       Best for predictable baselines with occasional bursts (≈2–5×).
                     </p>
                   </div>
@@ -1943,7 +1943,7 @@ AzureMetrics
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
-                        Break-even analysis and recommendations
+                        Reservation savings opportunities
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
@@ -1951,12 +1951,12 @@ AzureMetrics
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
-                        Throughput and utilization metrics
+                        Personalized recommendations
                       </div>
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <h4 className="font-medium text-gray-800">Export Options:</h4>
+                    <h4 className="font-medium text-gray-800 mb-2">Export Options:</h4>
                     <div className="space-y-2">
                       <Button 
                         onClick={handleExportCSV}
@@ -2199,7 +2199,7 @@ AzureMetrics
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-2xl">⚠️</span>
-                        <h3 className="font-medium text-yellow-800">Consider Hybrid Model</h3>
+                        <h3 className="font-medium text-yellow-800">Consider Spillover Model</h3>
                       </div>
                       <div className="space-y-2 text-sm">
                         <div><strong>TPM Range:</strong> 10,000-30,000 TPM</div>
@@ -2277,7 +2277,7 @@ AzureMetrics
                               <li>Consider PTU if usage grows consistently</li>
                             </>
                           )}
-                          {calculations.recommendation === 'Consider Hybrid Model' && (
+                          {calculations.recommendation === 'Consider Spillover Model' && (
                             <>
                               <li>Reserve base PTUs for average usage</li>
                               <li>Let burst traffic use PAYGO overflow</li>
@@ -2307,7 +2307,7 @@ AzureMetrics
                               <li>Monitor for usage pattern changes</li>
                             </>
                           )}
-                          {calculations.recommendation === 'Consider Hybrid Model' && (
+                          {calculations.recommendation === 'Consider Spillover Model' && (
                             <>
                               <li>Balance between cost and flexibility</li>
                               <li>Requires monitoring of overflow costs</li>
@@ -2481,7 +2481,7 @@ AzureMetrics
                     <div className="pt-2 border-t border-indigo-200">
                       <strong>Annual Savings:</strong> ${((calculations.ptuNeeded * currentPricing.ptu_monthly * 12) - (calculations.ptuNeeded * currentPricing.ptu_yearly)).toLocaleString()}
                       <div className="text-xs text-green-600">
-                        {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% saved with yearly commitment
+                        {currentPricing.officialPricing?.discount?.yearlyVsHourly || 30}% saved with yearly commitment
                       </div>
                     </div>
                   </div>
@@ -2522,7 +2522,7 @@ AzureMetrics
                 
                 <div className="bg-white p-4 rounded-lg border border-purple-200">
                   <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                    ⚖️ Base PTUs for Hybrid Model
+                    ⚖️ Base PTUs for Spillover Model
                   </h4>
                   <p className="text-sm text-purple-700">
                     Reserve a fixed number of PTUs (e.g., 2 PTUs = 100k tokens/min guaranteed) for your baseline usage, with automatic PAYGO billing when demand exceeds reserved capacity.
@@ -2531,7 +2531,7 @@ AzureMetrics
                 
                 <div className="bg-white p-4 rounded-lg border border-purple-200">
                   <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                    🎯 Hybrid Strategy Benefits
+                    🎯 Spillover Strategy Benefits
                   </h4>
                   <p className="text-sm text-purple-700">
                     Combines predictable costs (PTU reservation) with elastic scalability (PAYGO overflow) - optimal for workloads with variable demand patterns.

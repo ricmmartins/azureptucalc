@@ -15,8 +15,12 @@ export const OFFICIAL_PTU_PRICING = {
   DEPLOYMENT_MULTIPLIERS: {
     regional: 1.0,     // Regional: base price
     dataZone: 1.2,     // Data Zone: 20% premium
-    global: 1.4        // Global: 40% premium
+    // Global should be base price per user's confirmation
+    global: 1.0
   },
+  // Optional explicit reservation monthly override (per PTU) to reflect Azure reservation pricing
+  // If set, this value will be used for reservation monthly cost instead of hourly*730
+  RESERVATION_MONTHLY_OVERRIDE: null, // e.g., 260
   
   // Regional multipliers (based on Azure cost factors)
   REGIONAL_MULTIPLIERS: {
@@ -63,19 +67,26 @@ export const calculateOfficialPTUPricing = (region, deploymentType) => {
   const regionalMultiplier = OFFICIAL_PTU_PRICING.REGIONAL_MULTIPLIERS[region] || 1.0;
   const deploymentMultiplier = OFFICIAL_PTU_PRICING.DEPLOYMENT_MULTIPLIERS[deploymentType] || 1.0;
   
+  // For Global deployment, do not apply regional multiplier (global is cross-region base)
+  const applyRegional = deploymentType !== 'global';
+  const effectiveRegionalMultiplier = applyRegional ? regionalMultiplier : 1.0;
+  
   // Calculate base hourly rate with multipliers
-  const hourlyRate = baseRate * regionalMultiplier * deploymentMultiplier;
+  const hourlyRate = baseRate * effectiveRegionalMultiplier * deploymentMultiplier;
   
   // Calculate monthly rate (730 hours per month average)
   const monthlyRate = hourlyRate * 730;
+  // If there's a reservation override value, compute reservation monthly from that override
+  const reservationMonthly = OFFICIAL_PTU_PRICING.RESERVATION_MONTHLY_OVERRIDE || monthlyRate;
   
   // Calculate yearly rate with 30% discount
   const yearlyDiscountRate = 1 - OFFICIAL_PTU_PRICING.DISCOUNTS.yearly;
-  const yearlyRate = monthlyRate * 12 * yearlyDiscountRate;
+  const yearlyRate = reservationMonthly * 12 * yearlyDiscountRate;
   
   return {
     hourly: Number(hourlyRate.toFixed(3)),
     monthly: Number(monthlyRate.toFixed(2)),
+    reservationMonthly: Number(reservationMonthly.toFixed(2)),
     yearly: Number(yearlyRate.toFixed(2)),
     discount: {
       monthlyVsHourly: Number(((1 - (monthlyRate / (hourlyRate * 730))) * 100).toFixed(1)),
