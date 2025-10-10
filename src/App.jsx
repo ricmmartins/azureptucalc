@@ -13,6 +13,7 @@ import ptuModels from './ptu_supported_models.json';
 // import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
 // import correctedPricingService from "./corrected_pricing_service.js";
 import enhancedModelConfig from "./enhanced_model_config.json";
+import correctedPricingData from './corrected_pricing_data.json';
 import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTUPricing.js";
 import { getTokenPricing, calculatePAYGCost, OFFICIAL_TOKEN_PRICING } from "./official_token_pricing.js";
 import { REGION_MODEL_AVAILABILITY, getRegionsByZone } from "./regionModelAvailability.js";
@@ -399,8 +400,15 @@ function App() {
     }
     
     try {
-      // TASK 2: Use official PTU pricing alignment (US$1/PTU-hour base)
-      const officialPTUPricing = calculateOfficialPTUPricing(selectedRegion, selectedDeployment);
+      // TASK 2: Use official PTU pricing alignment (prefer authoritative corrected_pricing_data.json)
+      const officialPTUPricing = calculateOfficialPTUPricing
+        ? calculateOfficialPTUPricing(selectedRegion, selectedDeployment)
+        : null;
+
+      // If calculateOfficialPTUPricing is unavailable or missing reservation values,
+      // fall back to corrected_pricing_data.json which contains authoritative reservation rates.
+      const correctedModel = correctedPricingData.models?.[selectedModel];
+      const correctedReservations = correctedModel?.reservations || null;
 
       // Safety guard: Global deployments should not receive a regional premium.
       if (selectedDeployment === 'global') {
@@ -418,31 +426,38 @@ function App() {
       // Use official token pricing for PAYG
       const tokenPricing = getTokenPricing(selectedModel);
       
+      // Prefer explicit reservation (monthly/yearly) from corrected_pricing_data.json when present
+      const ptuMonthly = correctedReservations?.monthly || officialPTUPricing?.monthly || (officialPTUPricing?.hourly ? Math.round(officialPTUPricing.hourly * 24 * 30.4167) : 730);
+      const ptuYearly = correctedReservations?.yearly || officialPTUPricing?.yearly || Math.round(ptuMonthly * 12 * 0.7);
+
       return {
         paygo_input: tokenPricing.input,
         paygo_output: tokenPricing.output,
-        ptu_hourly: officialPTUPricing.hourly,      // Official US$1/hour base with regional/deployment multipliers
-        ptu_monthly: officialPTUPricing.monthly,    // Calculated from hourly rate (730 hours/month)
-        ptu_yearly: officialPTUPricing.yearly,      // Monthly rate * 12 with 30% yearly discount
-        minPTU: 15, // Will be overridden by model-specific logic
+        ptu_hourly: officialPTUPricing?.hourly || correctedModel?.ptu?.[selectedDeployment] || 1.00,
+        ptu_monthly: ptuMonthly,
+        ptu_yearly: ptuYearly,
+        minPTU: correctedModel?.minPTU?.[selectedDeployment] || 15,
         tokensPerPTUPerMinute: getCurrentModelThroughput(),
         // Additional metadata for transparency
-        officialPricing: officialPTUPricing
+        officialPricing: officialPTUPricing || { source: 'corrected_pricing_data.json', model: correctedModel }
       };
     } catch (error) {
       console.error('Error getting pricing:', error);
       // Fallback to official base pricing structure
-      const fallbackPTUPricing = calculateOfficialPTUPricing('eastus', 'regional');
+      // Final fallback: use corrected_pricing_data.json entries or safe defaults
+      const correctedModel = correctedPricingData.models?.[selectedModel];
       const fallbackTokenPricing = getTokenPricing(selectedModel);
+      const ptuMonthly = correctedModel?.reservations?.monthly || 730;
+      const ptuYearly = correctedModel?.reservations?.yearly || 6132;
       return {
         paygo_input: fallbackTokenPricing.input,
         paygo_output: fallbackTokenPricing.output,
-        ptu_hourly: fallbackPTUPricing.hourly,
-        ptu_monthly: fallbackPTUPricing.monthly,
-        ptu_yearly: fallbackPTUPricing.yearly,
-        minPTU: 15,
+        ptu_hourly: correctedModel?.ptu?.[selectedDeployment] || 1.00,
+        ptu_monthly: ptuMonthly,
+        ptu_yearly: ptuYearly,
+        minPTU: correctedModel?.minPTU?.[selectedDeployment] || 15,
         tokensPerPTUPerMinute: getCurrentModelThroughput(),
-        officialPricing: fallbackPTUPricing
+        officialPricing: { source: 'fallback-corrected_pricing_data.json', model: correctedModel }
       };
     }
   };
