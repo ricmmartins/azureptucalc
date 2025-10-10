@@ -1,0 +1,347 @@
+[
+  {
+    "modelId": "gpt-4o",
+    "displayName": "GPT-4o",
+    "minPTU": {
+      "global": 15,
+      "dataZone": 15,
+      "regional": 50
+    },
+    "paygo": {
+      "global": 0.5,
+      "globalOutput": 2,
+      "tokenPricingFallback": {
+        "input": 2.5,
+        "output": 10,
+        "description": "Latest multimodal model with text and image capabilities"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "gpt-4o-mini",
+    "displayName": "GPT-4o Mini",
+    "minPTU": {
+      "global": 15,
+      "dataZone": 15,
+      "regional": 25
+    },
+    "paygo": {
+      "global": 0.15,
+      "globalOutput": 0.6,
+      "tokenPricingFallback": {
+        "input": 0.15,
+        "output": 0.6,
+        "description": "Smaller, faster version of GPT-4o with cost optimization"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "gpt-4",
+    "displayName": "GPT-4",
+    "minPTU": {
+      "global": 50,
+      "dataZone": 50,
+      "regional": 100
+    },
+    "paygo": {
+      "global": 3,
+      "globalOutput": 6,
+      "tokenPricingFallback": {
+        "input": 30,
+        "output": 60,
+        "description": "Advanced language model with superior reasoning capabilities"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "gpt-4-turbo",
+    "displayName": "GPT-4 Turbo",
+    "minPTU": {
+      "global": 50,
+      "dataZone": 50,
+      "regional": 100
+    },
+    "paygo": {
+      "global": 1,
+      "globalOutput": 3,
+      "tokenPricingFallback": {
+        "input": 10,
+        "output": 30,
+        "description": "Enhanced GPT-4 with improved performance and larger context window"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "gpt-4.1",
+    "displayName": "GPT-4.1",
+    "minPTU": {
+      "global": 15,
+      "dataZone": 15,
+      "regional": 50
+    },
+    "paygo": {
+      "global": 2,
+      "globalOutput": 8,
+      "tokenPricingFallback": {
+        "input": 0.15,
+        "output": 0.6,
+        "description": "Smaller, faster version of GPT-4o with cost optimization"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "gpt-4.1-mini",
+    "displayName": "GPT-4.1-mini",
+    "minPTU": {
+      "global": 15,
+      "dataZone": 15,
+      "regional": 25
+    },
+    "paygo": {
+      "global": 0.4,
+      "globalOutput": 1.6,
+      "tokenPricingFallback": {
+        "input": 0.15,
+        "output": 0.6,
+        "description": "Smaller, faster version of GPT-4o with cost optimization"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "gpt-4.1-nano",
+    "displayName": "GPT-4.1-nano",
+    "minPTU": {
+      "global": 15,
+      "dataZone": 15,
+      "regional": 25
+    },
+    "paygo": {
+      "global": 0.2,
+      "globalOutput": 0.8,
+      "tokenPricingFallback": {
+        "input": 0.15,
+        "output": 0.6,
+        "description": "Smaller, faster version of GPT-4o with cost optimization"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "gpt-3.5-turbo",
+    "displayName": "GPT-3.5 Turbo",
+    "minPTU": {
+      "global": 25,
+      "dataZone": 25,
+      "regional": 50
+    },
+    "paygo": {
+      "global": 0.5,
+      "globalOutput": 1.5,
+      "tokenPricingFallback": {
+        "input": 0.15,
+        "output": 0.6,
+        "description": "Smaller, faster version of GPT-4o with cost optimization"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "o3",
+    "displayName": "o3",
+    "minPTU": {
+      "global": 15,
+      "dataZone": 15,
+      "regional": 50
+    },
+    "paygo": {
+      "global": 2,
+      "globalOutput": 8,
+      "tokenPricingFallback": {
+        "input": 0.15,
+        "output": 0.6,
+        "description": "Smaller, faster version of GPT-4o with cost optimization"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "o3-mini",
+    "displayName": "o3-mini",
+    "minPTU": {
+      "global": 15,
+      "dataZone": 15,
+      "regional": 25
+    },
+    "paygo": {
+      "global": 1.1,
+      "globalOutput": 4.4,
+      "tokenPricingFallback": {
+        "input": 0.15,
+        "output": 0.6,
+        "description": "Smaller, faster version of GPT-4o with cost optimization"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "o4-mini",
+    "displayName": "o4-mini",
+    "minPTU": {
+      "global": 15,
+      "dataZone": 15,
+      "regional": 25
+    },
+    "paygo": {
+      "global": 1.1,
+      "globalOutput": 4.4,
+      "tokenPricingFallback": {
+        "input": 0.15,
+        "output": 0.6,
+        "description": "Smaller, faster version of GPT-4o with cost optimization"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "text-embedding-ada-002",
+    "displayName": "Text Embedding Ada 002",
+    "minPTU": {
+      "global": 25,
+      "dataZone": 25,
+      "regional": 50
+    },
+    "paygo": {
+      "global": 0.1,
+      "globalOutput": 0,
+      "tokenPricingFallback": {
+        "input": 0.1,
+        "output": 0,
+        "description": "High-quality text embeddings for semantic search"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "text-embedding-3-large",
+    "displayName": "Text Embedding 3 Large",
+    "minPTU": {
+      "global": 25,
+      "dataZone": 25,
+      "regional": 50
+    },
+    "paygo": {
+      "global": 0.13,
+      "globalOutput": 0,
+      "tokenPricingFallback": {
+        "input": 0.13,
+        "output": 0,
+        "description": "Latest large embedding model with improved performance"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "text-embedding-3-small",
+    "displayName": "Text Embedding 3 Small",
+    "minPTU": {
+      "global": 25,
+      "dataZone": 25,
+      "regional": 50
+    },
+    "paygo": {
+      "global": 0.02,
+      "globalOutput": 0,
+      "tokenPricingFallback": {
+        "input": 0.02,
+        "output": 0,
+        "description": "Efficient embedding model for cost-sensitive applications"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  },
+  {
+    "modelId": "whisper",
+    "displayName": "Whisper",
+    "minPTU": {
+      "global": 25,
+      "dataZone": 25,
+      "regional": 50
+    },
+    "paygo": {
+      "global": 0.006,
+      "globalOutput": 0,
+      "tokenPricingFallback": {
+        "input": 6,
+        "output": 0,
+        "description": "Speech-to-text model for audio transcription"
+      }
+    },
+    "ptu": {
+      "hourlyGlobal": 1,
+      "monthlyPerPTU": 260,
+      "yearlyPerPTU": 2652
+    }
+  }
+]

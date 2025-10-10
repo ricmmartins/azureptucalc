@@ -424,22 +424,24 @@ function App() {
       officialPTUPricing.yearly = officialPTUPricing.yearly || Math.round(officialPTUPricing.monthly * 12 * 0.7);
       
       // Use official token pricing for PAYG
-      const tokenPricing = getTokenPricing(selectedModel);
+  const tokenPricing = getTokenPricing(selectedModel);
+  const tokenPricingIsFallback = tokenPricing.isFallback === true;
       
       // Prefer explicit reservation (monthly/yearly) from corrected_pricing_data.json when present
       const ptuMonthly = correctedReservations?.monthly || officialPTUPricing?.monthly || (officialPTUPricing?.hourly ? Math.round(officialPTUPricing.hourly * 24 * 30.4167) : 730);
       const ptuYearly = correctedReservations?.yearly || officialPTUPricing?.yearly || Math.round(ptuMonthly * 12 * 0.7);
 
       return {
-        paygo_input: tokenPricing.input,
-        paygo_output: tokenPricing.output,
+  paygo_input: tokenPricing.input,
+  paygo_output: tokenPricing.output,
         ptu_hourly: officialPTUPricing?.hourly || correctedModel?.ptu?.[selectedDeployment] || 1.00,
         ptu_monthly: ptuMonthly,
         ptu_yearly: ptuYearly,
         minPTU: correctedModel?.minPTU?.[selectedDeployment] || 15,
         tokensPerPTUPerMinute: getCurrentModelThroughput(),
         // Additional metadata for transparency
-        officialPricing: officialPTUPricing || { source: 'corrected_pricing_data.json', model: correctedModel }
+        officialPricing: officialPTUPricing || { source: 'corrected_pricing_data.json', model: correctedModel },
+        paygoIsFallback: tokenPricingIsFallback
       };
     } catch (error) {
       console.error('Error getting pricing:', error);
@@ -1296,6 +1298,9 @@ AzureMetrics
                       </div>
                       <div>
                         <strong>PAYGO:</strong> ${currentPricing.paygo_input}/1M input tokens
+                        {currentPricing.paygoIsFallback && (
+                          <div className="text-xs text-yellow-700">(PAYGO fallback rates used)</div>
+                        )}
                       </div>
                       <div>
                         <strong>PTU Hourly:</strong> ${currentPricing.ptu_hourly}/hour per PTU

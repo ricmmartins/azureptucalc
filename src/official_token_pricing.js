@@ -85,9 +85,10 @@ export function getTokenPricing(modelName) {
   if (!pricing) {
     // Fallback to GPT-4o-mini pricing if model not found
     console.warn(`Pricing not found for model: ${modelName}. Using GPT-4o-mini fallback.`);
-    return OFFICIAL_TOKEN_PRICING["gpt-4o-mini"];
+    const fallback = OFFICIAL_TOKEN_PRICING["gpt-4o-mini"];
+    return { ...fallback, isFallback: true };
   }
-  return pricing;
+  return { ...pricing, isFallback: false };
 }
 
 // Function to calculate PAYG cost based on token usage
