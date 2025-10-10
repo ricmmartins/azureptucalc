@@ -281,12 +281,13 @@ function App() {
       // const pricing = await pricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType); // Commented out since pricingService is disabled
       
       // Use fallback pricing for now
+      // Use official base PTU pricing as a safe fallback (US$1/PTU-hour base)
       const pricing = {
         paygo_input: 0.002,
         paygo_output: 0.006,
-        ptu_hourly: 10,
-        ptu_monthly: 8,
-        ptu_yearly: 6
+        ptu_hourly: 1.00,
+        ptu_monthly: 730, // 24 * 30.4167 ~ 730 hours/month
+        ptu_yearly: 6132  // monthly * 12 * 0.7 (30% yearly discount)
       };
       
       setLivePricingData(pricing);
@@ -400,6 +401,19 @@ function App() {
     try {
       // TASK 2: Use official PTU pricing alignment (US$1/PTU-hour base)
       const officialPTUPricing = calculateOfficialPTUPricing(selectedRegion, selectedDeployment);
+
+      // Safety guard: Global deployments should not receive a regional premium.
+      if (selectedDeployment === 'global') {
+        officialPTUPricing.multipliers = officialPTUPricing.multipliers || {};
+        officialPTUPricing.multipliers.regional = 1;
+        officialPTUPricing.multipliers.deployment = 1;
+        officialPTUPricing.multipliers.combined = 1;
+      }
+
+      // Ensure PTU hourly/monthly/yearly align with the official base rate when available
+      officialPTUPricing.hourly = officialPTUPricing.hourly || 1.00;
+      officialPTUPricing.monthly = officialPTUPricing.monthly || Math.round(officialPTUPricing.hourly * 24 * 30.4167);
+      officialPTUPricing.yearly = officialPTUPricing.yearly || Math.round(officialPTUPricing.monthly * 12 * 0.7);
       
       // Use official token pricing for PAYG
       const tokenPricing = getTokenPricing(selectedModel);
@@ -605,9 +619,10 @@ function App() {
       { name: 'PTU (On-Demand)', cost: monthlyPtuCost },
       { name: 'PTU (1 Year)', cost: monthlyPtuReservationCost },
       { name: 'PTU (3 Year)', cost: yearlyPtuReservationCost / 12 },
-      { name: 'Hybrid', cost: hybridTotalCost },
-      { name: 'Hybrid (1Y)', cost: hybridBaseCost * 0.75 + hybridOverflowCost },
-      { name: 'Hybrid (3Y)', cost: hybridBaseCost * 0.6 + hybridOverflowCost }
+      // Use Azure's official terminology: "Spillover" instead of "Hybrid"
+      { name: 'Spillover', cost: hybridTotalCost },
+      { name: 'Spillover (1Y)', cost: hybridBaseCost * 0.75 + hybridOverflowCost },
+      { name: 'Spillover (3Y)', cost: hybridBaseCost * 0.6 + hybridOverflowCost }
     ];
     
     setCalculations({
