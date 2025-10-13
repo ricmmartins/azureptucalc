@@ -80,9 +80,9 @@ export const OFFICIAL_TOKEN_PRICING = {
 };
 
 // Auto-populate OFFICIAL_TOKEN_PRICING with any PAYGO rates present in corrected_pricing_data.json
-import correctedPricing from './corrected_pricing_data.json';
+import correctedPricingData from './corrected_pricing_data.json';
 
-for (const [modelId, modelData] of Object.entries(correctedPricing.models || {})) {
+for (const [modelId, modelData] of Object.entries(correctedPricingData.models || {})) {
   try {
     const paygo = modelData.paygo?.global;
     if (!OFFICIAL_TOKEN_PRICING[modelId] && paygo && (paygo.input != null || paygo.output != null)) {
@@ -100,14 +100,13 @@ for (const [modelId, modelData] of Object.entries(correctedPricing.models || {})
 }
 
 // Function to get pricing for a specific model
-import correctedPricing from './corrected_pricing_data.json';
 
 export function getTokenPricing(modelName) {
   const pricing = OFFICIAL_TOKEN_PRICING[modelName];
   if (pricing) return { ...pricing, isFallback: false };
 
   // Try to source PAYGO rates from corrected_pricing_data.json if available
-  const corrected = correctedPricing.models?.[modelName]?.paygo?.global;
+  const corrected = correctedPricingData.models?.[modelName]?.paygo?.global;
   if (corrected && (corrected.input != null || corrected.output != null)) {
     console.warn(`Pricing not found in OFFICIAL_TOKEN_PRICING for model: ${modelName}. Using corrected_pricing_data.json rates.`);
     return { input: corrected.input ?? 0, output: corrected.output ?? 0, isFallback: true };
