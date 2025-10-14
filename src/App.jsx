@@ -26,6 +26,7 @@ import WelcomeModal from './components/WelcomeModal';
 import GuidedTour from './components/GuidedTour';
 import { TooltipIcon, TooltipText } from './components/Tooltip';
 import './App.css';
+import Modal from './components/ui/Modal';
 
 function App() {
   // Enhanced features state
@@ -128,6 +129,7 @@ function App() {
   // Onboarding state management
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showGuidedTour, setShowGuidedTour] = useState(false);
+  const [showReadmeModal, setShowReadmeModal] = useState(false);
 
   // Check if user is first-time visitor
   useEffect(() => {
@@ -1052,6 +1054,48 @@ AzureMetrics
                   </div>
                 </li>
               </ol>
+              <div className="mt-6 flex justify-center">
+                <div className="w-full flex justify-start">
+                  <button
+                    type="button"
+                    onClick={() => setShowReadmeModal(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold rounded-lg border border-blue-300 transition-colors duration-150"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <Info className="h-5 w-5" />
+                    Learn more about throughput per PTU & KQL Analysis
+                  </button>
+                </div>
+      {/* Modal for README content */}
+      <Modal
+        isOpen={showReadmeModal}
+        onClose={() => setShowReadmeModal(false)}
+        title="Throughput per PTU & KQL Analysis"
+      >
+        <div className="space-y-4 text-sm text-gray-800 max-h-[60vh] overflow-y-auto">
+          <h3 className="font-semibold text-base mb-2">How to Find the Right throughput_per_ptu (TPM per PTU) for Each Model</h3>
+          <p>
+            The correct <code>throughput_per_ptu</code> (tokens per minute per PTU) for each model is published by Microsoft in their official documentation:
+            <br />
+            <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Latest Azure OpenAI Models – Provisioned Throughput Table</a>
+          </p>
+          <ul className="list-disc ml-6">
+            <li><b>GPT-4.1:</b> 3,000 tokens per minute per PTU (each output token counts as 4 input tokens for quota)</li>
+            <li><b>GPT-4.1 Mini:</b> 37,000 tokens per minute per PTU</li>
+            <li>The 50,000 value in the KQL step is a generic placeholder. Always refer to the official table for the exact value for your selected model. Adjust the KQL and calculator input accordingly.</li>
+          </ul>
+          <ol className="list-decimal ml-6">
+            <li>Go to the link above.</li>
+            <li>Find your model in the “Latest Azure OpenAI models” table.</li>
+            <li>Use the “Tokens per minute per PTU” column for your calculations.</li>
+          </ol>
+          <p>If you have questions or spot discrepancies, please open an issue or suggestion!</p>
+          <hr className="my-4" />
+          <h3 className="font-semibold text-base mb-2">KQL Query Example</h3>
+          <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>{`// Burst-Aware Azure OpenAI PTU Sizing Analysis\n// Run this query in Azure Monitor Log Analytics for accurate capacity planning\nlet window = 1m;           // granularity for burst detection\nlet p = 0.99;             // percentile for burst sizing\nAzureMetrics\n| where ResourceProvider == \"MICROSOFT.COGNITIVESERVICES\"\n| where MetricName in (\"ProcessedPromptTokens\", \"ProcessedCompletionTokens\")\n| where TimeGenerated >= ago(7d)\n| summarize Tokens = sum(Total) by bin(TimeGenerated, window)\n| summarize\n    AvgTPM = avg(Tokens),\n    P99TPM = percentile(Tokens, p),\n    MaxTPM = max(Tokens)\n| extend\n    AvgPTU = ceiling(AvgTPM / 50000.0),\n    P99PTU = ceiling(P99TPM / 50000.0),\n    MaxPTU = ceiling(MaxTPM / 50000.0)\n| extend RecommendedPTU = max_of(AvgPTU, P99PTU)  // higher value covers bursts\n| project AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</code></pre>
+        </div>
+      </Modal>
+              </div>
             </div>
 
             <Alert className="mt-6 border-blue-200 bg-blue-50">
@@ -2637,8 +2681,18 @@ AzureMetrics
           </CardContent>
         </Card>
 
-        <div style={{ marginTop: '2rem', padding: '1rem', background: '#f8f8f8', borderRadius: '8px', color: '#333', fontSize: '0.95rem', textAlign: 'center' }}>
+        <div style={{ marginTop: '2rem', padding: '1rem', background: '#f8f8f8', borderRadius: '8px', color: '#333', fontSize: '0.95rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <strong>Disclaimer:</strong> The information provided on this website is for informational purposes only. While we strive for accuracy, no guarantee is made regarding the completeness or correctness of the data. Microsoft and the site operators are not responsible for any errors, omissions, or decisions made based on this information. Users should verify all information independently before making any decisions.
+          <a
+            href="https://github.com/ricmmartins/azureptucalc"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg border border-gray-700 transition-colors duration-150"
+            style={{ textDecoration: 'none' }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M12 0C5.37 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.085 1.84 1.237 1.84 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.334-5.466-5.931 0-1.31.468-2.381 1.236-3.221-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23.957-.266 1.984-.399 3.003-.404 1.018.005 2.046.138 3.006.404 2.289-1.552 3.295-1.23 3.295-1.23.653 1.653.242 2.873.119 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.804 5.624-5.475 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.218.694.825.576C20.565 21.796 24 17.299 24 12c0-6.627-5.373-12-12-12z"/></svg>
+            GitHub Repo
+          </a>
         </div>
         
         {/* Mobile Action Buttons */}

@@ -374,10 +374,30 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 4. Push to branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
+
 ### 📝 **Documentation**
 - Improve README clarity
 - Add more use case examples
 - Enhance KQL query documentation
+
+#### **How to Find the Right throughput_per_ptu (TPM per PTU) for Each Model**
+
+The correct `throughput_per_ptu` (tokens per minute per PTU) for each model is published by Microsoft in their official documentation:
+
+👉 [Latest Azure OpenAI Models – Provisioned Throughput Table](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models)
+
+For example:
+- **GPT-4.1:** 3,000 tokens per minute per PTU (each output token counts as 4 input tokens for quota)
+- **GPT-4.1 Mini:** 37,000 tokens per minute per PTU
+
+The 50,000 value in the KQL step is a generic placeholder. Always refer to the official table for the exact value for your selected model. Adjust the KQL and calculator input accordingly.
+
+**Steps:**
+1. Go to the link above.
+2. Find your model in the “Latest Azure OpenAI models” table.
+3. Use the “Tokens per minute per PTU” column for your calculations.
+
+If you have questions or spot discrepancies, please open an issue or suggestion!
 
 ## 📄 License
 

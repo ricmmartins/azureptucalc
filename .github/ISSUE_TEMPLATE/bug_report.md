@@ -31,3 +31,6 @@ A clear and concise description of what you expected to happen.
 
 **Additional context**
 Add any other context about the problem here.
+
+**Suggestion for Documentation or Clarity**
+If your feedback is about unclear documentation, missing guidance, or suggestions to improve instructions (such as how to find the right TPM per PTU for each model), please describe it here. We welcome enhancement requests as well as bug reports!
