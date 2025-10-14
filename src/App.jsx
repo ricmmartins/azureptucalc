@@ -547,10 +547,12 @@ function App() {
       monthlyPaygoCost = 0;
       paygoBreakdown = { inputCost: 0, outputCost: 0, totalCost: 0, pricing: getTokenPricing(selectedModel) };
     }
-    const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 24 * 30;
+  // Use official Azure convention: 730 hours/month
+  const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 730;
     const monthlyPtuHourlyCost = monthlyPtuCost;
     const monthlyPtuReservationCost = ptuNeeded * currentPricing.ptu_monthly;
-    const yearlyPtuReservationCost = ptuNeeded * currentPricing.ptu_yearly;
+  // Yearly reservation cost: use official value, monthly equivalent = (yearly * PTUs) / 12
+  const yearlyPtuReservationCost = (ptuNeeded * currentPricing.ptu_yearly) / 12;
     
     // FIXED: Dynamic utilization calculation
     const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
@@ -688,9 +690,11 @@ function App() {
   // Handle form input changes
   const handleInputChange = (field, value) => {
     console.log(`Input change: ${field} = ${value}`);
+    let parsed = parseFloat(value);
+    if (isNaN(parsed) || parsed < 0) parsed = 0;
     setFormData(prev => ({
       ...prev,
-      [field]: parseFloat(value) || 0
+      [field]: parsed
     }));
   };
 
