@@ -2,7 +2,15 @@
 
 Thank you for your interest in contributing to the Azure OpenAI PTU Estimator! This document provides guidelines and information for contributors.
 
-## 🤝 How to Contribute
+## � First-Time Contributors
+
+- Look for issues labeled "good first issue"—these are great starting points!
+- Don’t hesitate to ask questions in your PR or issue
+- See the [MIT License](LICENSE) for terms of use and contribution
+
+By contributing, you agree to the terms of the MIT license. See [LICENSE](LICENSE) for details.
+
+## �🤝 How to Contribute
 
 ### Reporting Issues
 - Use the [GitHub Issues](https://github.com/ricmmartins/azureptucalc/issues) page

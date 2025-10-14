@@ -136,7 +136,13 @@ VITE_CACHE_DURATION=10800000
 
 ## 📄 License
 
-MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details. By contributing, you agree to the terms of the MIT license.
+
+---
+
+## 🤝 Welcome First-Time Contributors!
+
+We encourage new contributors! Look for issues labeled <strong>good first issue</strong>—these are great starting points. If you have questions, open an issue or join the discussion. See the <strong>CONTRIBUTING.md</strong> for more tips.
 
 ---
 
