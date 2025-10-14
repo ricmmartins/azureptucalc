@@ -551,8 +551,8 @@ function App() {
   const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 730;
     const monthlyPtuHourlyCost = monthlyPtuCost;
     const monthlyPtuReservationCost = ptuNeeded * currentPricing.ptu_monthly;
-  // Yearly reservation cost: use official value, monthly equivalent = (yearly * PTUs) / 12
-  const yearlyPtuReservationCost = (ptuNeeded * currentPricing.ptu_yearly) / 12;
+  // Yearly reservation cost: use official value, monthly equivalent = (currentPricing.ptu_yearly * ptuNeeded) / 12
+  const yearlyPtuReservationCost = (currentPricing.ptu_yearly * ptuNeeded) / 12;
     
     // FIXED: Dynamic utilization calculation
     const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
@@ -581,11 +581,12 @@ function App() {
     // PTU cost effectiveness
     const ptuCostEffectiveness = monthlyPaygoCost > 0 ? monthlyPtuCost / monthlyPaygoCost : 0;
     
-    // FIXED: Dynamic reservation savings calculations
-    const oneYearSavings = Math.max(0, monthlyPtuCost - monthlyPtuReservationCost);
-    const threeYearSavings = Math.max(0, monthlyPtuCost - (yearlyPtuReservationCost / 12));
-    const oneYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - monthlyPtuReservationCost) / monthlyPtuCost) * 100 : 0;
-    const threeYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - (yearlyPtuReservationCost / 12)) / monthlyPtuCost) * 100 : 0;
+  // FIXED: Dynamic reservation savings calculations (align with official pricing)
+  const oneYearSavings = Math.max(0, monthlyPtuCost - yearlyPtuReservationCost);
+  const oneYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - yearlyPtuReservationCost) / monthlyPtuCost) * 100 : 0;
+  // Multi-year logic placeholder (if needed)
+  const threeYearSavings = 0;
+  const threeYearSavingsPercent = 0;
     
     // FIXED: Dynamic monthly savings calculation
     const monthlySavings = Math.max(0, monthlyPaygoCost - monthlyPtuReservationCost);
