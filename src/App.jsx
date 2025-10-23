@@ -1015,7 +1015,7 @@ AzureMetrics
                 Copy
               </Button>
               <pre className="text-sm overflow-x-auto pr-20">
-                <code>{kqlQuery}</code>
+                <code>{`// Burst-Aware Azure OpenAI PTU Sizing Analysis\n// Run this query in Azure Monitor Log Analytics for accurate capacity planning\nlet window = 1m;              // granularity for burst detection\nlet p = 0.99;                 // percentile for burst sizing\nAzureMetrics\n| where ResourceProvider == \"MICROSOFT.COGNITIVESERVICES\"\n| where MetricName in (\"ProcessedPromptTokens\", \"ProcessedCompletionTokens\")\n| where TimeGenerated >= ago(7d)\n| summarize Tokens = sum(Total) by bin(TimeGenerated, window)\n| summarize\n    AvgTPM = avg(Tokens),\n    P99TPM = percentile(Tokens, p),\n    MaxTPM = max(Tokens)\n| extend\n    AvgPTU = ceiling(AvgTPM / 37000.0),    // <-- Adjust divisor for your model\n    P99PTU = ceiling(P99TPM / 37000.0),    // <-- Adjust divisor for your model\n    MaxPTU = ceiling(MaxTPM / 37000.0)     // <-- Adjust divisor for your model\n| extend RecommendedPTU = max_of(AvgPTU, P99PTU)  // higher value covers bursts\n| project AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</code>
               </pre>
             </div>
             
