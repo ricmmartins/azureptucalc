@@ -455,5 +455,5 @@ az staticwebapp hostname show --name azure-openai-ptu-estimator
 
 ---
 
-**Need help?** Open an issue in the [GitHub repository](https://github.com/your-username/azure-openai-ptu-estimator/issues).
+**Need help?** Open an issue in the [GitHub repository](https://github.com/ricmmartins/azureptucalc//issues).
 
