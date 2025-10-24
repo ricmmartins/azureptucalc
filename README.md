@@ -6,9 +6,12 @@
   <img src="https://img.shields.io/badge/Tailwind%20CSS-3-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS" />
 </div>
 
+
 # Azure OpenAI PTU Calculator
 
 **Optimize your Azure OpenAI costs with intelligent PTU sizing, hybrid model analysis, and real-time pricing.**
+
+👉 **Read the full [User Guide](./docs/USER_GUIDE.md) for a step-by-step walkthrough, practical tips, and best practices!**
 
 ---
 
