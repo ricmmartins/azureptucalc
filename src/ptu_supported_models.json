@@ -28,6 +28,27 @@
       "min_ptu": 100,
       "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "germany-west-central", "switzerland-north", "norway-east", "sweden-central", "australia-east", "japan-east", "korea-central", "canada-central", "brazil-south", "uae-north", "south-africa-north", "india-south", "southeast-asia", "east-asia"]
     },
+    "gpt-4.1": {
+      "name": "GPT-4.1",
+      "description": "Advanced GPT-4.1 model with enhanced capabilities",
+      "ptu_support": true,
+      "min_ptu": 50,
+      "regions": ["east-us", "east-us-2", "north-central-us", "south-central-us", "sweden-central", "korea-central", "japan-east", "australia-east"]
+    },
+    "gpt-4.1-mini": {
+      "name": "GPT-4.1 Mini",
+      "description": "Efficient GPT-4.1 variant optimized for cost and performance",
+      "ptu_support": true,
+      "min_ptu": 25,
+      "regions": ["east-us", "east-us-2", "north-central-us", "south-central-us", "sweden-central", "korea-central", "japan-east"]
+    },
+    "gpt-4.1-nano": {
+      "name": "GPT-4.1 Nano",
+      "description": "Ultra-efficient GPT-4.1 variant for high-throughput applications",
+      "ptu_support": true,
+      "min_ptu": 25,
+      "regions": ["east-us", "east-us-2", "north-central-us", "south-central-us", "sweden-central"]
+    },
     "gpt-4o": {
       "name": "GPT-4o",
       "description": "Latest multimodal model with text and image capabilities",

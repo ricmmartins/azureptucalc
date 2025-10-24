@@ -1081,7 +1081,8 @@ AzureMetrics
           </p>
           <ul className="list-disc ml-6">
             <li><b>GPT-4.1:</b> 3,000 tokens per minute per PTU (each output token counts as 4 input tokens for quota)</li>
-            <li><b>GPT-4.1 Mini:</b> 37,000 tokens per minute per PTU</li>
+            <li><b>GPT-4.1 Mini:</b> 14,900 tokens per minute per PTU</li>
+            <li><b>GPT-4.1 Nano:</b> 59,400 tokens per minute per PTU</li>
             <li>The 50,000 value in the KQL step is a generic placeholder. Always refer to the official table for the exact value for your selected model. Adjust the KQL and calculator input accordingly.</li>
           </ul>
           <ol className="list-decimal ml-6">
