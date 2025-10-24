@@ -12,16 +12,16 @@
       },
       "paygo": {
         "global": {
-          "input": 0.50,
-          "output": 2.00
+          "input": 2.50,
+          "output": 10.00
         },
         "dataZone": {
-          "input": 0.55,
-          "output": 2.20
+          "input": 2.75,
+          "output": 11.00
         },
         "regional": {
-          "input": 0.55,
-          "output": 2.20
+          "input": 2.75,
+          "output": 11.00
         }
       },
       "ptu": {
@@ -322,16 +322,16 @@
       },
       "paygo": {
         "global": {
-          "input": 0.20,
-          "output": 0.80
+          "input": 0.10,
+          "output": 0.40
         },
         "dataZone": {
-          "input": 0.22,
-          "output": 0.88
+          "input": 0.11,
+          "output": 0.44
         },
         "regional": {
-          "input": 0.22,
-          "output": 0.88
+          "input": 0.11,
+          "output": 0.44
         }
       },
       "ptu": {
