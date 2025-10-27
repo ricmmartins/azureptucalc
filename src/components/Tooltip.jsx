@@ -20,7 +20,7 @@ export const tooltipContent = {
   },
   'custom-pricing': {
     title: 'Custom Pricing',
-    content: 'Use this when you have negotiated rates with Microsoft, enterprise agreements, or special pricing contracts. Also required for government regions where public pricing is not available.',
+    content: 'Use this when you have negotiated rates with Microsoft, enterprise agreements, or special pricing contracts. Optional for government regions if you have specific contract rates.',
     example: 'Example: Enterprise discounts, government contracts, or regional pricing variations'
   },
   'p99': {
