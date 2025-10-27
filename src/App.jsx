@@ -97,15 +97,10 @@ function App() {
     localStorage.setItem('azurePTUUseCustomPricing', useCustomPricing.toString());
   }, [useCustomPricing]);
 
-  // Government region detection and automatic custom pricing
+  // Government region detection
   useEffect(() => {
     const isGov = isGovernmentRegion(selectedRegion);
     setIsGovernmentRegionSelected(isGov);
-    
-    // Automatically enable custom pricing for government regions
-    if (isGov && !useCustomPricing) {
-      setUseCustomPricing(true);
-    }
 
     // Auto-adjust deployment type for government regions
     if (isGov) {
@@ -118,7 +113,7 @@ function App() {
         }
       }
     }
-  }, [selectedRegion, selectedDeployment, useCustomPricing]);
+  }, [selectedRegion, selectedDeployment]);
   
   // Task 9: External Pricing Service initialization
   const externalPricingService = useMemo(() => new ExternalPricingService(), []);
@@ -1376,8 +1371,8 @@ AzureMetrics
                           <Badge variant="secondary" className="bg-blue-100 text-blue-800">USGov Cloud</Badge>
                         </div>
                         <p className="text-blue-700">
-                          You've selected a US Government region ({selectedRegion}). Government pricing may differ from public cloud rates. 
-                          Custom pricing mode has been automatically enabled - please enter your specific government contract rates below.
+                          You've selected a US Government region ({selectedRegion}). This region uses public government pricing. 
+                          Use "Custom Pricing" below if you have specific contract rates or enterprise agreements.
                         </p>
                         <div className="text-sm text-blue-600">
                           <strong>Available Models:</strong> This region supports a limited set of models optimized for government workloads.

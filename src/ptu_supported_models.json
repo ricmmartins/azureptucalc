@@ -110,7 +110,7 @@
       "description": "Fast and efficient reasoning model for complex tasks",
       "ptu_support": true,
       "min_ptu": 50,
-      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central", "usgovarizona", "usgovvirginia", "usgovdatazone"]
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central"]
     },
     "whisper": {
       "name": "Whisper",
@@ -166,8 +166,7 @@
     "southeast-asia": "Southeast Asia",
     "east-asia": "East Asia",
     "usgovarizona": "US Gov Arizona",
-    "usgovvirginia": "US Gov Virginia", 
-    "usgovdatazone": "USGov DataZone"
+    "usgovvirginia": "US Gov Virginia"
   }
 }
 
