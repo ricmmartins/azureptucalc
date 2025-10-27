@@ -389,11 +389,8 @@ export const REGION_MODEL_AVAILABILITY = {
     available_deployments: ['regional'],
     available_models: {
       'gpt-4o': { deployments: ['regional'], capacity: 'medium' },
-      'gpt-4o-mini': { deployments: ['regional'], capacity: 'high' },
       'gpt-35-turbo': { deployments: ['regional'], capacity: 'high' },
-      'text-embedding-ada-002': { deployments: ['regional'], capacity: 'high' },
-      'text-embedding-3-large': { deployments: ['regional'], capacity: 'medium' },
-      'text-embedding-3-small': { deployments: ['regional'], capacity: 'high' }
+      'text-embedding-ada-002': { deployments: ['regional'], capacity: 'high' }
     },
     zone: 'USGov',
     pricing_tier: 'government',
@@ -447,7 +444,9 @@ export const isGovernmentRegion = (regionCode) => {
 };
 
 export const getGovernmentAvailableModels = () => {
-  // Models available in government regions (based on actual availability)
+  // Models available in government regions (union of all gov regions)
+  // US Gov Arizona: GPT-4o, GPT-4o-mini, GPT-3.5-turbo, all embeddings
+  // US Gov Virginia: GPT-4o, GPT-3.5-turbo, text-embedding-ada-002 only
   return [
     'gpt-4o',
     'gpt-4o-mini', 
