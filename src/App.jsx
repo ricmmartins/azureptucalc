@@ -1365,18 +1365,16 @@ AzureMetrics
                   <Alert className="border-blue-200 bg-blue-50">
                     <Shield className="h-4 w-4" />
                     <AlertDescription>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <strong className="text-blue-800">Government Region Selected</strong>
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">USGov Cloud</Badge>
-                        </div>
-                        <p className="text-blue-700">
-                          You've selected a US Government region ({selectedRegion}). 
-                          Use "Custom Pricing" below if you have specific contract rates or enterprise agreements.
-                        </p>
-                        <div className="text-sm text-blue-600">
-                          <strong>Available Models:</strong> This region supports a limited set of models optimized for government workloads.
-                        </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <strong className="text-blue-800">Government Region Selected</strong>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">USGov Cloud</Badge>
+                      </div>
+                      <p className="text-blue-700 mb-2">
+                        You've selected a US Government region ({selectedRegion}). 
+                        Use "Custom Pricing" below if you have specific contract rates or enterprise agreements.
+                      </p>
+                      <div className="text-sm text-blue-600">
+                        <strong>Available Models:</strong> This region supports a limited set of models optimized for government workloads.
                       </div>
                     </AlertDescription>
                   </Alert>
