@@ -1371,7 +1371,7 @@ AzureMetrics
                           <Badge variant="secondary" className="bg-blue-100 text-blue-800">USGov Cloud</Badge>
                         </div>
                         <p className="text-blue-700">
-                          You've selected a US Government region ({selectedRegion}). This region uses public government pricing. 
+                          You've selected a US Government region ({selectedRegion}). 
                           Use "Custom Pricing" below if you have specific contract rates or enterprise agreements.
                         </p>
                         <div className="text-sm text-blue-600">
