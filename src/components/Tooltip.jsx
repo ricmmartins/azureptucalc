@@ -18,6 +18,11 @@ export const tooltipContent = {
     content: 'On-demand pricing where you pay per token used. More expensive per token but offers maximum flexibility with no commitments.',
     example: 'Example: $0.002 per 1K input tokens'
   },
+  'custom-pricing': {
+    title: 'Custom Pricing',
+    content: 'Use this when you have negotiated rates with Microsoft, enterprise agreements, or special pricing contracts. Also required for government regions where public pricing is not available.',
+    example: 'Example: Enterprise discounts, government contracts, or regional pricing variations'
+  },
   'p99': {
     title: '99th Percentile (P99)',
     content: 'Peak usage level - 99% of your usage is below this value. Used to understand traffic spikes and capacity planning.',

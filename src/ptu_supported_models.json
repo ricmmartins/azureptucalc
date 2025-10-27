@@ -105,6 +105,13 @@
       "min_ptu": 50,
       "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central"]
     },
+    "o3-mini": {
+      "name": "o3-mini",
+      "description": "Fast and efficient reasoning model for complex tasks",
+      "ptu_support": true,
+      "min_ptu": 50,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "australia-east", "japan-east", "canada-central", "usgovarizona", "usgovvirginia", "usgovdatazone"]
+    },
     "whisper": {
       "name": "Whisper",
       "description": "Speech-to-text model for audio transcription",
@@ -157,7 +164,10 @@
     "south-africa-north": "South Africa North",
     "india-south": "India South",
     "southeast-asia": "Southeast Asia",
-    "east-asia": "East Asia"
+    "east-asia": "East Asia",
+    "usgovarizona": "US Gov Arizona",
+    "usgovvirginia": "US Gov Virginia", 
+    "usgovdatazone": "USGov DataZone"
   }
 }
 

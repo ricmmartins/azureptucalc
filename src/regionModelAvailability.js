@@ -364,6 +364,59 @@ export const REGION_MODEL_AVAILABILITY = {
     },
     zone: 'APAC',
     pricing_tier: 'standard'
+  },
+
+  // US Government Cloud regions
+  'usgovarizona': {
+    name: 'US Gov Arizona',
+    displayName: 'US Gov Arizona',
+    available_deployments: ['regional'],
+    available_models: {
+      'gpt-4o': { deployments: ['regional'], capacity: 'medium' },
+      'gpt-4o-mini': { deployments: ['regional'], capacity: 'high' },
+      'gpt-35-turbo': { deployments: ['regional'], capacity: 'high' },
+      'o3-mini': { deployments: ['regional'], capacity: 'medium' },
+      'text-embedding-ada-002': { deployments: ['regional'], capacity: 'high' },
+      'text-embedding-3-large': { deployments: ['regional'], capacity: 'medium' },
+      'text-embedding-3-small': { deployments: ['regional'], capacity: 'high' }
+    },
+    zone: 'USGov',
+    pricing_tier: 'government',
+    isGovernment: true
+  },
+  'usgovvirginia': {
+    name: 'US Gov Virginia',
+    displayName: 'US Gov Virginia',
+    available_deployments: ['regional'],
+    available_models: {
+      'gpt-4o': { deployments: ['regional'], capacity: 'medium' },
+      'gpt-4o-mini': { deployments: ['regional'], capacity: 'high' },
+      'gpt-35-turbo': { deployments: ['regional'], capacity: 'high' },
+      'o3-mini': { deployments: ['regional'], capacity: 'medium' },
+      'text-embedding-ada-002': { deployments: ['regional'], capacity: 'high' },
+      'text-embedding-3-large': { deployments: ['regional'], capacity: 'medium' },
+      'text-embedding-3-small': { deployments: ['regional'], capacity: 'high' }
+    },
+    zone: 'USGov',
+    pricing_tier: 'government',
+    isGovernment: true
+  },
+  'usgovdatazone': {
+    name: 'USGov DataZone',
+    displayName: 'USGov DataZone',
+    available_deployments: ['dataZone'],
+    available_models: {
+      'gpt-4o': { deployments: ['dataZone'], capacity: 'medium' },
+      'gpt-4o-mini': { deployments: ['dataZone'], capacity: 'high' },
+      'gpt-35-turbo': { deployments: ['dataZone'], capacity: 'high' },
+      'o3-mini': { deployments: ['dataZone'], capacity: 'medium' },
+      'text-embedding-ada-002': { deployments: ['dataZone'], capacity: 'high' },
+      'text-embedding-3-large': { deployments: ['dataZone'], capacity: 'medium' },
+      'text-embedding-3-small': { deployments: ['dataZone'], capacity: 'high' }
+    },
+    zone: 'USGov',
+    pricing_tier: 'government',
+    isGovernment: true
   }
 };
 
@@ -405,6 +458,24 @@ export const isModelAvailableInRegion = (regionCode, modelId, deploymentType = n
   }
   
   return true;
+};
+
+export const isGovernmentRegion = (regionCode) => {
+  const regionInfo = getRegionInfo(regionCode);
+  return regionInfo?.isGovernment === true;
+};
+
+export const getGovernmentAvailableModels = () => {
+  // Models available in government regions (based on our research)
+  return [
+    'gpt-4o',
+    'gpt-4o-mini', 
+    'gpt-35-turbo',
+    'o3-mini',
+    'text-embedding-ada-002',
+    'text-embedding-3-large',
+    'text-embedding-3-small'
+  ];
 };
 
 export const getRegionsByZone = () => {

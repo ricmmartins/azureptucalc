@@ -16,7 +16,7 @@ import enhancedModelConfig from "./enhanced_model_config.json";
 import correctedPricingData from './corrected_pricing_data.json';
 import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTUPricing.js";
 import { getTokenPricing, calculatePAYGCost, OFFICIAL_TOKEN_PRICING } from "./official_token_pricing.js";
-import { REGION_MODEL_AVAILABILITY, getRegionsByZone } from "./regionModelAvailability.js";
+import { REGION_MODEL_AVAILABILITY, getRegionsByZone, isGovernmentRegion, getGovernmentAvailableModels } from "./regionModelAvailability.js";
 import ExternalPricingService from './ExternalPricingService.js';
 import ExportService from './ExportService.js';
 // Temporarily comment out complex components
@@ -42,6 +42,7 @@ function App() {
   const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const [selectedDeployment, setSelectedDeployment] = useState('global');
   const [useCustomPricing, setUseCustomPricing] = useState(false);
+  const [isGovernmentRegionSelected, setIsGovernmentRegionSelected] = useState(false);
   
   // KQL form data - ALL VALUES SET TO 0 EXCEPT MONTHLY MINUTES
   const [formData, setFormData] = useState({
@@ -95,6 +96,29 @@ function App() {
   useEffect(() => {
     localStorage.setItem('azurePTUUseCustomPricing', useCustomPricing.toString());
   }, [useCustomPricing]);
+
+  // Government region detection and automatic custom pricing
+  useEffect(() => {
+    const isGov = isGovernmentRegion(selectedRegion);
+    setIsGovernmentRegionSelected(isGov);
+    
+    // Automatically enable custom pricing for government regions
+    if (isGov && !useCustomPricing) {
+      setUseCustomPricing(true);
+    }
+
+    // Auto-adjust deployment type for government regions
+    if (isGov) {
+      const regionInfo = REGION_MODEL_AVAILABILITY[selectedRegion];
+      if (regionInfo && regionInfo.available_deployments.length > 0) {
+        const availableDeployments = regionInfo.available_deployments;
+        // If current deployment not available in gov region, switch to first available
+        if (!availableDeployments.includes(selectedDeployment)) {
+          setSelectedDeployment(availableDeployments[0]);
+        }
+      }
+    }
+  }, [selectedRegion, selectedDeployment, useCustomPricing]);
   
   // Task 9: External Pricing Service initialization
   const externalPricingService = useMemo(() => new ExternalPricingService(), []);
@@ -839,11 +863,19 @@ function App() {
         ];
       }
       
-      return Object.entries(ptuModels.ptu_supported_models).map(([id, model]) => ({
+      let availableModels = Object.entries(ptuModels.ptu_supported_models).map(([id, model]) => ({
         id,
         name: model.name,
         minPTU: model.min_ptu
       }));
+
+      // Filter models for government regions
+      if (isGovernmentRegionSelected) {
+        const govModels = getGovernmentAvailableModels();
+        availableModels = availableModels.filter(model => govModels.includes(model.id));
+      }
+
+      return availableModels;
     } catch (error) {
       console.error('Error in getAvailableModels:', error);
       return [
@@ -1333,6 +1365,28 @@ AzureMetrics
                   </div>
                 </div>
 
+                {/* Government Region Notice */}
+                {isGovernmentRegionSelected && (
+                  <Alert className="border-blue-200 bg-blue-50">
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <strong className="text-blue-800">Government Region Selected</strong>
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">USGov Cloud</Badge>
+                        </div>
+                        <p className="text-blue-700">
+                          You've selected a US Government region ({selectedRegion}). Government pricing may differ from public cloud rates. 
+                          Custom pricing mode has been automatically enabled - please enter your specific government contract rates below.
+                        </p>
+                        <div className="text-sm text-blue-600">
+                          <strong>Available Models:</strong> This region supports a limited set of models optimized for government workloads.
+                        </div>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {/* Current Model Pricing Display */}
                 <Card className="bg-green-50 border-green-200">
                   <CardContent className="p-4">
@@ -1426,7 +1480,7 @@ AzureMetrics
                   />
                   <Label htmlFor="customPricing" className="text-red-600">
                     Use Custom Pricing
-                    <TooltipIcon term="paygo" />
+                    <TooltipIcon term="custom-pricing" />
                   </Label>
                 </div>
                 
