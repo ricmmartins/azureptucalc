@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import {
   BarChart,
   Bar,
@@ -20,6 +20,64 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { TrendingUp, TrendingDown, DollarSign, Zap, Clock, BarChart3, Activity, Target } from 'lucide-react';
+
+// Memoized chart components for better performance
+const CostBarChart = memo(({ data, onBarClick }) => (
+  <ResponsiveContainer width="100%" height={350}>
+    <BarChart data={data} onClick={onBarClick}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip 
+        formatter={(value) => [`$${value.toLocaleString()}`, 'Cost']}
+        labelStyle={{ color: '#374151' }}
+      />
+      <Bar 
+        dataKey="cost" 
+        radius={[4, 4, 0, 0]}
+        fill="#3b82f6"
+      />
+    </BarChart>
+  </ResponsiveContainer>
+));
+
+const UtilizationLineChart = memo(({ data }) => (
+  <ResponsiveContainer width="100%" height={350}>
+    <LineChart data={data}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="time" />
+      <YAxis />
+      <Tooltip />
+      <Line 
+        type="monotone" 
+        dataKey="utilization" 
+        stroke="#10b981" 
+        strokeWidth={2}
+        dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+      />
+    </LineChart>
+  </ResponsiveContainer>
+));
+
+const ProjectionAreaChart = memo(({ data }) => (
+  <ResponsiveContainer width="100%" height={350}>
+    <AreaChart data={data}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="month" />
+      <YAxis />
+      <Tooltip 
+        formatter={(value) => [`$${value.toLocaleString()}`, 'Cost']}
+      />
+      <Area 
+        type="monotone" 
+        dataKey="cost" 
+        stroke="#8b5cf6" 
+        fill="#8b5cf6" 
+        fillOpacity={0.3}
+      />
+    </AreaChart>
+  </ResponsiveContainer>
+));
 
 const InteractiveCharts = ({ 
   costData, 
@@ -501,4 +559,4 @@ const InteractiveCharts = ({
   );
 };
 
-export default InteractiveCharts;
+export default memo(InteractiveCharts);

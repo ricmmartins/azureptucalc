@@ -30,7 +30,7 @@ import Modal from './components/ui/Modal';
 
 function App() {
   // Enhanced features state
-  console.log('🎯 FULL AZURE PTU CALCULATOR APP IS LOADING! Time:', new Date().toLocaleTimeString());
+  // console.log('🎯 FULL AZURE PTU CALCULATOR APP IS LOADING! Time:', new Date().toLocaleTimeString()); // Removed for production
   const [showInteractiveCharts, setShowInteractiveCharts] = useState(true);
   // const deviceInfo = useMobileDetection(); // Commented out since import is disabled
 
@@ -278,6 +278,10 @@ function App() {
     usingLiveData: false,
     dataExpiry: new Date(Date.now() + 3 * 60 * 60 * 1000).toLocaleString() // 3 hours from now
   });
+  
+  // Loading states
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [isLoadingPricingData, setIsLoadingPricingData] = useState(false);
 
   // Enhanced pricing data state
   const [livePricingData, setLivePricingData] = useState(null);
@@ -496,12 +500,20 @@ function App() {
     // Only calculate if user has entered valid data
     if (!hasValidData) {
       setCalculations({});
+      setIsCalculating(false);
       return;
     }
-    // FIXED: Dynamic burst pattern analysis
-    const burstRatio = formData.p99TPM && formData.avgTPM ? formData.p99TPM / formData.avgTPM : 1;
-    const peakRatio = formData.maxTPM && formData.avgTPM ? formData.maxTPM / formData.avgTPM : 1;
-    const ptuVariance = formData.p99PTU && formData.avgPTU ? Math.abs(formData.p99PTU - formData.avgPTU) : 0;
+
+    // Set loading state
+    setIsCalculating(true);
+
+    // Use setTimeout to allow UI to update with loading state
+    const calculateAsync = setTimeout(() => {
+      try {
+        // FIXED: Dynamic burst pattern analysis
+        const burstRatio = formData.p99TPM && formData.avgTPM ? formData.p99TPM / formData.avgTPM : 1;
+        const peakRatio = formData.maxTPM && formData.avgTPM ? formData.maxTPM / formData.avgTPM : 1;
+        const ptuVariance = formData.p99PTU && formData.avgPTU ? Math.abs(formData.p99PTU - formData.avgPTU) : 0;
     
     // FIXED: PTU calculation logic with Task 4 manual PTU support
     // Use enhanced PTU calculation
@@ -707,11 +719,25 @@ function App() {
       // Task 3: PAYG breakdown for detailed cost display
       paygoBreakdown
     });
+
+        // Clear loading state
+        setIsCalculating(false);
+      } catch (error) {
+        console.error('Calculation error:', error);
+        setCalculations(prev => ({ 
+          ...prev, 
+          exportError: 'Calculation failed. Please check your inputs.' 
+        }));
+        setIsCalculating(false);
+      }
+    }, 100); // Small delay to allow UI to update
+
+    return () => clearTimeout(calculateAsync);
   }, [formData, currentPricing, hasValidData, selectedModel, selectedDeployment]);
 
   // Handle form input changes
   const handleInputChange = (field, value) => {
-    console.log(`Input change: ${field} = ${value}`);
+    // console.log(`Input change: ${field} = ${value}`); // Removed for production
     let parsed = parseFloat(value);
     if (isNaN(parsed) || parsed < 0) parsed = 0;
     setFormData(prev => ({
@@ -762,7 +788,11 @@ function App() {
       exportService.downloadCSV();
     } catch (error) {
       console.error('Export CSV failed:', error);
-      alert('Failed to export CSV. Please try again.');
+      // TODO: Replace with proper toast notification
+      setCalculations(prev => ({ 
+        ...prev, 
+        exportError: 'Failed to export CSV. Please try again.' 
+      }));
     }
   };
 
@@ -799,7 +829,10 @@ function App() {
       exportService.downloadJSON();
     } catch (error) {
       console.error('Export JSON failed:', error);
-      alert('Failed to export JSON. Please try again.');
+      setCalculations(prev => ({ 
+        ...prev, 
+        exportError: 'Failed to export JSON. Please try again.' 
+      }));
     }
   };
 
@@ -813,10 +846,17 @@ function App() {
       const updateInfo = await externalPricingService.checkForUpdates();
       setPricingUpdateInfo(updateInfo);
       
-      alert('Pricing data updated successfully!');
+      setCalculations(prev => ({ 
+        ...prev, 
+        exportError: null,
+        updateSuccess: 'Pricing data updated successfully!' 
+      }));
     } catch (error) {
       console.error('Failed to update pricing:', error);
-      alert('Failed to update pricing data. Please try again.');
+      setCalculations(prev => ({ 
+        ...prev, 
+        exportError: 'Failed to update pricing data. Please try again.' 
+      }));
     } finally {
       setIsLoadingExternalPricing(false);
     }
@@ -1286,7 +1326,12 @@ AzureMetrics
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
                     <Label htmlFor="region">Azure Region</Label>
-                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                    <Select 
+                      value={selectedRegion} 
+                      onValueChange={setSelectedRegion}
+                      aria-label="Select Azure region for deployment"
+                      aria-describedby="region-help"
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a region" />
                       </SelectTrigger>
@@ -1309,11 +1354,19 @@ AzureMetrics
                         ))}
                       </SelectContent>
                     </Select>
+                    <p id="region-help" className="text-xs text-gray-500 mt-1">
+                      Choose the Azure region for deployment and pricing
+                    </p>
                   </div>
 
                   <div>
                     <Label htmlFor="model">OpenAI Model (PTU Supported Only)</Label>
-                    <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <Select 
+                      value={selectedModel} 
+                      onValueChange={setSelectedModel}
+                      aria-label="Select OpenAI model for calculations"
+                      aria-describedby="model-help"
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a model" />
                       </SelectTrigger>
@@ -1325,7 +1378,7 @@ AzureMetrics
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p id="model-help" className="text-sm text-gray-600 mt-1">
                       Only models that support Provisioned Throughput Units (PTU) are shown. Models like DALL-E and TTS do not support PTU reservations.
                     </p>
                   </div>
@@ -1896,18 +1949,43 @@ AzureMetrics
                 <p className="text-gray-600 max-w-md mx-auto">
                   Enter your KQL query results above to see:
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto text-sm text-gray-600">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto text-sm text-gray-600">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Cost comparisons (PAYGO vs PTU)
+                    <span>Cost comparisons</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Reservation savings opportunities
+                    <span>PTU recommendations</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Usage pattern analysis
+                    <span>Usage pattern analysis</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Interactive charts</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : isCalculating ? (
+          <Card className="border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <CardContent className="p-8 text-center">
+              <div className="space-y-4">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                </div>
+                <h3 className="text-xl font-semibold text-blue-700">🔄 Calculating Results</h3>
+                <p className="text-blue-600 max-w-md mx-auto">
+                  Analyzing your usage patterns and calculating optimal PTU recommendations...
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-6">{/* Results content starts here */}
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -2609,7 +2687,7 @@ AzureMetrics
               />
               </div>
             )}
-          </>
+          </div>
         )}
 
         {/* TASK 2: Official Pricing Transparency Section */}

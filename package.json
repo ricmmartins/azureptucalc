@@ -17,11 +17,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/azure-openai-ptu-estimator.git"
+    "url": "https://github.com/ricmmartins/azureptucalc.git"
   },
-  "homepage": "https://github.com/yourusername/azure-openai-ptu-estimator#readme",
+  "homepage": "https://github.com/ricmmartins/azureptucalc#readme",
   "bugs": {
-    "url": "https://github.com/yourusername/azure-openai-ptu-estimator/issues"
+    "url": "https://github.com/ricmmartins/azureptucalc/issues"
   },
   "scripts": {
     "dev": "vite",
