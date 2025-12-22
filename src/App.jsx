@@ -1174,22 +1174,52 @@ AzureMetrics
               <div className="flex items-center gap-3">
                 {/* Live Pricing Status Indicator */}
                 <div className="flex items-center gap-2">
-                  {livePricingData?.source === 'live' ? (
-                    <>
-                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-medium text-green-700">Live Azure Pricing</span>
-                    </>
-                  ) : livePricingData?.source === 'live-simulated' ? (
-                    <>
-                      <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-blue-700">Development Mode</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-2 w-2 bg-amber-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-amber-700">Static Pricing</span>
-                    </>
-                  )}
+                  {(() => {
+                    // Determine pricing data status
+                    const now = Date.now();
+                    const timestamp = livePricingData?.timestamp ? new Date(livePricingData.timestamp).getTime() : null;
+                    const isOld = timestamp && (now - timestamp) > 6 * 60 * 60 * 1000; // Older than 6 hours
+                    const isPartial = livePricingData?.total_items < 100; // Less than 100 items suggests incomplete data
+                    const isLive = livePricingData?.source === 'live';
+                    const isSimulated = livePricingData?.source === 'live-simulated';
+                    
+                    if (isLive && !isOld && !isPartial) {
+                      return (
+                        <>
+                          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-sm font-medium text-green-700">Live Azure Pricing</span>
+                        </>
+                      );
+                    } else if (isLive && isOld) {
+                      return (
+                        <>
+                          <div className="h-2 w-2 bg-orange-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-orange-700">Outdated Pricing</span>
+                        </>
+                      );
+                    } else if (isLive && isPartial) {
+                      return (
+                        <>
+                          <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-yellow-700">Partial Pricing</span>
+                        </>
+                      );
+                    } else if (isSimulated) {
+                      return (
+                        <>
+                          <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-blue-700">Development Mode</span>
+                        </>
+                      );
+                    } else {
+                      return (
+                        <>
+                          <div className="h-2 w-2 bg-amber-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-amber-700">Static Pricing</span>
+                        </>
+                      );
+                    }
+                  })()}
                 </div>
                 <Button 
                   variant="outline" 
@@ -1202,7 +1232,28 @@ AzureMetrics
                 </Button>
               </div>
             </div>
-            <CardDescription>Azure OpenAI pricing and model availability information</CardDescription>
+            <CardDescription>
+              {(() => {
+                const now = Date.now();
+                const timestamp = livePricingData?.timestamp ? new Date(livePricingData.timestamp).getTime() : null;
+                const isOld = timestamp && (now - timestamp) > 6 * 60 * 60 * 1000;
+                const isPartial = livePricingData?.total_items < 100;
+                const isLive = livePricingData?.source === 'live';
+                const isSimulated = livePricingData?.source === 'live-simulated';
+                
+                if (isLive && !isOld && !isPartial) {
+                  return "Real-time pricing data from Azure API (prices.azure.com/api/retail/prices)";
+                } else if (isLive && isOld) {
+                  return "Azure API pricing data is outdated - click Refresh Data to update";
+                } else if (isLive && isPartial) {
+                  return "Partial Azure API pricing data available - some models may use fallback pricing";
+                } else if (isSimulated) {
+                  return "Simulated live pricing for local development - deploy to Vercel for real Azure API";
+                } else {
+                  return "Static pricing data with periodic API validation";
+                }
+              })()}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
