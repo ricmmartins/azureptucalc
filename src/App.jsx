@@ -1248,7 +1248,7 @@ AzureMetrics
                 } else if (isLive && isPartial) {
                   return "Partial Azure API pricing data available - some models may use fallback pricing";
                 } else if (isSimulated) {
-                  return "Simulated live pricing for local development - deploy to Vercel for real Azure API";
+                  return "Static pricing data with periodic API validation";
                 } else {
                   return "Static pricing data with periodic API validation";
                 }
@@ -1256,7 +1256,30 @@ AzureMetrics
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* Status Explanation */}
+              <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                <div className="font-medium text-gray-700 mb-2">Pricing Status Guide:</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                    <span><strong>Live:</strong> Current Azure API data</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 bg-orange-500 rounded-full"></div>
+                    <span><strong>Outdated:</strong> Data older than 6 hours</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
+                    <span><strong>Partial:</strong> Incomplete API response</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 bg-amber-500 rounded-full"></div>
+                    <span><strong>Static:</strong> Cached/fallback pricing</span>
+                  </div>
+                </div>
+              </div>
+              
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <span className="text-sm">
