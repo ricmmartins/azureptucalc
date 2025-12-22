@@ -261,8 +261,8 @@ function extractPTUPricing(items, model, deployment) {
 
   return {
     global: ptuPrice || 0,
-    dataZone: ptuPrice ? Math.round(ptuPrice * 1.1) : 0,
-    regional: ptuPrice ? Math.round(ptuPrice * 0.9) : 0,
+    dataZone: ptuPrice ? Number((ptuPrice * 1.1).toFixed(2)) : 0,
+    regional: ptuPrice ? Number((ptuPrice * 0.9).toFixed(2)) : 0,
     found_items: candidates.length,
     candidates: candidates.slice(0, 3) // Include some candidates for debugging
   };
