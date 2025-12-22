@@ -7,6 +7,7 @@ class AzureOpenAIPricingService {
     this.cache = new Map();
     this.cacheExpiry = 3 * 60 * 60 * 1000; // 3 hours
     this.fallbackPricing = this.loadFallbackPricing();
+    console.log('🔧 Azure Pricing Service initialized with API endpoint:', this.baseUrl);
   }
 
   // Load fallback pricing data
@@ -77,21 +78,25 @@ class AzureOpenAIPricingService {
 
   // Get cached pricing or fetch from API
   async getPricing(model, region = 'eastus2', deploymentType = 'data-zone') {
+    console.log('💰 Azure API: Getting pricing for', { model, region, deploymentType });
     const cacheKey = `${model}-${region}-${deploymentType}`;
     
     // Check cache first
     if (this.cache.has(cacheKey)) {
       const cached = this.cache.get(cacheKey);
       if (Date.now() - cached.timestamp < this.cacheExpiry) {
+        console.log('📋 Azure API: Using cached pricing data for', model);
         return cached.data;
       }
     }
 
     try {
       // Attempt to fetch live pricing
+      console.log('🌐 Azure API: Fetching live pricing from', this.baseUrl);
       const livePricing = await this.fetchLivePricing(model, region, deploymentType);
       
       if (livePricing) {
+        console.log('✅ Azure API: Successfully retrieved live pricing for', model, livePricing);
         // Cache successful result
         this.cache.set(cacheKey, {
           data: livePricing,
@@ -100,10 +105,11 @@ class AzureOpenAIPricingService {
         return livePricing;
       }
     } catch (error) {
-      console.warn('Live pricing fetch failed:', error);
+      console.warn('❌ Azure API: Live pricing fetch failed:', error);
     }
 
     // Fallback to static pricing
+    console.log('🔄 Azure API: Using fallback pricing for', model);
     return this.getFallbackPricing(model, deploymentType);
   }
 
