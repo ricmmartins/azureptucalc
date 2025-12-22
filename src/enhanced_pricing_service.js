@@ -115,47 +115,60 @@ class AzureOpenAIPricingService {
 
   // Fetch live pricing from Azure API
   async fetchLivePricing(model, region, deploymentType) {
+    console.log('🔍 Azure API: Searching for model:', model);
+    
     const modelMap = {
       'gpt-5': 'GPT5',
-      'gpt-5-mini': 'GPT5 Mini',
-      'gpt-5-nano': 'GPT5 Nano',
-      'gpt-5-chat': 'GPT5 Chat',
-      'gpt-5.1': 'GPT5.1',
-      'gpt-5.2': 'GPT5.2',
-      'gpt-4o': 'GPT-4o',
-      'gpt-4o-mini': 'GPT-4o Mini',
-      'gpt-4': 'GPT-4',
+      'gpt-5-mini': 'GPT 5 Mini',
+      'gpt-5-nano': 'GPT 5 Nano', 
+      'gpt-5-chat': 'GPT 5',
+      'gpt-5.1': 'GPT 5.1',
+      'gpt-5.2': 'GPT 5.2',
+      'gpt-4o': 'gpt 4o',
+      'gpt-4o-mini': 'gpt 4o mini',
+      'gpt-4': 'gpt 4',
       'gpt-4-turbo': 'GPT-4 Turbo',
-      'gpt-35-turbo': 'GPT-3.5 Turbo',
-      'text-embedding-ada-002': 'Text Embedding Ada 002',
-      'text-embedding-3-large': 'Text Embedding 3 Large',
-      'text-embedding-3-small': 'Text Embedding 3 Small',
-      'whisper': 'Whisper'
+      'gpt-35-turbo': 'gpt-35-turbo',
+      'text-embedding-ada-002': 'ada 002',
+      'text-embedding-3-large': 'embedding 3 large',
+      'text-embedding-3-small': 'embedding 3 small',
+      'whisper': 'whisper'
     };
 
     const searchModel = modelMap[model] || model;
     
-    // Multiple search strategies
+    // Multiple search strategies - updated with working queries
     const queries = [
-      `serviceName eq 'Cognitive Services' and contains(productName, 'Azure OpenAI') and contains(productName, '${searchModel}')`,
-      `contains(productName, 'Azure OpenAI') and contains(productName, '${searchModel}')`,
-      `contains(productName, '${searchModel}') and contains(serviceName, 'Cognitive')`
+      // First try: Broad OpenAI search with model name
+      `contains(productName, 'OpenAI') and contains(productName, '${searchModel}')`,
+      // Second try: Just OpenAI with service name
+      `serviceName eq 'Foundry Models' and contains(productName, 'OpenAI') and contains(productName, '${searchModel}')`,
+      // Third try: Very broad search for the model
+      `contains(productName, '${searchModel}') and contains(productName, 'OpenAI')`,
+      // Fourth try: Just broad OpenAI search to get any pricing data
+      `contains(productName, 'OpenAI')`
     ];
 
     for (const filter of queries) {
       try {
+        console.log('🔎 Azure API: Trying query:', filter);
         const response = await fetch(`${this.baseUrl}?$filter=${encodeURIComponent(filter)}&$top=100`);
         
         if (response.ok) {
           const data = await response.json();
+          console.log('📊 Azure API: Query returned', data.Items?.length || 0, 'items');
+          
           const pricing = this.parsePricingResponse(data.Items, model, deploymentType);
           
           if (pricing) {
+            console.log('✅ Azure API: Successfully parsed pricing from query:', filter);
             return pricing;
           }
+        } else {
+          console.warn('⚠️ Azure API: Query failed with status:', response.status);
         }
       } catch (error) {
-        console.warn(`Query failed: ${filter}`, error);
+        console.warn(`❌ Azure API: Query failed:`, filter, error);
       }
     }
 
