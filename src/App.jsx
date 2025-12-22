@@ -365,7 +365,7 @@ function App() {
   };
 
 
-  const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0;
+  const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0 || formData.inputTokensMonthly > 0 || formData.outputTokensMonthly > 0;
 
   // Load live pricing data when model or deployment changes
   useEffect(() => {
