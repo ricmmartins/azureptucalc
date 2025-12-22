@@ -19,6 +19,7 @@ import { getTokenPricing, calculatePAYGCost, OFFICIAL_TOKEN_PRICING } from "./of
 import { REGION_MODEL_AVAILABILITY, getRegionsByZone, isGovernmentRegion, getGovernmentAvailableModels } from "./regionModelAvailability.js";
 import ExternalPricingService from './ExternalPricingService.js';
 import ExportService from './ExportService.js';
+import pricingValidationService from './PricingValidationService.js';
 // Temporarily comment out complex components
 import InteractiveCharts from './components/InteractiveCharts';
 // import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
@@ -282,6 +283,11 @@ function App() {
   // Loading states
   const [isCalculating, setIsCalculating] = useState(false);
   const [isLoadingPricingData, setIsLoadingPricingData] = useState(false);
+  
+  // Pricing validation state
+  const [pricingValidation, setPricingValidation] = useState(null);
+  const [showPricingValidation, setShowPricingValidation] = useState(false);
+  const [isValidatingPricing, setIsValidatingPricing] = useState(false);
 
   // Enhanced pricing data state
   const [livePricingData, setLivePricingData] = useState(null);
@@ -735,6 +741,30 @@ function App() {
     return () => clearTimeout(calculateAsync);
   }, [formData, currentPricing, hasValidData, selectedModel, selectedDeployment]);
 
+  // Pricing validation effect
+  useEffect(() => {
+    const validatePricing = async () => {
+      if (selectedModel && selectedRegion) {
+        try {
+          const validation = await pricingValidationService.validatePricingAccuracy(
+            selectedModel, 
+            selectedRegion, 
+            selectedDeployment
+          );
+          setPricingValidation(validation);
+        } catch (error) {
+          console.warn('Pricing validation failed:', error);
+        }
+      }
+    };
+
+    // Only validate pricing every 30 minutes to avoid API rate limits
+    const validationStatus = pricingValidationService.getValidationStatus();
+    if (!validationStatus.hasRecentValidation) {
+      validatePricing();
+    }
+  }, [selectedModel, selectedRegion, selectedDeployment]);
+
   // Handle form input changes
   const handleInputChange = (field, value) => {
     // console.log(`Input change: ${field} = ${value}`); // Removed for production
@@ -859,6 +889,28 @@ function App() {
       }));
     } finally {
       setIsLoadingExternalPricing(false);
+    }
+  };
+
+  // Manual pricing validation handler
+  const handleValidatePricing = async () => {
+    setIsValidatingPricing(true);
+    try {
+      const validation = await pricingValidationService.validatePricingAccuracy(
+        selectedModel,
+        selectedRegion, 
+        selectedDeployment
+      );
+      setPricingValidation(validation);
+      setShowPricingValidation(true);
+    } catch (error) {
+      console.error('Pricing validation failed:', error);
+      setCalculations(prev => ({ 
+        ...prev, 
+        exportError: 'Pricing validation failed. Please try again.' 
+      }));
+    } finally {
+      setIsValidatingPricing(false);
     }
   };
 
@@ -1038,14 +1090,46 @@ AzureMetrics
             <CardDescription>Azure OpenAI pricing and model availability information</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-sm">{pricingStatus.usingLiveData ? "Live pricing data from Azure API (prices.azure.com/api/retail/prices)" : "Static pricing data (expires in 3 hours)"}</span>
+                <span className="text-sm">
+                  {pricingStatus.usingLiveData 
+                    ? "Live pricing data from Azure API (prices.azure.com/api/retail/prices)" 
+                    : "Static pricing data with periodic API validation"
+                  }
+                </span>
               </div>
+              
+              {pricingValidation && (
+                <div className={`flex items-center gap-2 p-2 rounded-md text-xs ${ 
+                  pricingValidation.status === 'accurate' ? 'bg-green-50 border border-green-200' :
+                  pricingValidation.status === 'minor_differences' ? 'bg-yellow-50 border border-yellow-200' :
+                  'bg-orange-50 border border-orange-200'
+                }`}>
+                  <Shield className={`h-3 w-3 ${ 
+                    pricingValidation.status === 'accurate' ? 'text-green-600' :
+                    pricingValidation.status === 'minor_differences' ? 'text-yellow-600' :
+                    'text-orange-600'
+                  }`} />
+                  <span className={`font-medium ${ 
+                    pricingValidation.status === 'accurate' ? 'text-green-800' :
+                    pricingValidation.status === 'minor_differences' ? 'text-yellow-800' :
+                    'text-orange-800'
+                  }`}>
+                    Pricing Validation: {pricingValidation.accuracy?.toFixed(0)}% accurate
+                    {pricingValidation.warnings.length > 0 && ` (${pricingValidation.warnings.length} warnings)`}
+                  </span>
+                </div>
+              )}
+              
               <div className="text-sm text-gray-600">
                 Last refreshed: {pricingStatus.lastRefreshed}
+                {pricingValidation && (
+                  <span className="ml-2">• Validated: {new Date(pricingValidation.timestamp).toLocaleTimeString()}</span>
+                )}
               </div>
+            </div>
               <div className="text-sm text-gray-600">
                 <strong>Data Sources:</strong>
                 <ul className="list-disc list-inside mt-1 space-y-1">
@@ -1936,6 +2020,127 @@ AzureMetrics
             </Alert>
           </CardContent>
         </Card>
+
+        {/* Pricing Validation Section */}
+        {pricingValidation && (
+          <Card className={`mb-6 border-2 ${
+            pricingValidation.status === 'accurate' ? 'border-green-200 bg-green-50' :
+            pricingValidation.status === 'minor_differences' ? 'border-yellow-200 bg-yellow-50' :
+            pricingValidation.status === 'significant_differences' ? 'border-orange-200 bg-orange-50' :
+            'border-gray-200 bg-gray-50'
+          }`}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className={`h-5 w-5 ${
+                    pricingValidation.status === 'accurate' ? 'text-green-600' :
+                    pricingValidation.status === 'minor_differences' ? 'text-yellow-600' :
+                    pricingValidation.status === 'significant_differences' ? 'text-orange-600' :
+                    'text-gray-600'
+                  }`} />
+                  <CardTitle className="text-sm">Pricing Data Validation</CardTitle>
+                  <Badge variant={pricingValidation.status === 'accurate' ? 'default' : 'secondary'} className={`text-xs ${
+                    pricingValidation.status === 'accurate' ? 'bg-green-100 text-green-800' :
+                    pricingValidation.status === 'minor_differences' ? 'bg-yellow-100 text-yellow-800' :
+                    pricingValidation.status === 'significant_differences' ? 'bg-orange-100 text-orange-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {pricingValidation.accuracy?.toFixed(0)}% Accurate
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleValidatePricing}
+                    disabled={isValidatingPricing}
+                    className="text-xs"
+                  >
+                    {isValidatingPricing ? (
+                      <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full mr-1" />
+                    ) : (
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                    )}
+                    Verify
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowPricingValidation(!showPricingValidation)}
+                    className="text-xs"
+                  >
+                    {showPricingValidation ? 'Hide' : 'Details'}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <div className="text-center">
+                  <div className="text-xs text-gray-600">Data Source</div>
+                  <div className={`font-medium text-sm ${
+                    pricingValidation.dataSource === 'live' ? 'text-green-600' : 'text-orange-600'
+                  }`}>
+                    {pricingValidation.dataSource === 'live' ? '🌐 Live Azure API' : '📁 Static Data'}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-600">Last Validated</div>
+                  <div className="font-medium text-sm text-gray-800">
+                    {new Date(pricingValidation.timestamp).toLocaleTimeString()}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-600">Status</div>
+                  <div className={`font-medium text-sm ${
+                    pricingValidation.status === 'accurate' ? 'text-green-600' :
+                    pricingValidation.status === 'minor_differences' ? 'text-yellow-600' :
+                    'text-orange-600'
+                  }`}>
+                    {pricingValidation.status === 'accurate' ? '✅ Verified' :
+                     pricingValidation.status === 'minor_differences' ? '⚠️ Minor Diffs' :
+                     pricingValidation.status === 'significant_differences' ? '🚨 Major Diffs' :
+                     pricingValidation.status === 'api_unavailable' ? '📡 API Unavailable' : '❌ Error'}
+                  </div>
+                </div>
+              </div>
+              
+              {pricingValidation.warnings.length > 0 && (
+                <Alert className="border-orange-200 bg-orange-50 mb-3">
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <AlertDescription className="text-orange-800">
+                    <strong>Pricing Warnings:</strong>
+                    <ul className="mt-1 text-xs list-disc list-inside">
+                      {pricingValidation.warnings.slice(0, 3).map((warning, index) => (
+                        <li key={index}>{warning}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {showPricingValidation && pricingValidation.live && (
+                <div className="bg-white p-3 rounded border text-xs">
+                  <h4 className="font-medium mb-2">Live vs Static Pricing Comparison:</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <strong>Static Data:</strong>
+                      <div>Input: ${pricingValidation.static.token?.input || 'N/A'}/M tokens</div>
+                      <div>Output: ${pricingValidation.static.token?.output || 'N/A'}/M tokens</div>
+                      <div>PTU: ${pricingValidation.static.ptu?.hourly || 'N/A'}/hour</div>
+                    </div>
+                    <div>
+                      <strong>Live Azure API:</strong>
+                      <div>Input: ${pricingValidation.live.paygo?.input || 'N/A'}/M tokens</div>
+                      <div>Output: ${pricingValidation.live.paygo?.output || 'N/A'}/M tokens</div>
+                      <div>PTU: ${pricingValidation.live.ptu?.regional || pricingValidation.live.ptu?.global || 'N/A'}/hour</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Results Section - Only show if user has entered valid data */}
         {!hasValidData ? (
