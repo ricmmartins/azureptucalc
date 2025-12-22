@@ -1986,17 +1986,6 @@ AzureMetrics
           </Card>
         ) : (
           <div className="space-y-6">{/* Results content starts here */}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Personalized recommendations
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
             {/* Burst Pattern Analysis */}
             <Card className="results-section">
               <CardHeader>
