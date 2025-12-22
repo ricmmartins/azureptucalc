@@ -97,14 +97,24 @@ export default async function handler(req, res) {
       deployment: deployment,
       paygo: extractPAYGOPricing(pricingData, model),
       ptu: extractPTUPricing(pricingData, model, deployment),
-      raw_items: pricingData.slice(0, 5) // Include first 5 items for debugging
+      raw_sample: pricingData.slice(0, 3).map(item => ({
+        productName: item.productName,
+        serviceName: item.serviceName,
+        skuName: item.skuName,
+        meterName: item.meterName,
+        type: item.type,
+        unitPrice: item.unitPrice,
+        retailPrice: item.retailPrice,
+        unitOfMeasure: item.unitOfMeasure
+      })) // Include sample items for debugging
     };
 
     console.log('📤 Sending processed pricing:', {
       success: processedPricing.success,
       source: processedPricing.source,
       paygo: processedPricing.paygo,
-      ptu: processedPricing.ptu
+      ptu: processedPricing.ptu,
+      sample_item: processedPricing.raw_sample[0]
     });
 
     return res.status(200).json(processedPricing);
@@ -121,57 +131,139 @@ export default async function handler(req, res) {
 
 // Extract PAYG pricing from Azure API response
 function extractPAYGOPricing(items, model) {
-  const paygoItems = items.filter(item => 
-    item.type === 'Consumption' && 
-    (item.productName?.toLowerCase().includes('input') || 
-     item.productName?.toLowerCase().includes('output') ||
-     item.meterName?.toLowerCase().includes('input') ||
-     item.meterName?.toLowerCase().includes('output'))
-  );
-
+  console.log(`🔍 Extracting PAYG pricing for ${model} from ${items.length} items`);
+  
   let input = null, output = null;
+  const candidates = [];
 
-  for (const item of paygoItems) {
-    const name = (item.productName || item.meterName || '').toLowerCase();
+  for (const item of items) {
+    const productName = (item.productName || '').toLowerCase();
+    const meterName = (item.meterName || '').toLowerCase();
+    const skuName = (item.skuName || '').toLowerCase();
+    const combinedName = `${productName} ${meterName} ${skuName}`.toLowerCase();
+    
+    // Get price from either field
     const price = parseFloat(item.unitPrice || item.retailPrice || 0);
-
-    if (name.includes('input') && !input) {
-      input = price;
-    } else if (name.includes('output') && !output) {
-      output = price;
+    
+    console.log(`📊 Checking item: ${item.productName} | ${item.meterName} | Price: ${price} | Type: ${item.type}`);
+    
+    if (price > 0) {
+      candidates.push({
+        name: combinedName,
+        productName: item.productName,
+        meterName: item.meterName,
+        price: price,
+        type: item.type,
+        unitOfMeasure: item.unitOfMeasure
+      });
+      
+      // Look for input/output tokens in various fields
+      if ((combinedName.includes('input') || combinedName.includes('prompt')) && 
+          (combinedName.includes('token') || item.unitOfMeasure?.toLowerCase().includes('token'))) {
+        if (!input || price < input) input = price;
+        console.log(`✅ Found input pricing: ${price} (${item.productName})`);
+      }
+      
+      if ((combinedName.includes('output') || combinedName.includes('completion') || combinedName.includes('generated')) && 
+          (combinedName.includes('token') || item.unitOfMeasure?.toLowerCase().includes('token'))) {
+        if (!output || price < output) output = price;
+        console.log(`✅ Found output pricing: ${price} (${item.productName})`);
+      }
+      
+      // Alternative patterns for GPT pricing
+      if (combinedName.includes('gpt') && combinedName.includes(model.replace('-', ''))) {
+        if (combinedName.includes('input') || combinedName.includes('prompt')) {
+          if (!input) input = price;
+        } else if (combinedName.includes('output') || combinedName.includes('completion')) {
+          if (!output) output = price;
+        }
+      }
     }
   }
-
+  
+  console.log(`💰 PAYG extraction result: input=${input}, output=${output}`);
+  console.log(`📋 Candidates found: ${candidates.length}`);
+  
   return {
     input: input || 0,
     output: output || 0,
-    found_items: paygoItems.length
+    found_items: candidates.length,
+    candidates: candidates.slice(0, 5) // Include some candidates for debugging
   };
 }
 
 // Extract PTU pricing from Azure API response
 function extractPTUPricing(items, model, deployment) {
-  const ptuItems = items.filter(item => 
-    item.type === 'Reservation' || 
-    item.productName?.toLowerCase().includes('ptu') ||
-    item.meterName?.toLowerCase().includes('ptu') ||
-    item.productName?.toLowerCase().includes('provisioned')
-  );
-
+  console.log(`🔍 Extracting PTU pricing for ${model} (${deployment}) from ${items.length} items`);
+  
   let ptuPrice = null;
+  const candidates = [];
 
-  for (const item of ptuItems) {
+  for (const item of items) {
+    const productName = (item.productName || '').toLowerCase();
+    const meterName = (item.meterName || '').toLowerCase();
+    const skuName = (item.skuName || '').toLowerCase();
+    const combinedName = `${productName} ${meterName} ${skuName}`.toLowerCase();
+    
     const price = parseFloat(item.unitPrice || item.retailPrice || 0);
+    
     if (price > 0) {
-      ptuPrice = price;
-      break;
+      // Look for PTU, provisioned, or reservation pricing
+      if (combinedName.includes('ptu') || 
+          combinedName.includes('provisioned') || 
+          combinedName.includes('reservation') ||
+          item.type === 'Reservation') {
+        
+        candidates.push({
+          name: combinedName,
+          productName: item.productName,
+          meterName: item.meterName,
+          price: price,
+          type: item.type,
+          unitOfMeasure: item.unitOfMeasure
+        });
+        
+        console.log(`📊 PTU candidate: ${item.productName} | ${item.meterName} | Price: ${price} | Type: ${item.type}`);
+        
+        if (!ptuPrice || price < ptuPrice) {
+          ptuPrice = price;
+          console.log(`✅ Found PTU pricing: ${price} (${item.productName})`);
+        }
+      }
+      
+      // Alternative search for hourly pricing
+      if ((item.unitOfMeasure?.toLowerCase().includes('hour') || combinedName.includes('hour')) &&
+          (combinedName.includes('gpt') || combinedName.includes('openai'))) {
+        if (!ptuPrice || price < ptuPrice) {
+          ptuPrice = price;
+          console.log(`✅ Found hourly pricing: ${price} (${item.productName})`);
+        }
+      }
     }
   }
+  
+  // If no PTU pricing found, try to estimate from available data
+  if (!ptuPrice && candidates.length === 0) {
+    // Look for any pricing that might be PTU-related
+    const hourlyItems = items.filter(item => {
+      const combinedName = `${item.productName || ''} ${item.meterName || ''}`.toLowerCase();
+      return item.unitOfMeasure?.toLowerCase().includes('hour') && parseFloat(item.unitPrice || item.retailPrice || 0) > 0;
+    });
+    
+    if (hourlyItems.length > 0) {
+      ptuPrice = parseFloat(hourlyItems[0].unitPrice || hourlyItems[0].retailPrice || 0);
+      console.log(`⚠️ Using estimated PTU pricing: ${ptuPrice} (${hourlyItems[0].productName})`);
+    }
+  }
+
+  console.log(`💰 PTU extraction result: ptuPrice=${ptuPrice}`);
+  console.log(`📋 PTU candidates found: ${candidates.length}`);
 
   return {
     global: ptuPrice || 0,
     dataZone: ptuPrice ? Math.round(ptuPrice * 1.1) : 0,
     regional: ptuPrice ? Math.round(ptuPrice * 0.9) : 0,
-    found_items: ptuItems.length
+    found_items: candidates.length,
+    candidates: candidates.slice(0, 3) // Include some candidates for debugging
   };
 }
