@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from './components/ui/alert';
 import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ptuModels from './ptu_supported_models.json';
-// import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
+import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
 // import correctedPricingService from "./corrected_pricing_service.js";
 import enhancedModelConfig from "./enhanced_model_config.json";
 import correctedPricingData from './corrected_pricing_data.json';
@@ -118,12 +118,15 @@ function App() {
   
   // Task 9: External Pricing Service initialization
   const externalPricingService = useMemo(() => new ExternalPricingService(), []);
+  const azurePricingService = useMemo(() => new AzureOpenAIPricingService(), []);
   const exportService = useMemo(() => new ExportService(), []);
   
   // Task 9: External pricing data state
   const [externalPricingData, setExternalPricingData] = useState(null);
   const [pricingUpdateInfo, setPricingUpdateInfo] = useState(null);
   const [isLoadingExternalPricing, setIsLoadingExternalPricing] = useState(false);
+  const [isLoadingLivePricing, setIsLoadingLivePricing] = useState(false);
+  const [livePricingData, setLivePricingData] = useState(null);
   
   // Task 9: Load external pricing data on component mount
   useEffect(() => {
@@ -136,6 +139,35 @@ function App() {
         // Check for updates
         const updateInfo = await externalPricingService.checkForUpdates();
         setPricingUpdateInfo(updateInfo);
+        
+        // Load live Azure pricing data for current model and region
+        if (selectedModel && selectedRegion && selectedDeployment) {
+          setIsLoadingLivePricing(true);
+          try {
+            const livePricing = await azurePricingService.getPricing(selectedModel, selectedRegion, selectedDeployment);
+            setLivePricingData(livePricing);
+            console.log('Live Azure pricing loaded:', livePricing);
+            
+            // Update pricing status based on live data availability
+            setPricingStatus(prev => ({
+              ...prev,
+              usingLiveData: livePricing && livePricing.source === 'live',
+              lastRefreshed: new Date().toLocaleString(),
+              dataExpiry: livePricing && livePricing.timestamp 
+                ? new Date(new Date(livePricing.timestamp).getTime() + 3 * 60 * 60 * 1000).toLocaleString()
+                : prev.dataExpiry
+            }));
+          } catch (error) {
+            console.warn('Failed to load live Azure pricing, using fallback:', error);
+            setPricingStatus(prev => ({
+              ...prev,
+              usingLiveData: false,
+              lastRefreshed: new Date().toLocaleString()
+            }));
+          } finally {
+            setIsLoadingLivePricing(false);
+          }
+        }
       } catch (error) {
         console.warn('Failed to load external pricing:', error);
       } finally {
@@ -144,7 +176,7 @@ function App() {
     };
     
     loadExternalPricing();
-  }, [externalPricingService]);
+  }, [externalPricingService, azurePricingService, selectedModel, selectedRegion, selectedDeployment]);
 
   // Onboarding state management
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -289,8 +321,6 @@ function App() {
   // const [showPricingValidation, setShowPricingValidation] = useState(false);
   // const [isValidatingPricing, setIsValidatingPricing] = useState(false);
 
-  // Enhanced pricing data state
-  const [livePricingData, setLivePricingData] = useState(null);
   // Check if user has entered valid data
 
   // Function to refresh pricing data
@@ -300,40 +330,30 @@ function App() {
     setPricingStatus(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // Clear cache and fetch fresh data
-      // pricingService.cache.clear(); // Commented out since pricingService is disabled
+      // Clear Azure pricing service cache and fetch fresh data
+      azurePricingService.cache.clear();
       
-      const deploymentTypeMap = {
-        global: "global",
-        dataZone: "data-zone",
-        regional: "regional"
-      };
+      // Fetch fresh live pricing data
+      const livePricing = await azurePricingService.getPricing(selectedModel, selectedRegion, selectedDeployment);
+      setLivePricingData(livePricing);
       
-      const enhancedDeploymentType = deploymentTypeMap[selectedDeployment] || "data-zone";
-      // const pricing = await pricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType); // Commented out since pricingService is disabled
+      console.log('Refreshed Azure pricing:', livePricing);
       
-      // Use fallback pricing for now
-      // Use official base PTU pricing as a safe fallback (US$1/PTU-hour base)
-      const pricing = {
-        paygo_input: 0.002,
-        paygo_output: 0.006,
-        ptu_hourly: 1.00,
-        ptu_monthly: 730, // 24 * 30.4167 ~ 730 hours/month
-        ptu_yearly: 6132  // monthly * 12 * 0.7 (30% yearly discount)
-      };
-      
-      setLivePricingData(pricing);
       setPricingStatus(prev => ({
         ...prev,
         isLoading: false,
-        usingLiveData: true,
-        lastRefreshed: new Date().toLocaleString()
+        usingLiveData: livePricing && livePricing.source === 'live',
+        lastRefreshed: new Date().toLocaleString(),
+        dataExpiry: livePricing && livePricing.timestamp 
+          ? new Date(new Date(livePricing.timestamp).getTime() + 3 * 60 * 60 * 1000).toLocaleString()
+          : new Date(Date.now() + 3 * 60 * 60 * 1000).toLocaleString()
       }));
     } catch (error) {
       console.warn("Failed to refresh pricing:", error);
       setPricingStatus(prev => ({
         ...prev,
-        isLoading: false
+        isLoading: false,
+        usingLiveData: false
       }));
     }
   };
@@ -431,6 +451,25 @@ function App() {
     }
     
     try {
+      // PRIORITY 1: Use live Azure API pricing data when available
+      let livePAYGO = null;
+      let livePTU = null;
+      let pricingSource = 'static';
+      
+      if (livePricingData && livePricingData.source === 'live') {
+        livePAYGO = {
+          input: livePricingData.paygo?.input || 0,
+          output: livePricingData.paygo?.output || 0
+        };
+        livePTU = {
+          hourly: livePricingData.ptu?.[selectedDeployment] || livePricingData.ptu?.global || 0,
+          monthly: Math.round((livePricingData.ptu?.[selectedDeployment] || livePricingData.ptu?.global || 0) * 24 * 30.4167),
+          yearly: Math.round((livePricingData.ptu?.[selectedDeployment] || livePricingData.ptu?.global || 0) * 24 * 365 * 0.7)
+        };
+        pricingSource = 'azure-api-live';
+        console.log('Using live Azure API pricing:', { livePAYGO, livePTU, timestamp: livePricingData.timestamp });
+      }
+      
       // TASK 2: Use official PTU pricing alignment (prefer authoritative corrected_pricing_data.json)
       const officialPTUPricing = calculateOfficialPTUPricing
         ? calculateOfficialPTUPricing(selectedRegion, selectedDeployment)
@@ -454,25 +493,28 @@ function App() {
       officialPTUPricing.monthly = officialPTUPricing.monthly || Math.round(officialPTUPricing.hourly * 24 * 30.4167);
       officialPTUPricing.yearly = officialPTUPricing.yearly || Math.round(officialPTUPricing.monthly * 12 * 0.7);
       
-      // Use official token pricing for PAYG
-  const tokenPricing = getTokenPricing(selectedModel);
-  const tokenPricingIsFallback = tokenPricing.isFallback === true;
+      // PRIORITY 2: Use official token pricing for PAYG (fallback from live API)
+      const tokenPricing = getTokenPricing(selectedModel);
+      const tokenPricingIsFallback = tokenPricing.isFallback === true;
       
-      // Prefer explicit reservation (monthly/yearly) from corrected_pricing_data.json when present
-      const ptuMonthly = correctedReservations?.monthly || officialPTUPricing?.monthly || (officialPTUPricing?.hourly ? Math.round(officialPTUPricing.hourly * 24 * 30.4167) : 730);
-      const ptuYearly = correctedReservations?.yearly || officialPTUPricing?.yearly || Math.round(ptuMonthly * 12 * 0.7);
+      // PRIORITY 3: Prefer explicit reservation (monthly/yearly) from corrected_pricing_data.json when present
+      const ptuMonthly = livePTU?.monthly || correctedReservations?.monthly || officialPTUPricing?.monthly || (officialPTUPricing?.hourly ? Math.round(officialPTUPricing.hourly * 24 * 30.4167) : 730);
+      const ptuYearly = livePTU?.yearly || correctedReservations?.yearly || officialPTUPricing?.yearly || Math.round(ptuMonthly * 12 * 0.7);
 
       return {
-  paygo_input: tokenPricing.input,
-  paygo_output: tokenPricing.output,
-        ptu_hourly: officialPTUPricing?.hourly || correctedModel?.ptu?.[selectedDeployment] || 1.00,
+        paygo_input: livePAYGO?.input || tokenPricing.input,
+        paygo_output: livePAYGO?.output || tokenPricing.output,
+        ptu_hourly: livePTU?.hourly || officialPTUPricing?.hourly || correctedModel?.ptu?.[selectedDeployment] || 1.00,
         ptu_monthly: ptuMonthly,
         ptu_yearly: ptuYearly,
         minPTU: correctedModel?.minPTU?.[selectedDeployment] || 15,
         tokensPerPTUPerMinute: getCurrentModelThroughput(),
         // Additional metadata for transparency
         officialPricing: officialPTUPricing || { source: 'corrected_pricing_data.json', model: correctedModel },
-        paygoIsFallback: tokenPricingIsFallback
+        paygoIsFallback: tokenPricingIsFallback && !livePAYGO?.input,
+        pricingSource: pricingSource,
+        livePricingTimestamp: livePricingData?.timestamp,
+        isLoadingLivePricing: isLoadingLivePricing
       };
     } catch (error) {
       console.error('Error getting pricing:', error);
