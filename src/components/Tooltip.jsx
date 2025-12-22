@@ -57,6 +57,11 @@ export const tooltipContent = {
     title: 'Minimum PTU',
     content: 'The smallest number of PTUs you can purchase for a model. Ensures efficient capacity allocation.',
     example: 'Example: GPT-4o requires minimum 15 PTUs globally'
+  },
+  'input-output-ratio': {
+    title: 'Input/Output Ratio',
+    content: 'The proportion of input tokens to total tokens consumed. Used to estimate token split when only TPM is available. Input and output tokens have different pricing.',
+    example: 'Example: 0.7 = 70% input tokens ($0.15/1M), 30% output tokens ($0.60/1M)'
   }
 };
 

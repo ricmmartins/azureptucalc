@@ -1780,7 +1780,10 @@ AzureMetrics
                     <p className="text-sm text-gray-600 mt-1">Total output tokens per month</p>
                   </div>
                   <div>
-                    <Label htmlFor="inputOutputRatio">Input/Output Ratio</Label>
+                    <Label htmlFor="inputOutputRatio" className="flex items-center gap-2">
+                      Input/Output Ratio
+                      <TooltipIcon term="input-output-ratio" />
+                    </Label>
                     <Input
                       id="inputOutputRatio"
                       type="number"
@@ -1791,20 +1794,52 @@ AzureMetrics
                       onChange={(e) => handleInputChange('inputOutputRatio', e.target.value)}
                       placeholder="0.5"
                     />
-                    <p className="text-sm text-gray-600 mt-1">Ratio of input to total tokens (0.5 = 50/50 split)</p>
+                    <div className="text-sm text-gray-600 mt-1">
+                      <div className="mb-2">Ratio of input to total tokens</div>
+                      <div className="space-y-1 text-xs">
+                        <div><strong>0.5</strong> = 50/50 split (balanced chat)</div>
+                        <div><strong>0.7</strong> = 70% input (data analysis)</div>
+                        <div><strong>0.3</strong> = 30% input (content generation)</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="mt-4 p-4 border border-blue-200 bg-blue-50 rounded-lg">
                   <div className="flex items-start">
                     <Info className="h-5 w-5 mt-0.5 text-blue-600 flex-shrink-0 mr-2" />
-                    <div className="text-blue-800">
-                      <div className="font-medium mb-2">🎯 Usage Priority:</div>
+                    <div className="text-blue-800 space-y-3">
+                      <div className="font-medium mb-2">🎯 Usage Priority & Input/Output Ratio:</div>
                       <ol className="text-sm space-y-1 list-decimal ml-4">
                         <li><strong>Monthly Token Counts:</strong> If you enter input/output tokens above, these exact values will be used for PAYG calculation</li>
                         <li><strong>TPM + Ratio:</strong> If tokens are blank but you have TPM values, the calculator will estimate tokens using the input/output ratio</li>
                         <li><strong>No Data:</strong> If neither is provided, PAYG cost will be $0</li>
                       </ol>
-                      <div className="mt-3 text-sm bg-blue-100 p-2 rounded">
+                      
+                      <div className="bg-blue-100 p-3 rounded text-sm">
+                        <div className="font-medium mb-2">📊 Understanding Input/Output Ratio:</div>
+                        <div className="space-y-2">
+                          <div><strong>What it is:</strong> Percentage of input tokens vs total tokens consumed</div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                            <div>
+                              <div className="font-medium text-blue-700">High Input Ratio (0.7-0.9):</div>
+                              <div className="text-xs">• Document analysis</div>
+                              <div className="text-xs">• Data classification</div>
+                              <div className="text-xs">• Content summarization</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-purple-700">Low Input Ratio (0.2-0.4):</div>
+                              <div className="text-xs">• Content generation</div>
+                              <div className="text-xs">• Creative writing</div>
+                              <div className="text-xs">• Code generation</div>
+                            </div>
+                          </div>
+                          <div className="text-xs mt-2 text-blue-700">
+                            <strong>💰 Why it matters:</strong> Input tokens cost ~$0.15/1M, output tokens cost ~$0.60/1M
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm bg-blue-100 p-2 rounded">
                         <strong>💡 Pro tip:</strong> Token counts provide the most accurate PAYG estimates, especially for applications with uneven input/output patterns.
                       </div>
                     </div>
