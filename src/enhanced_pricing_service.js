@@ -28,6 +28,14 @@ class AzureOpenAIPricingService {
         paygo: { input: 0.03, output: 0.09 },
         ptu: { global: 35000, dataZone: 38500, regional: 31500 }
       },
+      'gpt-5.1': {
+        paygo: { input: 0.12, output: 0.36 },
+        ptu: { global: 60000, dataZone: 66000, regional: 54000 }
+      },
+      'gpt-5.2': {
+        paygo: { input: 0.15, output: 0.45 },
+        ptu: { global: 75000, dataZone: 82500, regional: 67500 }
+      },
       'gpt-4o': {
         paygo: { input: 0.025, output: 0.10 },
         ptu: { global: 40000, dataZone: 44000, regional: 36000 }
@@ -106,6 +114,8 @@ class AzureOpenAIPricingService {
       'gpt-5-mini': 'GPT5 Mini',
       'gpt-5-nano': 'GPT5 Nano',
       'gpt-5-chat': 'GPT5 Chat',
+      'gpt-5.1': 'GPT5.1',
+      'gpt-5.2': 'GPT5.2',
       'gpt-4o': 'GPT-4o',
       'gpt-4o-mini': 'GPT-4o Mini',
       'gpt-4': 'GPT-4',

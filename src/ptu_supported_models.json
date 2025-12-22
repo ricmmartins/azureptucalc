@@ -28,6 +28,20 @@
       "min_ptu": 100,
       "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "germany-west-central", "switzerland-north", "norway-east", "sweden-central", "australia-east", "japan-east", "korea-central", "canada-central", "brazil-south", "uae-north", "south-africa-north", "india-south", "southeast-asia", "east-asia"]
     },
+    "gpt-5.1": {
+      "name": "GPT-5.1",
+      "description": "Enhanced GPT-5 with improved reasoning and problem-solving capabilities",
+      "ptu_support": true,
+      "min_ptu": 125,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "uk-south", "france-central", "sweden-central", "australia-east", "japan-east", "korea-central"]
+    },
+    "gpt-5.2": {
+      "name": "GPT-5.2",
+      "description": "Latest GPT-5 iteration with advanced agentic capabilities and enhanced performance",
+      "ptu_support": true,
+      "min_ptu": 150,
+      "regions": ["east-us", "east-us-2", "west-us", "west-us-2", "north-central-us", "south-central-us", "west-europe", "north-europe", "sweden-central", "australia-east", "japan-east"]
+    },
     "gpt-4.1": {
       "name": "GPT-4.1",
       "description": "Advanced GPT-4.1 model with enhanced capabilities",

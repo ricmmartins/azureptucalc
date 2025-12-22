@@ -120,6 +120,54 @@
       },
       "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
     },
+    "gpt-5.1": {
+      "name": "GPT-5.1",
+      "description": "Enhanced GPT-5 with improved reasoning and problem-solving capabilities",
+      "throughput_per_ptu": 1800,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": {
+          "min_ptu": 20,
+          "increment": 5,
+          "available": true
+        },
+        "dataZone": {
+          "min_ptu": 20,
+          "increment": 5,
+          "available": true
+        },
+        "regional": {
+          "min_ptu": 75,
+          "increment": 25,
+          "available": true
+        }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+    },
+    "gpt-5.2": {
+      "name": "GPT-5.2",
+      "description": "Latest GPT-5 iteration with advanced agentic capabilities and enhanced performance",
+      "throughput_per_ptu": 1600,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": {
+          "min_ptu": 25,
+          "increment": 5,
+          "available": true
+        },
+        "dataZone": {
+          "min_ptu": 25,
+          "increment": 5,
+          "available": true
+        },
+        "regional": {
+          "min_ptu": 100,
+          "increment": 25,
+          "available": true
+        }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+    },
     "o1": {
       "name": "o1",
       "description": "Reasoning-focused model for complex problem solving",

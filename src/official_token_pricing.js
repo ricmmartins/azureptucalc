@@ -24,6 +24,16 @@ export const OFFICIAL_TOKEN_PRICING = {
     output: 10.00,   // $10 per million output tokens
     description: "Text-only chat optimized version of GPT-5"
   },
+  "gpt-5.1": {
+    input: 12.00,    // $12 per million input tokens
+    output: 36.00,   // $36 per million output tokens
+    description: "Enhanced GPT-5 with improved reasoning and problem-solving capabilities"
+  },
+  "gpt-5.2": {
+    input: 15.00,    // $15 per million input tokens
+    output: 45.00,   // $45 per million output tokens
+    description: "Latest GPT-5 iteration with advanced agentic capabilities and enhanced performance"
+  },
 
   // GPT-4 Series
   "gpt-4o": {
