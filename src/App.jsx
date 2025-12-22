@@ -323,6 +323,54 @@ function App() {
 
   // Check if user has entered valid data
 
+  // Test Azure API connection
+  const testAzureAPI = async () => {
+    try {
+      console.log('🧪 Manual Azure API test triggered...');
+      const testResult = await azurePricingService.getPricing('gpt-4o', 'eastus2', 'global');
+      console.log('✅ Azure API test result:', testResult);
+      
+      const isDevelopment = testResult?.source === 'live-simulated';
+      const isLive = testResult?.source === 'live';
+      const isFallback = testResult?.source === 'fallback';
+      
+      const resultMsg = `Azure API Test Result:
+
+${isDevelopment ? '🚧 DEVELOPMENT MODE' : isLive ? '🌐 PRODUCTION MODE' : '⚠️ FALLBACK MODE'}
+
+Status: ${testResult?.source || 'unknown'}
+Source: ${
+  isDevelopment ? 'Simulated live data (local development)' :
+  isLive ? 'Live Azure API via Vercel' : 
+  'Static fallback data'
+}
+
+PAYG Pricing:
+• Input: $${testResult?.paygo?.input || 'N/A'}/1K tokens
+• Output: $${testResult?.paygo?.output || 'N/A'}/1K tokens
+
+PTU Pricing:
+• Global: $${testResult?.ptu?.global || 'N/A'}/hour
+• Data Zone: $${testResult?.ptu?.dataZone || 'N/A'}/hour
+• Regional: $${testResult?.ptu?.regional || 'N/A'}/hour
+
+${testResult?.strategy_used ? `Strategy: ${testResult.strategy_used}` : ''}
+${testResult?.total_items ? `Items Found: ${testResult.total_items}` : ''}
+${testResult?.timestamp ? `Timestamp: ${new Date(testResult.timestamp).toLocaleString()}` : ''}
+
+${isDevelopment ? '\n💡 Deploy to Vercel to test real Azure API integration!' : ''}`;
+
+      alert(resultMsg);
+    } catch (error) {
+      console.error('❌ Azure API test failed:', error);
+      alert(`Azure API Test Failed:
+
+${error.message}
+
+Check browser console for detailed error information.`);
+    }
+  };
+
   // Function to refresh pricing data
   const refreshPricingData = async () => {
     if (!selectedModel) return;
@@ -1123,15 +1171,26 @@ AzureMetrics
                 <Info className="h-5 w-5 text-blue-600" />
                 <CardTitle>Pricing Data Status</CardTitle>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={refreshPricingData}
-                disabled={pricingStatus.isLoading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${pricingStatus.isLoading ? 'animate-spin' : ''}`} />
-                Refresh Data
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={testAzureAPI}
+                  className="bg-blue-50 hover:bg-blue-100 text-blue-700"
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Test Azure API
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={refreshPricingData}
+                  disabled={pricingStatus.isLoading}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${pricingStatus.isLoading ? 'animate-spin' : ''}`} />
+                  Refresh Data
+                </Button>
+              </div>
             </div>
             <CardDescription>Azure OpenAI pricing and model availability information</CardDescription>
           </CardHeader>

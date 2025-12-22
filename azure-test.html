@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Azure API Test</title>
+</head>
+<body>
+    <h1>Azure Pricing API Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        async function testAzurePricing() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.innerHTML = '<p>🧪 Testing Azure Pricing API...</p>';
+                
+                // Test the actual API endpoint
+                const response = await fetch('https://prices.azure.com/api/retail/prices?$filter=contains(productName,%20%27OpenAI%27)%20and%20contains(productName,%20%27gpt%204o%27)&$top=5');
+                
+                if (!response.ok) {
+                    throw new Error(`API failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>✅ Azure API is working!</h3>
+                    <p><strong>Found ${data.Items.length} pricing items</strong></p>
+                    <pre>${JSON.stringify(data.Items[0], null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>❌ Error:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+        
+        // Run test when page loads
+        testAzurePricing();
+    </script>
+</body>
+</html>
