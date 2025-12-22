@@ -1171,16 +1171,26 @@ AzureMetrics
                 <Info className="h-5 w-5 text-blue-600" />
                 <CardTitle>Pricing Data Status</CardTitle>
               </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={testAzureAPI}
-                  className="bg-blue-50 hover:bg-blue-100 text-blue-700"
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  Test Azure API
-                </Button>
+              <div className="flex items-center gap-3">
+                {/* Live Pricing Status Indicator */}
+                <div className="flex items-center gap-2">
+                  {livePricingData?.source === 'live' ? (
+                    <>
+                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-green-700">Live Azure Pricing</span>
+                    </>
+                  ) : livePricingData?.source === 'live-simulated' ? (
+                    <>
+                      <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-blue-700">Development Mode</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-2 w-2 bg-amber-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-amber-700">Static Pricing</span>
+                    </>
+                  )}
+                </div>
                 <Button 
                   variant="outline" 
                   size="sm" 
