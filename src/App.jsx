@@ -1571,6 +1571,30 @@ AzureMetrics
               </CardContent>
             </Card>
 
+            {/* Usage Input Method Guide */}
+            <Alert className="my-6 border-indigo-200 bg-indigo-50">
+              <AlertDescription className="text-indigo-800">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <span className="text-indigo-600 font-bold text-sm">?</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="font-semibold">📊 Choose Your Input Method:</div>
+                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                      <div className="bg-white p-3 rounded border">
+                        <div className="font-medium text-indigo-700 mb-1">🔍 Have Azure Log Analytics data?</div>
+                        <div>Use TPM fields below (from KQL queries)</div>
+                      </div>
+                      <div className="bg-white p-3 rounded border">
+                        <div className="font-medium text-orange-700 mb-1">🎯 Know exact token usage?</div>
+                        <div>Skip TPM and use Token Usage section below</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+
             {/* KQL Input Fields */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 usage-inputs-section">
               <div>
@@ -1709,15 +1733,26 @@ AzureMetrics
             })()}
 
             {/* Task 3: PAYG Token-based Pricing Inputs */}
-            <Card className="mt-6">
-              <CardHeader>
+            <Card className="mt-6 border-orange-200">
+              <CardHeader className="bg-orange-50">
                 <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
+                  <DollarSign className="h-5 w-5 text-orange-600" />
                   PAYG Token Usage (Alternative to TPM)
                 </CardTitle>
                 <CardDescription>
-                  Specify input/output token usage for more accurate PAYG cost calculation.
-                  Leave blank to use TPM-based estimation with ratio below.
+                  <div className="space-y-2">
+                    <div>
+                      <strong>💡 Use this section when:</strong>
+                    </div>
+                    <ul className="text-sm space-y-1 ml-4 list-disc">
+                      <li>You don't have Azure Log Analytics data available</li>
+                      <li>You know exact input/output token consumption from your app</li>
+                      <li>You want precise PAYG cost calculations instead of TPM estimates</li>
+                    </ul>
+                    <div className="text-sm text-orange-700 bg-orange-100 p-2 rounded mt-3">
+                      <strong>How it works:</strong> Enter your monthly token counts below OR use TPM values above. Token counts take priority when both are provided.
+                    </div>
+                  </div>
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1759,12 +1794,19 @@ AzureMetrics
                     <p className="text-sm text-gray-600 mt-1">Ratio of input to total tokens (0.5 = 50/50 split)</p>
                   </div>
                 </div>
-                <div className="mt-4 p-3 border border-blue-200 bg-blue-50 rounded-lg">
+                <div className="mt-4 p-4 border border-blue-200 bg-blue-50 rounded-lg">
                   <div className="flex items-start">
-                    <Info className="h-4 w-4 mt-0.5 text-blue-600 flex-shrink-0 mr-1" />
-                    <div className="text-blue-700">
-                      <strong>Usage:</strong> If you specify monthly token counts above, they will be used for PAYG calculation.
-                      Otherwise, TPM values will be used with the input/output ratio.
+                    <Info className="h-5 w-5 mt-0.5 text-blue-600 flex-shrink-0 mr-2" />
+                    <div className="text-blue-800">
+                      <div className="font-medium mb-2">🎯 Usage Priority:</div>
+                      <ol className="text-sm space-y-1 list-decimal ml-4">
+                        <li><strong>Monthly Token Counts:</strong> If you enter input/output tokens above, these exact values will be used for PAYG calculation</li>
+                        <li><strong>TPM + Ratio:</strong> If tokens are blank but you have TPM values, the calculator will estimate tokens using the input/output ratio</li>
+                        <li><strong>No Data:</strong> If neither is provided, PAYG cost will be $0</li>
+                      </ol>
+                      <div className="mt-3 text-sm bg-blue-100 p-2 rounded">
+                        <strong>💡 Pro tip:</strong> Token counts provide the most accurate PAYG estimates, especially for applications with uneven input/output patterns.
+                      </div>
                     </div>
                   </div>
                 </div>
