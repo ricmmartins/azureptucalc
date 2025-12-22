@@ -19,7 +19,7 @@ import { getTokenPricing, calculatePAYGCost, OFFICIAL_TOKEN_PRICING } from "./of
 import { REGION_MODEL_AVAILABILITY, getRegionsByZone, isGovernmentRegion, getGovernmentAvailableModels } from "./regionModelAvailability.js";
 import ExternalPricingService from './ExternalPricingService.js';
 import ExportService from './ExportService.js';
-import pricingValidationService from './PricingValidationService.js';
+// import pricingValidationService from './PricingValidationService.js';
 // Temporarily comment out complex components
 import InteractiveCharts from './components/InteractiveCharts';
 // import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
@@ -284,10 +284,10 @@ function App() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [isLoadingPricingData, setIsLoadingPricingData] = useState(false);
   
-  // Pricing validation state
-  const [pricingValidation, setPricingValidation] = useState(null);
-  const [showPricingValidation, setShowPricingValidation] = useState(false);
-  const [isValidatingPricing, setIsValidatingPricing] = useState(false);
+  // Pricing validation state - temporarily disabled
+  // const [pricingValidation, setPricingValidation] = useState(null);
+  // const [showPricingValidation, setShowPricingValidation] = useState(false);
+  // const [isValidatingPricing, setIsValidatingPricing] = useState(false);
 
   // Enhanced pricing data state
   const [livePricingData, setLivePricingData] = useState(null);
@@ -741,7 +741,8 @@ function App() {
     return () => clearTimeout(calculateAsync);
   }, [formData, currentPricing, hasValidData, selectedModel, selectedDeployment]);
 
-  // Pricing validation effect
+  // Pricing validation effect - temporarily disabled
+  /*
   useEffect(() => {
     const validatePricing = async () => {
       if (selectedModel && selectedRegion) {
@@ -764,6 +765,7 @@ function App() {
       validatePricing();
     }
   }, [selectedModel, selectedRegion, selectedDeployment]);
+  */
 
   // Handle form input changes
   const handleInputChange = (field, value) => {
@@ -892,7 +894,8 @@ function App() {
     }
   };
 
-  // Manual pricing validation handler
+  // Manual pricing validation handler - temporarily disabled
+  /*
   const handleValidatePricing = async () => {
     setIsValidatingPricing(true);
     try {
@@ -913,6 +916,7 @@ function App() {
       setIsValidatingPricing(false);
     }
   };
+  */
 
   // Load official pricing
   const loadOfficialPricing = () => {
@@ -1101,7 +1105,7 @@ AzureMetrics
                 </span>
               </div>
               
-              {pricingValidation && (
+              {/* pricingValidation && (
                 <div className={`flex items-center gap-2 p-2 rounded-md text-xs ${ 
                   pricingValidation.status === 'accurate' ? 'bg-green-50 border border-green-200' :
                   pricingValidation.status === 'minor_differences' ? 'bg-yellow-50 border border-yellow-200' :
@@ -1121,23 +1125,13 @@ AzureMetrics
                     {pricingValidation.warnings.length > 0 && ` (${pricingValidation.warnings.length} warnings)`}
                   </span>
                 </div>
-              )}
+              ) */}
               
               <div className="text-sm text-gray-600">
                 Last refreshed: {pricingStatus.lastRefreshed}
-                {pricingValidation && (
+                {/* pricingValidation && (
                   <span className="ml-2">• Validated: {new Date(pricingValidation.timestamp).toLocaleTimeString()}</span>
-                )}
-              </div>
-            </div>
-              <div className="text-sm text-gray-600">
-                <strong>Data Sources:</strong>
-                <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li>Azure Retail Prices API (prices.azure.com/api/retail/prices) - Live pricing data</li>
-                  <li>Official Azure pricing pages and calculators</li>
-                  <li>Microsoft Learn documentation for PTU rates</li>
-                  <li>Azure service deployment and availability data</li>
-                </ul>
+                ) */}
               </div>
             </div>
           </CardContent>
@@ -2021,8 +2015,8 @@ AzureMetrics
           </CardContent>
         </Card>
 
-        {/* Pricing Validation Section */}
-        {pricingValidation && (
+        {/* Pricing Validation Section - temporarily disabled */}
+        {false && pricingValidation && (
           <Card className={`mb-6 border-2 ${
             pricingValidation.status === 'accurate' ? 'border-green-200 bg-green-50' :
             pricingValidation.status === 'minor_differences' ? 'border-yellow-200 bg-yellow-50' :
