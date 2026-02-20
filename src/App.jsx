@@ -159,7 +159,8 @@ function App() {
             // Update pricing status based on live data availability
             setPricingStatus(prev => ({
               ...prev,
-              usingLiveData: livePricing && livePricing.source === 'live',
+              usingLiveData: livePricing && (livePricing.source === 'live' || livePricing.source === 'fallback'),
+              pricingSource: livePricing?.source || 'unknown',
               lastRefreshed: new Date().toLocaleString(),
               dataExpiry: livePricing && livePricing.timestamp 
                 ? new Date(new Date(livePricing.timestamp).getTime() + 3 * 60 * 60 * 1000).toLocaleString()
@@ -170,6 +171,7 @@ function App() {
             setPricingStatus(prev => ({
               ...prev,
               usingLiveData: false,
+              pricingSource: 'error',
               lastRefreshed: new Date().toLocaleString()
             }));
           } finally {
@@ -515,7 +517,8 @@ Check browser console for detailed error information.`);
       setPricingStatus(prev => ({
         ...prev,
         isLoading: false,
-        usingLiveData: livePricing && livePricing.source === 'live',
+        usingLiveData: livePricing && (livePricing.source === 'live' || livePricing.source === 'fallback'),
+        pricingSource: livePricing?.source || 'unknown',
         lastRefreshed: new Date().toLocaleString(),
         dataExpiry: livePricing && livePricing.timestamp 
           ? new Date(new Date(livePricing.timestamp).getTime() + 3 * 60 * 60 * 1000).toLocaleString()
@@ -526,7 +529,8 @@ Check browser console for detailed error information.`);
       setPricingStatus(prev => ({
         ...prev,
         isLoading: false,
-        usingLiveData: false
+        usingLiveData: false,
+        pricingSource: 'error'
       }));
     }
   };
@@ -629,18 +633,26 @@ Check browser console for detailed error information.`);
       let livePTU = null;
       let pricingSource = 'static';
       
-      if (livePricingData && livePricingData.source === 'live') {
-        livePAYGO = {
-          input: livePricingData.paygo?.input || 0,
-          output: livePricingData.paygo?.output || 0
-        };
-        livePTU = {
-          hourly: livePricingData.ptu?.[selectedDeployment] || livePricingData.ptu?.global || 0,
-          monthly: Math.round((livePricingData.ptu?.[selectedDeployment] || livePricingData.ptu?.global || 0) * 24 * 30.4167),
-          yearly: Math.round((livePricingData.ptu?.[selectedDeployment] || livePricingData.ptu?.global || 0) * 24 * 365 * 0.7)
-        };
-        pricingSource = 'azure-api-live';
-        console.log('Using live Azure API pricing:', { livePAYGO, livePTU, timestamp: livePricingData.timestamp });
+      if (livePricingData && (livePricingData.source === 'live' || livePricingData.source === 'fallback')) {
+        const hasPaygo = (livePricingData.paygo?.input > 0 || livePricingData.paygo?.output > 0);
+        const hasPtu = (livePricingData.ptu?.global > 0 || livePricingData.ptu?.dataZone > 0 || livePricingData.ptu?.regional > 0);
+        
+        if (hasPaygo) {
+          livePAYGO = {
+            input: livePricingData.paygo.input,
+            output: livePricingData.paygo.output
+          };
+        }
+        if (hasPtu) {
+          const hourlyRate = livePricingData.ptu?.[selectedDeployment] || livePricingData.ptu?.global || 0;
+          livePTU = {
+            hourly: hourlyRate,
+            monthly: Math.round(hourlyRate * 24 * 30.4167),
+            yearly: Math.round(hourlyRate * 24 * 365 * 0.7)
+          };
+        }
+        pricingSource = livePricingData.source === 'live' ? 'azure-api-live' : 'service-fallback';
+        console.log(`Using ${pricingSource} pricing:`, { livePAYGO, livePTU, timestamp: livePricingData.timestamp });
       }
       
       // TASK 2: Use official PTU pricing alignment (prefer authoritative corrected_pricing_data.json)
@@ -714,7 +726,7 @@ Check browser console for detailed error information.`);
   useEffect(() => {
     const pricing = getCurrentPricing();
     setCurrentPricing(pricing);
-  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing, formData.model]);
+  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing, formData.model, livePricingData, selectedRegion]);
 
   // Calculate costs and recommendations
   useEffect(() => {
