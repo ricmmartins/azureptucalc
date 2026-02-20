@@ -29,7 +29,7 @@ export const OFFICIAL_PTU_PRICING = {
     global: 15,
     dataZone: 15,
     regional: 50
-  }
+  },
   
   // Regional multipliers (based on Azure cost factors)
   REGIONAL_MULTIPLIERS: {
