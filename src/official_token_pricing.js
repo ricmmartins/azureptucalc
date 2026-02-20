@@ -1,37 +1,37 @@
 // Official Azure OpenAI Token Pricing per Million Tokens (USD)
-// Updated: September 2025
+// Updated: February 2026
 // Source: https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
 
 export const OFFICIAL_TOKEN_PRICING = {
-  // GPT-5 Series
+  // GPT-5 Series (prices per 1M tokens from official Azure pricing page)
   "gpt-5": {
-    input: 10.00,    // $10 per million input tokens
-    output: 30.00,   // $30 per million output tokens
+    input: 1.25,     // $1.25 per million input tokens (Global Standard)
+    output: 10.00,   // $10 per million output tokens
     description: "Most advanced reasoning model for coding and agentic tasks"
   },
   "gpt-5-mini": {
-    input: 3.00,     // $3 per million input tokens
-    output: 12.00,   // $12 per million output tokens
+    input: 0.25,     // $0.25 per million input tokens
+    output: 2.00,    // $2 per million output tokens
     description: "Faster, cost-efficient version of GPT-5"
   },
   "gpt-5-nano": {
-    input: 1.50,     // $1.50 per million input tokens
-    output: 6.00,    // $6 per million output tokens
+    input: 0.05,     // $0.05 per million input tokens
+    output: 0.40,    // $0.40 per million output tokens
     description: "Lightweight GPT-5 variant optimized for speed"
   },
   "gpt-5-chat": {
-    input: 2.50,     // $2.50 per million input tokens
+    input: 1.25,     // $1.25 per million input tokens
     output: 10.00,   // $10 per million output tokens
     description: "Text-only chat optimized version of GPT-5"
   },
   "gpt-5.1": {
-    input: 12.00,    // $12 per million input tokens
-    output: 36.00,   // $36 per million output tokens
+    input: 1.25,     // $1.25 per million input tokens (Global Standard)
+    output: 10.00,   // $10 per million output tokens
     description: "Enhanced GPT-5 with improved reasoning and problem-solving capabilities"
   },
   "gpt-5.2": {
-    input: 15.00,    // $15 per million input tokens
-    output: 45.00,   // $45 per million output tokens
+    input: 1.75,     // $1.75 per million input tokens (Global Standard)
+    output: 14.00,   // $14 per million output tokens
     description: "Latest GPT-5 iteration with advanced agentic capabilities and enhanced performance"
   },
 

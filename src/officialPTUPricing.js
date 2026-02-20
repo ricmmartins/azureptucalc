@@ -11,16 +11,25 @@ export const OFFICIAL_PTU_PRICING = {
     yearly: 0.30       // Yearly reservation: 30% discount
   },
   
-  // Deployment type multipliers (official Azure pricing)
+  // Deployment type multipliers (official Azure pricing Feb 2026)
+  // Source: https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
   DEPLOYMENT_MULTIPLIERS: {
-    regional: 1.0,     // Regional: base price
-    dataZone: 1.2,     // Data Zone: 20% premium
-    // Global should be base price per user's confirmation
-    global: 1.0
+    global: 1.0,       // Global: $1.00/PTU/hr (base price)
+    dataZone: 1.1,     // Data Zone: $1.10/PTU/hr (10% premium)
+    regional: 2.0      // Regional: $2.00/PTU/hr (100% premium)
   },
-  // Optional explicit reservation monthly override (per PTU) to reflect Azure reservation pricing
-  // If set, this value will be used for reservation monthly cost instead of hourly*730
-  RESERVATION_MONTHLY_OVERRIDE: null, // e.g., 260
+  // Reservation pricing per deployment type (official Azure pricing)
+  RESERVATION_OVERRIDES: {
+    global:   { monthly: 260, yearly: 2652 },
+    dataZone: { monthly: 286, yearly: 2916 },
+    regional: { monthly: 286, yearly: 2916 }
+  },
+  // Min PTU per deployment type (official Azure pricing)
+  MIN_PTU: {
+    global: 15,
+    dataZone: 15,
+    regional: 50
+  }
   
   // Regional multipliers (based on Azure cost factors)
   REGIONAL_MULTIPLIERS: {
@@ -62,41 +71,35 @@ export const OFFICIAL_PTU_PRICING = {
 };
 
 // Calculate official PTU pricing
+// PTU pricing is uniform per deployment type — regional multipliers do NOT apply to provisioned pricing
 export const calculateOfficialPTUPricing = (region, deploymentType) => {
   const baseRate = OFFICIAL_PTU_PRICING.BASE_HOURLY_RATE;
-  const regionalMultiplier = OFFICIAL_PTU_PRICING.REGIONAL_MULTIPLIERS[region] || 1.0;
   const deploymentMultiplier = OFFICIAL_PTU_PRICING.DEPLOYMENT_MULTIPLIERS[deploymentType] || 1.0;
   
-  // For Global deployment, do not apply regional multiplier (global is cross-region base)
-  const applyRegional = deploymentType !== 'global';
-  const effectiveRegionalMultiplier = applyRegional ? regionalMultiplier : 1.0;
+  // PTU hourly rate is purely based on deployment type (same across all regions)
+  const hourlyRate = baseRate * deploymentMultiplier;
   
-  // Calculate base hourly rate with multipliers
-  const hourlyRate = baseRate * effectiveRegionalMultiplier * deploymentMultiplier;
+  // Use official reservation overrides if available
+  const reservations = OFFICIAL_PTU_PRICING.RESERVATION_OVERRIDES?.[deploymentType];
+  const reservationMonthly = reservations?.monthly || (hourlyRate * 730);
+  const reservationYearly = reservations?.yearly || (reservationMonthly * 12 * 0.85);
   
-  // Calculate monthly rate (730 hours per month average)
-  const monthlyRate = hourlyRate * 730;
-  // If there's a reservation override value, compute reservation monthly from that override
-  const reservationMonthly = OFFICIAL_PTU_PRICING.RESERVATION_MONTHLY_OVERRIDE || monthlyRate;
-  
-  // Calculate yearly rate with 30% discount
-  const yearlyDiscountRate = 1 - OFFICIAL_PTU_PRICING.DISCOUNTS.yearly;
-  const yearlyRate = reservationMonthly * 12 * yearlyDiscountRate;
+  // Calculate discount percentages
+  const hourlyAnnualized = hourlyRate * 730 * 12;
+  const monthlyAnnualized = reservationMonthly * 12;
   
   return {
     hourly: Number(hourlyRate.toFixed(3)),
-    monthly: Number(monthlyRate.toFixed(2)),
+    monthly: Number((hourlyRate * 730).toFixed(2)),
     reservationMonthly: Number(reservationMonthly.toFixed(2)),
-    yearly: Number(yearlyRate.toFixed(2)),
+    yearly: Number(reservationYearly.toFixed(2)),
     discount: {
-      monthlyVsHourly: Number(((1 - (monthlyRate / (hourlyRate * 730))) * 100).toFixed(1)),
-      yearlyVsMonthly: Number((OFFICIAL_PTU_PRICING.DISCOUNTS.yearly * 100).toFixed(1)),
-      yearlyVsHourly: Number(((1 - (yearlyRate / (hourlyRate * 730 * 12))) * 100).toFixed(1))
+      monthlyVsHourly: Number(((1 - (reservationMonthly / (hourlyRate * 730))) * 100).toFixed(1)),
+      yearlyVsMonthly: Number(((1 - (reservationYearly / monthlyAnnualized)) * 100).toFixed(1)),
+      yearlyVsHourly: Number(((1 - (reservationYearly / hourlyAnnualized)) * 100).toFixed(1))
     },
     multipliers: {
-      regional: regionalMultiplier,
-      deployment: deploymentMultiplier,
-      combined: Number((regionalMultiplier * deploymentMultiplier).toFixed(3))
+      deployment: deploymentMultiplier
     }
   };
 };

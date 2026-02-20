@@ -27,29 +27,31 @@ class AzureOpenAIPricingService {
   // Load fallback pricing data
   loadFallbackPricing() {
     return {
+      // GPT-5 series: PAYGO per 1M tokens, PTU per PTU/hr (all models same PTU rate)
+      // Source: https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
       'gpt-5': {
-        paygo: { input: 0.05, output: 0.15 },
+        paygo: { input: 1.25, output: 10.00 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-5-mini': {
-        paygo: { input: 0.03, output: 0.09 },
+        paygo: { input: 0.25, output: 2.00 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-5-nano': {
-        paygo: { input: 0.02, output: 0.06 },
+        paygo: { input: 0.05, output: 0.40 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-5-chat': {
-        paygo: { input: 0.03, output: 0.09 },
+        paygo: { input: 1.25, output: 10.00 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-5.1': {
-        paygo: { input: 0.12, output: 0.36 },
-        ptu: { global: 1.20, dataZone: 1.32, regional: 2.40 }
+        paygo: { input: 1.25, output: 10.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-5.2': {
-        paygo: { input: 0.15, output: 0.45 },
-        ptu: { global: 1.50, dataZone: 1.65, regional: 3.00 }
+        paygo: { input: 1.75, output: 14.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-4o': {
         paygo: { input: 0.025, output: 0.10 },

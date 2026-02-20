@@ -161,63 +161,63 @@
     "gpt-5.1": {
       "displayName": "GPT-5.1",
       "minPTU": {
-        "global": 20,
-        "dataZone": 20,
-        "regional": 75
+        "global": 15,
+        "dataZone": 15,
+        "regional": 50
       },
       "paygo": {
         "global": {
-          "input": 12.00,
-          "output": 36.00
+          "input": 1.25,
+          "output": 10.00
         },
         "dataZone": {
-          "input": 13.20,
-          "output": 39.60
+          "input": 1.38,
+          "output": 11.00
         },
         "regional": {
-          "input": 13.20,
-          "output": 39.60
+          "input": 1.38,
+          "output": 11.00
         }
       },
       "ptu": {
-        "global": 1.20,
-        "dataZone": 1.32,
-        "regional": 2.40
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
       },
       "reservations": {
-        "monthly": 312,
-        "yearly": 3182
+        "monthly": 260,
+        "yearly": 2652
       }
     },
     "gpt-5.2": {
       "displayName": "GPT-5.2",
       "minPTU": {
-        "global": 25,
-        "dataZone": 25,
-        "regional": 100
+        "global": 15,
+        "dataZone": 15,
+        "regional": 50
       },
       "paygo": {
         "global": {
-          "input": 15.00,
-          "output": 45.00
+          "input": 1.75,
+          "output": 14.00
         },
         "dataZone": {
-          "input": 16.50,
-          "output": 49.50
+          "input": 1.93,
+          "output": 15.40
         },
         "regional": {
-          "input": 16.50,
-          "output": 49.50
+          "input": 1.93,
+          "output": 15.40
         }
       },
       "ptu": {
-        "global": 1.50,
-        "dataZone": 1.65,
-        "regional": 3.00
+        "global": 1.00,
+        "dataZone": 1.10,
+        "regional": 2.00
       },
       "reservations": {
-        "monthly": 390,
-        "yearly": 3978
+        "monthly": 260,
+        "yearly": 2652
       }
     },
     "gpt-4o-mini": {
