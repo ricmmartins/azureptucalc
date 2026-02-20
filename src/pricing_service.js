@@ -174,14 +174,27 @@ class AzurePricingService {
     
     // Model patterns
     const modelPatterns = {
+      // GPT-5 series models (CRITICAL: Added to fix GPT-5.2 pricing issue)
+      'gpt-5.2': ['gpt-5.2', 'gpt5.2'],
+      'gpt-5.1': ['gpt-5.1', 'gpt5.1'],
+      'gpt-5': ['gpt-5', 'gpt5'],
+      'gpt-5-mini': ['gpt-5-mini', 'gpt5-mini'],
+      'gpt-5-nano': ['gpt-5-nano', 'gpt5-nano'],
+      'gpt-5-chat': ['gpt-5-chat', 'gpt5-chat'],
+      
+      // GPT-4 series models
       'gpt-4o-mini': ['gpt-4o-mini', 'gpt4o-mini'],
       'gpt-4o': ['gpt-4o', 'gpt4o'],
       'gpt-4-turbo': ['gpt-4-turbo', 'gpt4-turbo'],
       'gpt-4': ['gpt-4', 'gpt4'],
       'gpt-35-turbo': ['gpt-35', 'gpt-3.5', 'gpt35'],
+      
+      // Embedding models
       'text-embedding-ada-002': ['ada-002', 'embedding-ada'],
       'text-embedding-3-large': ['embedding-3-large'],
       'text-embedding-3-small': ['embedding-3-small'],
+      
+      // Other models
       'whisper': ['whisper'],
       'o1': ['o1-preview', 'o1-mini', 'o1'],
       'o3': ['o3-mini', 'o3']

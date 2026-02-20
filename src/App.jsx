@@ -7,11 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from './components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Alert, AlertDescription } from './components/ui/alert';
-import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap } from 'lucide-react';
+
+import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap, Keyboard } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+// Core functionality imports
 import ptuModels from './ptu_supported_models.json';
 import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
-// import correctedPricingService from "./corrected_pricing_service.js";
 import enhancedModelConfig from "./enhanced_model_config.json";
 import correctedPricingData from './corrected_pricing_data.json';
 import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTUPricing.js";
@@ -19,10 +21,16 @@ import { getTokenPricing, calculatePAYGCost, OFFICIAL_TOKEN_PRICING } from "./of
 import { REGION_MODEL_AVAILABILITY, getRegionsByZone, isGovernmentRegion, getGovernmentAvailableModels } from "./regionModelAvailability.js";
 import ExternalPricingService from './ExternalPricingService.js';
 import ExportService from './ExportService.js';
-// import pricingValidationService from './PricingValidationService.js';
-// Temporarily comment out complex components
+
+// Enhanced UX Components
+import SmartNumberInput from './components/SmartNumberInput';
+import EnhancedResults from './components/EnhancedResults';
+
+import AccessibilityEnhancements, { announceToScreenReader } from './components/AccessibilityEnhancements';
+import { SkeletonCard, CalculationLoader, SuccessAnimation, AnimatedButton, PulsingIndicator } from './components/EnhancedUI';
+
+// Existing components
 import InteractiveCharts from './components/InteractiveCharts';
-// import MobileOptimizations, { useMobileDetection } from './components/MobileOptimizations';
 import WelcomeModal from './components/WelcomeModal';
 import GuidedTour from './components/GuidedTour';
 import { TooltipIcon, TooltipText } from './components/Tooltip';
@@ -316,10 +324,127 @@ function App() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [isLoadingPricingData, setIsLoadingPricingData] = useState(false);
   
+  // Enhanced UX state variables for 10 improvements
+  const [calculatorMode, setCalculatorMode] = useState('quick'); // 'quick' | 'advanced' | 'expert'
+  const [inputValidation, setInputValidation] = useState({});
+  const [smartSuggestions, setSmartSuggestions] = useState([]);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [inputHistory, setInputHistory] = useState([]);
+  const [keyboardShortcuts, setKeyboardShortcuts] = useState(true);
+  const [autoSave, setAutoSave] = useState(true);
+  const [enhancedResults, setEnhancedResults] = useState(null);
+  const [showSkeletonLoading, setShowSkeletonLoading] = useState(false);
+  const [accessibilityMode, setAccessibilityMode] = useState(false);
+
+  // Feature toggle booleans for Enhancement Features panel
+  const enableSmartInputs = true;
+  const enableEnhancedResults = true;
+  
   // Pricing validation state - temporarily disabled
   // const [pricingValidation, setPricingValidation] = useState(null);
   // const [showPricingValidation, setShowPricingValidation] = useState(false);
   // const [isValidatingPricing, setIsValidatingPricing] = useState(false);
+
+  // Check if user has entered valid data
+
+  // Keyboard shortcuts (Enhancement #2)
+  useEffect(() => {
+    if (!keyboardShortcuts) return;
+
+    const handleKeyDown = (e) => {
+      // Ctrl/Cmd + Enter: Run calculation (triggers reactively via useEffect)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        // Calculation runs automatically via useEffect
+      }
+      // Ctrl/Cmd + R: Refresh pricing data
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refreshPricingData();
+      }
+      // Ctrl/Cmd + E: Export results
+      if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault();
+        if (calculations.paygo) {
+          handleExportCSV();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [keyboardShortcuts, calculations]);
+
+  // Auto-save functionality (Enhancement #6)
+  useEffect(() => {
+    if (!autoSave) return;
+    
+    const saveData = {
+      formData,
+      selectedModel,
+      selectedRegion,
+      selectedDeployment,
+      calculatorMode,
+      timestamp: Date.now()
+    };
+    
+    localStorage.setItem('azurePTUAutoSave', JSON.stringify(saveData));
+  }, [formData, selectedModel, selectedRegion, selectedDeployment, calculatorMode, autoSave]);
+
+  // Load auto-saved data
+  useEffect(() => {
+    const saved = localStorage.getItem('azurePTUAutoSave');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        // Only load if data is less than 24 hours old
+        if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+          setFormData(data.formData || formData);
+          setSelectedModel(data.selectedModel || selectedModel);
+          setSelectedRegion(data.selectedRegion || selectedRegion);
+          setSelectedDeployment(data.selectedDeployment || selectedDeployment);
+          setCalculatorMode(data.calculatorMode || calculatorMode);
+        }
+      } catch (error) {
+        console.warn('Failed to load auto-saved data:', error);
+      }
+    }
+  }, []); // Only run once on mount
+
+  // Function to load from input history (Enhancement #3)
+  const loadFromHistory = (historyEntry) => {
+    setFormData(historyEntry.formData);
+    setSelectedModel(historyEntry.selectedModel);
+    setSelectedRegion(historyEntry.selectedRegion);
+    setSelectedDeployment(historyEntry.selectedDeployment);
+    
+    // Announce to screen reader if accessibility is enabled
+    if (accessibilityMode) {
+      announceToScreenReader(`Loaded calculation from ${new Date(historyEntry.timestamp).toLocaleDateString()}`);
+    }
+  };
+
+  // Function to add calculation to history
+  const addToInputHistory = () => {
+    if (!inputHistory) return;
+
+    const historyEntry = {
+      formData,
+      selectedModel,
+      selectedRegion,
+      selectedDeployment,
+      timestamp: Date.now(),
+      id: Date.now().toString()
+    };
+    
+    try {
+      const history = JSON.parse(localStorage.getItem('azurePTUInputHistory') || '[]');
+      const updatedHistory = [historyEntry, ...history.slice(0, 9)]; // Keep last 10 entries
+      localStorage.setItem('azurePTUInputHistory', JSON.stringify(updatedHistory));
+    } catch (error) {
+      console.warn('Failed to save to input history:', error);
+    }
+  };
 
   // Check if user has entered valid data
 
@@ -461,7 +586,7 @@ Check browser console for detailed error information.`);
         };
         
         const enhancedDeploymentType = deploymentTypeMap[selectedDeployment] || "data-zone";
-        const pricing = await pricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType);
+        const pricing = await azurePricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType);
         
         setLivePricingData(pricing);
         setPricingStatus(prev => ({
@@ -816,6 +941,19 @@ Check browser console for detailed error information.`);
       paygoBreakdown
     });
 
+    // Add to input history after successful calculation (Enhancement #3)
+    addToInputHistory();
+    
+    // Show success animation if enabled (Enhancement #5)
+    if (showSuccessAnimation) {
+      setTimeout(() => setShowSuccessAnimation(true), 200);
+    }
+    
+    // Announce completion to screen reader if accessibility enabled (Enhancement #10)
+    if (accessibilityMode) {
+      announceToScreenReader(`Calculation completed for ${selectedModel} in ${selectedRegion}`);
+    }
+
         // Clear loading state
         setIsCalculating(false);
       } catch (error) {
@@ -1139,11 +1277,19 @@ AzureMetrics
         {/* Header */}
         <Card>
           <CardHeader className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Brain className="h-8 w-8 text-blue-600" />
-              <CardTitle className="text-3xl font-bold text-blue-600">
-                Azure OpenAI PTU Calculator
-              </CardTitle>
+            <div className="flex items-center justify-between mb-2">
+              <div /> {/* Spacer */}
+              <div className="flex items-center gap-2">
+                <Brain className="h-8 w-8 text-blue-600" />
+                <CardTitle className="text-3xl font-bold text-blue-600">
+                  Azure OpenAI PTU Calculator
+                </CardTitle>
+              </div>
+              {/* Accessibility Toggle */}
+              <AccessibilityEnhancements 
+                accessibilityMode={accessibilityMode}
+                onToggleAccessibility={(enabled) => setAccessibilityMode(enabled)}
+              />
             </div>
             <CardDescription className="text-lg">
               Optimize your Azure OpenAI costs by analyzing real usage patterns and comparing PAYGO, PTU, and hybrid pricing models
@@ -1162,6 +1308,8 @@ AzureMetrics
             </div>
           </CardHeader>
         </Card>
+
+
 
         {/* Pricing Data Status */}
         <Card>
@@ -1918,13 +2066,25 @@ AzureMetrics
                   Average TPM (from KQL)
                   <TooltipIcon term="tpm" />
                 </Label>
-                <Input
-                  id="avgTPM"
-                  type="number"
-                  value={formData.avgTPM}
-                  onChange={(e) => handleInputChange('avgTPM', e.target.value)}
-                  placeholder="0"
-                />
+                {enableSmartInputs ? (
+                  <SmartNumberInput
+                    id="avgTPM"
+                    value={formData.avgTPM}
+                    onChange={(value) => handleInputChange('avgTPM', value)}
+                    placeholder="0"
+                    formatType="number"
+                    validationRules={{ min: 0, max: 1000000 }}
+                    helpText="AvgTPM from your KQL query results"
+                  />
+                ) : (
+                  <Input
+                    id="avgTPM"
+                    type="number"
+                    value={formData.avgTPM}
+                    onChange={(e) => handleInputChange('avgTPM', e.target.value)}
+                    placeholder="0"
+                  />
+                )}
                 <p className="text-sm text-gray-600 mt-1">AvgTPM from your KQL query results</p>
               </div>
               <div>
@@ -1932,13 +2092,25 @@ AzureMetrics
                   P99 TPM (from KQL)
                   <TooltipIcon term="p99" />
                 </Label>
-                <Input
-                  id="p99TPM"
-                  type="number"
-                  value={formData.p99TPM}
-                  onChange={(e) => handleInputChange('p99TPM', e.target.value)}
-                  placeholder="0"
-                />
+                {enableSmartInputs ? (
+                  <SmartNumberInput
+                    id="p99TPM"
+                    value={formData.p99TPM}
+                    onChange={(value) => handleInputChange('p99TPM', value)}
+                    placeholder="0"
+                    formatType="number"
+                    validationRules={{ min: 0, max: 2000000 }}
+                    helpText="P99TPM - shows burst patterns"
+                  />
+                ) : (
+                  <Input
+                    id="p99TPM"
+                    type="number"
+                    value={formData.p99TPM}
+                    onChange={(e) => handleInputChange('p99TPM', e.target.value)}
+                    placeholder="0"
+                  />
+                )}
                 <p className="text-sm text-gray-600 mt-1">P99TPM - shows burst patterns</p>
               </div>
               <div>
@@ -2370,6 +2542,33 @@ AzureMetrics
           </Card>
         ) : (
           <div className="space-y-6">{/* Results content starts here */}
+            
+            {/* Enhanced Results Component (Enhancement #4) */}
+            {enableEnhancedResults && (
+              <EnhancedResults
+                calculations={calculations}
+                formData={formData}
+                selectedModel={selectedModel}
+                selectedRegion={selectedRegion}
+                selectedDeployment={selectedDeployment}
+                onExport={handleExportCSV}
+              />
+            )}
+            
+            {/* Skeleton Loading for Enhanced UI */}
+            {showSkeletonLoading && isCalculating && (
+              <div className="space-y-4">
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </div>
+            )}
+            
+            {/* Success Animation */}
+            {showSuccessAnimation && (
+              <SuccessAnimation message="Calculation completed successfully!" />
+            )}
+            
             {/* Burst Pattern Analysis */}
             <Card className="results-section">
               <CardHeader>
@@ -3160,88 +3359,7 @@ AzureMetrics
           </Card>
         )}
 
-        {/* Key Concepts */}
-        <Card className="border-purple-200 bg-purple-50">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-purple-800">Key Concepts & Pro Tips</CardTitle>
-            </div>
-            <CardDescription className="text-purple-700">Essential information for understanding Azure OpenAI pricing and deployment options</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="bg-white p-4 rounded-lg border border-purple-200">
-                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                    🔢 PTU Conversion Rate
-                  </h4>
-                  <p className="text-sm text-purple-700">
-                    Each PTU represents a unit of provisioned throughput capacity. The actual tokens/minute varies by model - for example, GPT-4 provides different throughput than GPT-3.5-Turbo per PTU based on model complexity and resource requirements.
-                  </p>
-                </div>
-                
-                <div className="bg-white p-4 rounded-lg border border-purple-200">
-                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                    ⚖️ Base PTUs for Spillover Model
-                  </h4>
-                  <p className="text-sm text-purple-700">
-                    Reserve a fixed number of PTUs (e.g., 2 PTUs = 100k tokens/min guaranteed) for your baseline usage, with automatic PAYGO billing when demand exceeds reserved capacity.
-                  </p>
-                </div>
-                
-                <div className="bg-white p-4 rounded-lg border border-purple-200">
-                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                    🎯 Spillover Strategy Benefits
-                  </h4>
-                  <p className="text-sm text-purple-700">
-                    Combines predictable costs (PTU reservation) with elastic scalability (PAYGO overflow) - optimal for workloads with variable demand patterns.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="bg-white p-4 rounded-lg border border-purple-200">
-                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                    🌍 Deployment Type Pricing
-                  </h4>
-                  <p className="text-sm text-purple-700">
-                    Global deployments typically cost 20-40% more than Regional deployments, with Data Zone deployments priced between the two.
-                  </p>
-                </div>
-                
-                <div className="bg-white p-4 rounded-lg border border-purple-200">
-                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                    💰 PTU vs PAYGO
-                  </h4>
-                  <p className="text-sm text-purple-700">
-                    PTU pricing offers 20-40% savings for sustained high-volume usage but requires monthly commitment, while PAYGO provides flexibility without commitment.
-                  </p>
-                </div>
-                
-                <div className="bg-white p-4 rounded-lg border border-purple-200">
-                  <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                    ⏰ Monthly Minutes
-                  </h4>
-                  <p className="text-sm text-purple-700 mb-2">
-                    Default 43,800 minutes assumes continuous 24/7 usage (30.4 days × 24 hours × 60 minutes).
-                  </p>
-                  <p className="text-xs text-purple-600 italic">
-                    💡 Tip: Adjust this based on your actual usage hours for more accurate cost estimates.
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-purple-200">
-              <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                🔄 Dynamic Pricing Updates
-              </h4>
-              <p className="text-sm text-purple-700">
-                The app uses AI analysis of official Azure OpenAI documentation to ensure current pricing accuracy and model availability.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+
 
         {/* Footer */}
         <Card className="mt-8 border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">

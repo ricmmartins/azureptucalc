@@ -29,27 +29,27 @@ class AzureOpenAIPricingService {
     return {
       'gpt-5': {
         paygo: { input: 0.05, output: 0.15 },
-        ptu: { global: 50000, dataZone: 55000, regional: 45000 }
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-5-mini': {
         paygo: { input: 0.03, output: 0.09 },
-        ptu: { global: 35000, dataZone: 38500, regional: 31500 }
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-5-nano': {
         paygo: { input: 0.02, output: 0.06 },
-        ptu: { global: 25000, dataZone: 27500, regional: 22500 }
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-5-chat': {
         paygo: { input: 0.03, output: 0.09 },
-        ptu: { global: 35000, dataZone: 38500, regional: 31500 }
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-5.1': {
         paygo: { input: 0.12, output: 0.36 },
-        ptu: { global: 60000, dataZone: 66000, regional: 54000 }
+        ptu: { global: 1.20, dataZone: 1.32, regional: 2.40 }
       },
       'gpt-5.2': {
         paygo: { input: 0.15, output: 0.45 },
-        ptu: { global: 75000, dataZone: 82500, regional: 67500 }
+        ptu: { global: 1.50, dataZone: 1.65, regional: 3.00 }
       },
       'gpt-4o': {
         paygo: { input: 0.025, output: 0.10 },
@@ -166,18 +166,148 @@ class AzureOpenAIPricingService {
       }
       
       // Fallback to direct Azure API (for local development)
-      console.log('🔄 Falling back to direct Azure API simulation');
+      console.log('🔄 Falling back to direct Azure API');
       
-      // For local development, simulate live pricing with enhanced static data
-      const simulatedPricing = this.getEnhancedSimulatedPricing(model, region, deploymentType);
-      console.log('✅ Using enhanced simulated pricing for development:', simulatedPricing);
+      // Make direct calls to Azure Pricing API for local development
+      const directPricing = await this.fetchDirectAzureAPI(model, region, deploymentType);
+      console.log('✅ Using direct Azure API pricing:', directPricing);
       
-      return simulatedPricing;
+      return directPricing;
       
     } catch (error) {
       console.error('❌ All pricing fetch methods failed:', error);
       throw error;
     }
+  }
+
+  // Direct Azure API calls for local development
+  async fetchDirectAzureAPI(model, region, deploymentType) {
+    console.log(`🌐 Making direct Azure API call for ${model} in ${region} (${deploymentType})`);
+    
+    // Multiple search strategies for finding pricing data
+    const queries = [
+      `contains(productName, 'OpenAI') and contains(skuName, '${model}')`,
+      `contains(productName, 'OpenAI') and contains(meterName, '${model}')`,
+      `contains(productName, 'OpenAI') and contains(productName, 'gpt')`,
+      `contains(productName, 'OpenAI')`
+    ];
+
+    for (let i = 0; i < queries.length; i++) {
+      try {
+        const azureUrl = `https://prices.azure.com/api/retail/prices?$filter=${encodeURIComponent(queries[i])}&$top=100`;
+        console.log(`📡 Direct API Strategy ${i + 1}: Searching for ${model}`);
+        
+        const response = await fetch(azureUrl, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Azure-PTU-Calculator/1.0'
+          }
+        });
+
+        if (!response.ok) {
+          console.warn(`❌ Direct API Strategy ${i + 1} failed: ${response.status}`);
+          continue;
+        }
+
+        const data = await response.json();
+        console.log(`📊 Direct API returned ${data.Items?.length || 0} items`);
+        
+        if (data.Items && data.Items.length > 0) {
+          // Parse the pricing data
+          const pricingResult = this.parseAzurePricingData(data.Items, model, deploymentType);
+          if (pricingResult) {
+            console.log('✅ Successfully parsed pricing from direct Azure API:', pricingResult);
+            return pricingResult;
+          }
+        }
+      } catch (error) {
+        console.warn(`❌ Direct API Strategy ${i + 1} error:`, error.message);
+      }
+    }
+
+    // If all strategies fail, fall back to static pricing
+    console.log('⚠️ All direct API strategies failed, using fallback pricing');
+    return this.getFallbackPricing(model, deploymentType);
+  }
+
+  // Parse Azure API pricing data
+  parseAzurePricingData(items, model, deploymentType) {
+    console.log(`🔍 Parsing ${items.length} pricing items for ${model} (${deploymentType})`);
+    
+    let paygoInput = 0, paygoOutput = 0;
+    let ptuGlobal = 0, ptuDataZone = 0, ptuRegional = 0;
+    
+    for (const item of items) {
+      const productName = (item.productName || '').toLowerCase();
+      const meterName = (item.meterName || '').toLowerCase();
+      const skuName = (item.skuName || '').toLowerCase();
+      const unit = (item.unitOfMeasure || '').toLowerCase();
+      const price = parseFloat(item.retailPrice || 0);
+      
+      if (price <= 0) continue;
+      
+      const itemText = `${productName} ${meterName} ${skuName}`.toLowerCase();
+      
+      // Check if this item matches our model
+      const modelVariations = [
+        model.toLowerCase(),
+        model.replace('-', '').toLowerCase(),
+        model.replace('.', '').toLowerCase()
+      ];
+      
+      const isModelMatch = modelVariations.some(variation => itemText.includes(variation));
+      if (!isModelMatch && !itemText.includes('gpt')) continue;
+      
+      console.log(`📝 Found potential match: ${item.productName} - ${item.meterName} - $${price}/${unit}`);
+      
+      // Parse PTU pricing
+      if (unit.includes('ptu') || unit.includes('hour') || itemText.includes('provisioned')) {
+        if (itemText.includes('global') || deploymentType === 'global') {
+          ptuGlobal = price;
+        } else if (itemText.includes('datazone') || itemText.includes('data-zone') || deploymentType === 'dataZone') {
+          ptuDataZone = price;
+        } else if (itemText.includes('regional') || deploymentType === 'regional') {
+          ptuRegional = price;
+        } else {
+          // Default assignment based on deployment type
+          if (deploymentType === 'global') ptuGlobal = price;
+          else if (deploymentType === 'dataZone') ptuDataZone = price;
+          else if (deploymentType === 'regional') ptuRegional = price;
+        }
+      }
+      
+      // Parse PAYGO pricing
+      if (unit.includes('token') || unit.includes('1k') || unit.includes('1m')) {
+        if (itemText.includes('input') || itemText.includes('prompt')) {
+          paygoInput = this.convertToPerMillionTokens(price, unit);
+        } else if (itemText.includes('output') || itemText.includes('completion')) {
+          paygoOutput = this.convertToPerMillionTokens(price, unit);
+        }
+      }
+    }
+    
+    // If we found any pricing data, return it
+    if (paygoInput > 0 || paygoOutput > 0 || ptuGlobal > 0 || ptuDataZone > 0 || ptuRegional > 0) {
+      const result = {
+        paygo: {
+          input: paygoInput || this.fallbackPricing[model]?.paygo?.input || 0,
+          output: paygoOutput || this.fallbackPricing[model]?.paygo?.output || 0
+        },
+        ptu: {
+          global: ptuGlobal || this.fallbackPricing[model]?.ptu?.global || 0,
+          dataZone: ptuDataZone || this.fallbackPricing[model]?.ptu?.dataZone || 0,
+          regional: ptuRegional || this.fallbackPricing[model]?.ptu?.regional || 0
+        },
+        source: 'azure-api-direct',
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('✅ Parsed pricing result:', result);
+      return result;
+    }
+    
+    console.log('⚠️ No matching pricing found in Azure API data');
+    return null;
   }
   
   // Enhanced simulated pricing for development (mimics live API structure)
@@ -264,6 +394,7 @@ class AzureOpenAIPricingService {
       return price * 1000000; // Convert from per token to per million
     }
     
+    console.log(`Converting price ${price} with unit "${unit}" - assuming per 1K tokens`);
     return price * 1000; // Default assumption: per 1K tokens
   }
 
@@ -283,10 +414,11 @@ class AzureOpenAIPricingService {
   }
 
   // Get fallback pricing when API fails
-  getFallbackPricing(model) {
+  getFallbackPricing(model, deploymentType = 'global') {
     const fallback = this.fallbackPricing[model];
     
     if (!fallback) {
+      console.log(`⚠️ No fallback pricing found for model: ${model}, using default`);
       return {
         paygo: { input: 0, output: 0 },
         ptu: { global: 0, dataZone: 0, regional: 0 },
@@ -295,6 +427,7 @@ class AzureOpenAIPricingService {
       };
     }
 
+    console.log(`📋 Using fallback pricing for ${model} (${deploymentType}):`, fallback);
     return {
       ...fallback,
       source: 'fallback',
