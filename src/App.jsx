@@ -8,7 +8,7 @@ import { Badge } from './components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Alert, AlertDescription } from './components/ui/alert';
 
-import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, AlertTriangle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap, Keyboard } from 'lucide-react';
+import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, AlertTriangle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap, Keyboard, ChevronDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Core functionality imports
@@ -41,6 +41,11 @@ function App() {
   // Enhanced features state
   // console.log('🎯 FULL AZURE PTU CALCULATOR APP IS LOADING! Time:', new Date().toLocaleTimeString()); // Removed for production
   const [showInteractiveCharts, setShowInteractiveCharts] = useState(true);
+  const [collapsed, setCollapsed] = useState({
+    pricingStatus: true,
+    kqlQuery: true,
+    noLogAnalytics: true,
+  });
   // const deviceInfo = useMobileDetection(); // Commented out since import is disabled
 
   // Initialize enhanced pricing service with useMemo to prevent re-instantiation
@@ -1366,7 +1371,7 @@ AzureMetrics
 
         {/* Pricing Data Status */}
         <Card>
-          <CardHeader>
+          <CardHeader className="cursor-pointer" onClick={() => setCollapsed(prev => ({...prev, pricingStatus: !prev.pricingStatus}))}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Info className="h-5 w-5 text-blue-600" />
@@ -1425,12 +1430,13 @@ AzureMetrics
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={refreshPricingData}
+                  onClick={(e) => { e.stopPropagation(); refreshPricingData(); }}
                   disabled={pricingStatus.isLoading}
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${pricingStatus.isLoading ? 'animate-spin' : ''}`} />
                   Refresh Data
                 </Button>
+                <ChevronDown className={`h-5 w-5 transition-transform ${collapsed.pricingStatus ? '' : 'rotate-180'}`} />
               </div>
             </div>
             <CardDescription>
@@ -1456,7 +1462,7 @@ AzureMetrics
               })()}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          {!collapsed.pricingStatus && <CardContent>
             <div className="space-y-4">
               {/* Status Explanation */}
               <div className="bg-gray-50 rounded-lg p-3 text-sm">
@@ -1519,21 +1525,24 @@ AzureMetrics
                 Last refreshed: {pricingStatus.lastRefreshed}
               </div>
             </div>
-          </CardContent>
+          </CardContent>}
         </Card>
 
         {/* Step 1: KQL Query */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-blue-600" />
-              <CardTitle>Step 1: Get Your Token Data</CardTitle>
+          <CardHeader className="cursor-pointer" onClick={() => setCollapsed(prev => ({...prev, kqlQuery: !prev.kqlQuery}))}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-blue-600" />
+                <CardTitle>Step 1: Get Your Token Data</CardTitle>
+              </div>
+              <ChevronDown className={`h-5 w-5 transition-transform ${collapsed.kqlQuery ? '' : 'rotate-180'}`} />
             </div>
             <CardDescription>
               Run this KQL query in your Azure Log Analytics workspace to calculate PTU requirements for <strong>{formData.model}</strong>
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          {!collapsed.kqlQuery && <CardContent>
             <div className="bg-gray-900 text-gray-100 p-4 rounded-lg relative">
               <Button
                 variant="outline"
@@ -1662,21 +1671,24 @@ AzureMetrics
                 </div>
               </AlertDescription>
             </Alert>
-          </CardContent>
+          </CardContent>}
         </Card>
 
         {/* Alternative: No Log Analytics Section */}
         <Card className="border-amber-200 bg-amber-50">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Info className="h-5 w-5 text-amber-600" />
-              <CardTitle className="text-amber-800">Alternative: Don't Have Log Analytics?</CardTitle>
+          <CardHeader className="cursor-pointer" onClick={() => setCollapsed(prev => ({...prev, noLogAnalytics: !prev.noLogAnalytics}))}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Info className="h-5 w-5 text-amber-600" />
+                <CardTitle className="text-amber-800">Alternative: Don't Have Log Analytics?</CardTitle>
+              </div>
+              <ChevronDown className={`h-5 w-5 transition-transform ${collapsed.noLogAnalytics ? '' : 'rotate-180'}`} />
             </div>
             <CardDescription className="text-amber-700">
               You can still use this calculator! Here's how to estimate your usage without KQL data.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          {!collapsed.noLogAnalytics && <CardContent>
             <div className="space-y-4">
               <Alert className="border-amber-300 bg-amber-100">
                 <AlertDescription className="text-amber-800">
@@ -1723,7 +1735,7 @@ AzureMetrics
                 </AlertDescription>
               </Alert>
             </div>
-          </CardContent>
+          </CardContent>}
         </Card>
 
         {/* Step 2: Configuration */}
@@ -2588,6 +2600,33 @@ AzureMetrics
           </CardContent>
         </Card>
 
+        {/* Sticky Executive Summary */}
+        {hasValidData && Object.keys(calculations).length > 0 && (
+          <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border rounded-lg shadow-md p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div>
+                <div className="text-xs text-gray-500 uppercase">Recommendation</div>
+                <div className="text-lg font-bold text-blue-600">{calculations.recommendation || 'N/A'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 uppercase">Monthly Savings</div>
+                <div className={`text-lg font-bold ${(calculations.monthlySavings || 0) > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                  ${Math.abs(calculations.monthlySavings || 0).toLocaleString(undefined, {maximumFractionDigits: 0})}
+                  <span className="text-xs ml-1">{(calculations.monthlySavings || 0) >= 0 ? 'saved' : 'more'}</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 uppercase">PTUs Needed</div>
+                <div className="text-lg font-bold">{calculations.ptuNeeded || 0}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 uppercase">Utilization</div>
+                <div className="text-lg font-bold">{((calculations.utilizationRate || 0) * 100).toFixed(1)}%</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Results Section - Only show if user has entered valid data */}
         {!hasValidData ? (
           <Card className="border-gray-300 bg-gradient-to-r from-gray-50 to-blue-50">
@@ -2638,6 +2677,15 @@ AzureMetrics
         ) : (
           <div className="space-y-6">{/* Results content starts here */}
             
+            <Tabs defaultValue="costs" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="costs">💰 Cost Analysis</TabsTrigger>
+                <TabsTrigger value="patterns">📊 Usage Patterns</TabsTrigger>
+                <TabsTrigger value="advanced">⚙️ Advanced</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="costs" className="space-y-6">
+
             {/* Enhanced Results Component (Enhancement #4) */}
             {enableEnhancedResults && (
               <EnhancedResults
@@ -2646,113 +2694,6 @@ AzureMetrics
               />
             )}
             
-            {/* Skeleton Loading for Enhanced UI */}
-            {showSkeletonLoading && isCalculating && (
-              <div className="space-y-4">
-                <SkeletonCard />
-                <SkeletonCard />
-                <SkeletonCard />
-              </div>
-            )}
-            
-            {/* Success Animation */}
-            {showSuccessAnimation && (
-              <SuccessAnimation message="Calculation completed successfully!" />
-            )}
-            
-            {/* Burst Pattern Analysis */}
-            <Card className="results-section">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
-                  <CardTitle>Burst Pattern Analysis</CardTitle>
-                </div>
-                <CardDescription>Understanding your usage patterns for optimal PTU sizing</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="bg-blue-50 border-blue-200">
-                    <CardContent className="p-4 text-center">
-                      <h3 className="font-medium text-blue-800">Usage Pattern</h3>
-                      <div className="text-2xl font-bold text-blue-600 mt-2">{calculations.usagePattern || 'N/A'}</div>
-                      <p className="text-sm text-blue-600 mt-1">
-                        {calculations.usagePattern === 'Steady' && 'Consistent usage with minimal spikes'}
-                        {calculations.usagePattern === 'Bursty' && 'Moderate spikes in usage patterns'}
-                        {calculations.usagePattern === 'Spiky' && 'High variability with significant peaks'}
-                        {!calculations.usagePattern && 'Enter TPM values to see usage pattern analysis'}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-green-50 border-green-200">
-                    <CardContent className="p-4 text-center">
-                      <h3 className="font-medium text-green-800">Burst Ratio</h3>
-                      <div className="text-2xl font-bold text-green-600 mt-2">{calculations.burstRatio?.toFixed(1) || '0.0'}x</div>
-                      <p className="text-sm text-green-600 mt-1">P99 vs Average TPM</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-purple-50 border-purple-200">
-                    <CardContent className="p-4 text-center">
-                      <h3 className="font-medium text-purple-800">Peak Ratio</h3>
-                      <div className="text-2xl font-bold text-purple-600 mt-2">{calculations.peakRatio?.toFixed(1) || '0.0'}x</div>
-                      <p className="text-sm text-purple-600 mt-1">Max vs Average TPM</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Reservation Savings Opportunity */}
-            <Card className="bg-green-50 border-green-200">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                  <CardTitle className="text-green-800">Reservation Savings Opportunity</CardTitle>
-                </div>
-                <CardDescription className="text-green-700">Potential savings with PTU reservations vs on-demand pricing</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="bg-green-100 border-green-300">
-                    <CardContent className="p-4 text-center">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-medium text-green-800">1-Year Reservation</h3>
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">25% off</Badge>
-                      </div>
-                      <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings?.toFixed(2) || '0.00'}/mo</p>
-                      <div className="text-right">
-                        <span className="text-xs text-green-600">{calculations.oneYearSavingsPercent?.toFixed(1) || '0.0'}% savings</span>
-                        <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00'}/mo</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-green-100 border-green-300">
-                    <CardContent className="p-4 text-center">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-medium text-green-800">3-Year Reservation</h3>
-                        <Badge variant="secondary" className="bg-green-200 text-green-900">45% off</Badge>
-                      </div>
-                      <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings?.toFixed(2) || '0.00'}/mo</p>
-                      <div className="text-right">
-                        <span className="text-xs text-green-700">{calculations.threeYearSavingsPercent?.toFixed(1) || '0.0'}% savings</span>
-                        <div className="text-2xl font-bold text-green-800">${((calculations.yearlyPtuReservationCost || 0) / 12).toFixed(2)}/mo</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card className="mt-4 bg-gradient-to-r from-green-100 to-blue-100 border-green-300">
-                  <CardContent className="p-4 text-center">
-                    <h3 className="font-medium text-green-800 mb-2">3-Year Total Savings</h3>
-                    <div className="text-3xl font-bold text-green-600">${((calculations.threeYearSavings || 0) * 36).toFixed(2)}</div>
-                    <p className="text-sm text-green-700 mt-1">Over full term</p>
-                  </CardContent>
-                </Card>
-              </CardContent>
-            </Card>
-
             {/* Cost Comparison Cards */}
             <div className={`grid grid-cols-1 md:grid-cols-2 ${calculations.isPrioritySupported ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
               <Card className="bg-gray-50 border-gray-200">
@@ -2868,31 +2809,6 @@ AzureMetrics
               </Card>
             </div>
 
-            {/* PTU Requirements Explanation */}
-            {calculations.isUsingMinimum && (
-              <Alert className="border-orange-200 bg-orange-50 flex items-center gap-2">
-                <Info className="h-4 w-4 text-orange-600 flex-shrink-0" />
-                <AlertDescription className="text-orange-800">
-                  <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU || 0} PTU(s), but Azure requires a minimum of {calculations.enhancedPTUData?.minPTU || 0} PTUs for this model and deployment type. You'll pay for {calculations.ptuNeeded || 0} PTUs but get extra capacity for bursts.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Priority Processing Info */}
-            {calculations.isPrioritySupported && (
-              <Alert className="border-amber-200 bg-amber-50 flex items-start gap-2">
-                <Info className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                <AlertDescription className="text-amber-800">
-                  <strong>Priority Processing Available:</strong> This model supports{' '}
-                  <a href="https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing" 
-                     target="_blank" rel="noopener noreferrer" className="underline font-medium">
-                    Priority Processing
-                  </a>
-                  {' '}— a pay-per-token option with SLA-backed low-latency guarantees. It costs ~70% more than standard PAYGO but provides guaranteed throughput. Available on Global Standard and Data Zone Standard deployments. Can be combined with PTU for a hybrid approach (PTU baseline + Priority Processing overflow).
-                </AlertDescription>
-              </Alert>
-            )}
-
             {/* Cost Comparison Chart */}
             <Card>
               <CardHeader>
@@ -2909,6 +2825,123 @@ AzureMetrics
                     <Bar dataKey="cost" fill="#8884d8" />
                   </BarChart>
                 </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Recommendation */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-purple-600" />
+                  <CardTitle>Recommendation</CardTitle>
+                </div>
+                <CardDescription>Optimized pricing strategy for your usage pattern</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Card className="bg-yellow-50 border-yellow-200 mb-4">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">{calculations.recommendationIcon || '❓'}</span>
+                      <h3 className="font-medium text-yellow-800">Recommended: {calculations.recommendation || 'N/A'}</h3>
+                    </div>
+                    <p className="text-yellow-700 mb-4">{calculations.recommendationReason || 'Enter TPM values to see recommendations'}</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium text-green-800 mb-2 flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4" />
+                          Next Steps
+                        </h4>
+                        <ol className="list-decimal list-inside space-y-1 text-sm text-green-700">
+                          {calculations.recommendation === 'PAYGO' && (
+                            <>
+                              <li>Continue with your current PAYGO setup</li>
+                              <li>Monitor usage patterns for future optimization</li>
+                              <li>Consider PTU if usage grows consistently</li>
+                            </>
+                          )}
+                          {calculations.recommendation === 'Consider Spillover Model' && (
+                            <>
+                              <li>Reserve base PTUs for average usage</li>
+                              <li>Let burst traffic use PAYGO overflow</li>
+                              <li>Monitor cost savings and adjust as needed</li>
+                            </>
+                          )}
+                          {calculations.recommendation === 'Full PTU Reservation' && (
+                            <>
+                              <li>Consider 1-year or 3-year PTU reservations</li>
+                              <li>Start with 1-year for flexibility</li>
+                              <li>Monitor utilization and optimize sizing</li>
+                            </>
+                          )}
+                        </ol>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium text-orange-800 mb-2 flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4" />
+                          Considerations
+                        </h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm text-orange-700">
+                          {calculations.recommendation === 'PAYGO' && (
+                            <>
+                              <li>No commitment but higher per-token costs</li>
+                              <li>Best for variable or experimental workloads</li>
+                              <li>Monitor for usage pattern changes</li>
+                            </>
+                          )}
+                          {calculations.recommendation === 'Consider Spillover Model' && (
+                            <>
+                              <li>Balance between cost and flexibility</li>
+                              <li>Requires monitoring of overflow costs</li>
+                              <li>Good for growing applications</li>
+                            </>
+                          )}
+                          {calculations.recommendation === 'Full PTU Reservation' && (
+                            <>
+                              <li>Significant upfront commitment required</li>
+                              <li>Best for stable, predictable workloads</li>
+                              <li>Maximum cost savings potential</li>
+                            </>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-blue-600" />
+                      <CardTitle>Analysis Summary</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600">Current TPM</div>
+                        <div className="text-2xl font-bold text-blue-600">{formData.avgTPM.toLocaleString()}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600">Recommended Cost</div>
+                        <div className="text-2xl font-bold text-green-600">
+                          ${calculations.recommendation === 'PAYGO' ? (calculations.monthlyPaygoCost?.toFixed(2) || '0.00') : 
+                            calculations.recommendation === 'Full PTU Reservation' ? (calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00') :
+                            (calculations.hybridTotalCost?.toFixed(2) || '0.00')}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600">PTU Utilization</div>
+                        <div className="text-2xl font-bold text-orange-600">{((calculations.utilizationRate || 0) * 100).toFixed(1)}%</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600">Monthly Savings</div>
+                        <div className="text-2xl font-bold text-purple-600">${calculations.monthlySavings?.toFixed(2) || '0.00'}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
 
@@ -2975,6 +3008,160 @@ AzureMetrics
                 </div>
               </CardContent>
             </Card>
+
+              </TabsContent>
+
+              <TabsContent value="patterns" className="space-y-6">
+
+            {/* Burst Pattern Analysis */}
+            <Card className="results-section">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  <CardTitle>Burst Pattern Analysis</CardTitle>
+                </div>
+                <CardDescription>Understanding your usage patterns for optimal PTU sizing</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="p-4 text-center">
+                      <h3 className="font-medium text-blue-800">Usage Pattern</h3>
+                      <div className="text-2xl font-bold text-blue-600 mt-2">{calculations.usagePattern || 'N/A'}</div>
+                      <p className="text-sm text-blue-600 mt-1">
+                        {calculations.usagePattern === 'Steady' && 'Consistent usage with minimal spikes'}
+                        {calculations.usagePattern === 'Bursty' && 'Moderate spikes in usage patterns'}
+                        {calculations.usagePattern === 'Spiky' && 'High variability with significant peaks'}
+                        {!calculations.usagePattern && 'Enter TPM values to see usage pattern analysis'}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-green-50 border-green-200">
+                    <CardContent className="p-4 text-center">
+                      <h3 className="font-medium text-green-800">Burst Ratio</h3>
+                      <div className="text-2xl font-bold text-green-600 mt-2">{calculations.burstRatio?.toFixed(1) || '0.0'}x</div>
+                      <p className="text-sm text-green-600 mt-1">P99 vs Average TPM</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-purple-50 border-purple-200">
+                    <CardContent className="p-4 text-center">
+                      <h3 className="font-medium text-purple-800">Peak Ratio</h3>
+                      <div className="text-2xl font-bold text-purple-600 mt-2">{calculations.peakRatio?.toFixed(1) || '0.0'}x</div>
+                      <p className="text-sm text-purple-600 mt-1">Max vs Average TPM</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Reservation Savings Opportunity */}
+            <Card className="bg-green-50 border-green-200">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <CardTitle className="text-green-800">Reservation Savings Opportunity</CardTitle>
+                </div>
+                <CardDescription className="text-green-700">Potential savings with PTU reservations vs on-demand pricing</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="bg-green-100 border-green-300">
+                    <CardContent className="p-4 text-center">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-medium text-green-800">1-Year Reservation</h3>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">25% off</Badge>
+                      </div>
+                      <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings?.toFixed(2) || '0.00'}/mo</p>
+                      <div className="text-right">
+                        <span className="text-xs text-green-600">{calculations.oneYearSavingsPercent?.toFixed(1) || '0.0'}% savings</span>
+                        <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00'}/mo</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-green-100 border-green-300">
+                    <CardContent className="p-4 text-center">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-medium text-green-800">3-Year Reservation</h3>
+                        <Badge variant="secondary" className="bg-green-200 text-green-900">45% off</Badge>
+                      </div>
+                      <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings?.toFixed(2) || '0.00'}/mo</p>
+                      <div className="text-right">
+                        <span className="text-xs text-green-700">{calculations.threeYearSavingsPercent?.toFixed(1) || '0.0'}% savings</span>
+                        <div className="text-2xl font-bold text-green-800">${((calculations.yearlyPtuReservationCost || 0) / 12).toFixed(2)}/mo</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="mt-4 bg-gradient-to-r from-green-100 to-blue-100 border-green-300">
+                  <CardContent className="p-4 text-center">
+                    <h3 className="font-medium text-green-800 mb-2">3-Year Total Savings</h3>
+                    <div className="text-3xl font-bold text-green-600">${((calculations.threeYearSavings || 0) * 36).toFixed(2)}</div>
+                    <p className="text-sm text-green-700 mt-1">Over full term</p>
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
+
+            {/* Usage Metrics and Cost Efficiency */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-blue-600" />
+                    <CardTitle>Usage Metrics</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Average TPM:</span>
+                      <span className="font-semibold">{formData.avgTPM.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Calculated PTUs:</span>
+                      <span className="font-semibold">{calculations.calculatedPTU || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>PTUs Needed:</span>
+                      <span className="font-semibold">{calculations.ptuNeeded || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Monthly Tokens:</span>
+                      <span className="font-semibold">{calculations.monthlyTokens?.toFixed(1) || '0.0'}M</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <CardTitle>Cost Efficiency</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Cost per 1M tokens:</span>
+                      <span className="font-semibold">${calculations.costPer1MTokens?.toFixed(2) || '0.00'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Utilization:</span>
+                      <span className="font-semibold">{((calculations.utilizationRate || 0) * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+              </TabsContent>
+
+              <TabsContent value="advanced" className="space-y-6">
 
             {/* Task 9: External Pricing Data Status */}
             <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
@@ -3109,59 +3296,6 @@ AzureMetrics
               </CardContent>
             </Card>
 
-            {/* Usage Metrics and Cost Efficiency */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-blue-600" />
-                    <CardTitle>Usage Metrics</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Average TPM:</span>
-                      <span className="font-semibold">{formData.avgTPM.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Calculated PTUs:</span>
-                      <span className="font-semibold">{calculations.calculatedPTU || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>PTUs Needed:</span>
-                      <span className="font-semibold">{calculations.ptuNeeded || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Monthly Tokens:</span>
-                      <span className="font-semibold">{calculations.monthlyTokens?.toFixed(1) || '0.0'}M</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <CardTitle>Cost Efficiency</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Cost per 1M tokens:</span>
-                      <span className="font-semibold">${calculations.costPer1MTokens?.toFixed(2) || '0.00'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Utilization:</span>
-                      <span className="font-semibold">{((calculations.utilizationRate || 0) * 100).toFixed(1)}%</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
             {/* PTU Cost-Effectiveness Guidelines */}
             <Card>
               <CardHeader>
@@ -3169,10 +3303,10 @@ AzureMetrics
                   <Info className="h-5 w-5 text-blue-600" />
                   <CardTitle>PTU Cost-Effectiveness Guidelines</CardTitle>
                 </div>
-                <CardDescription>Understand when to use PAYGO, Priority Processing, Hybrid, or full PTU reservations based on your usage patterns</CardDescription>
+                <CardDescription>Understand when to use PAYGO, Hybrid, or full PTU reservations based on your usage patterns</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card className="border-red-200 bg-red-50">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-2">
@@ -3184,22 +3318,6 @@ AzureMetrics
                         <div><strong>PTU Utilization:</strong> &lt;20% capacity</div>
                         <div><strong>Why PAYGO:</strong> Only pay for actual usage</div>
                         <div><strong>Cost Impact:</strong> Avoid paying for unused capacity</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-amber-200 bg-amber-50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">⚡</span>
-                        <h3 className="font-medium text-amber-800">Priority Processing</h3>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div><strong>When:</strong> Need guaranteed low-latency</div>
-                        <div><strong>Pricing:</strong> ~70% premium over standard PAYGO</div>
-                        <div><strong>Best For:</strong> Latency-sensitive apps, SLA requirements</div>
-                        <div><strong>Models:</strong> GPT-5.4, 5.2, 5.1, 4.1, 4.1-mini, o4-mini</div>
-                        <div><strong>Note:</strong> Global & Data Zone deployments only</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -3255,123 +3373,6 @@ AzureMetrics
               </CardContent>
             </Card>
 
-            {/* Recommendation */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-purple-600" />
-                  <CardTitle>Recommendation</CardTitle>
-                </div>
-                <CardDescription>Optimized pricing strategy for your usage pattern</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Card className="bg-yellow-50 border-yellow-200 mb-4">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">{calculations.recommendationIcon || '❓'}</span>
-                      <h3 className="font-medium text-yellow-800">Recommended: {calculations.recommendation || 'N/A'}</h3>
-                    </div>
-                    <p className="text-yellow-700 mb-4">{calculations.recommendationReason || 'Enter TPM values to see recommendations'}</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-medium text-green-800 mb-2 flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4" />
-                          Next Steps
-                        </h4>
-                        <ol className="list-decimal list-inside space-y-1 text-sm text-green-700">
-                          {calculations.recommendation === 'PAYGO' && (
-                            <>
-                              <li>Continue with your current PAYGO setup</li>
-                              <li>Monitor usage patterns for future optimization</li>
-                              <li>Consider PTU if usage grows consistently</li>
-                            </>
-                          )}
-                          {calculations.recommendation === 'Consider Spillover Model' && (
-                            <>
-                              <li>Reserve base PTUs for average usage</li>
-                              <li>Let burst traffic use PAYGO overflow</li>
-                              <li>Monitor cost savings and adjust as needed</li>
-                            </>
-                          )}
-                          {calculations.recommendation === 'Full PTU Reservation' && (
-                            <>
-                              <li>Consider 1-year or 3-year PTU reservations</li>
-                              <li>Start with 1-year for flexibility</li>
-                              <li>Monitor utilization and optimize sizing</li>
-                            </>
-                          )}
-                        </ol>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium text-orange-800 mb-2 flex items-center gap-2">
-                          <AlertCircle className="h-4 w-4" />
-                          Considerations
-                        </h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm text-orange-700">
-                          {calculations.recommendation === 'PAYGO' && (
-                            <>
-                              <li>No commitment but higher per-token costs</li>
-                              <li>Best for variable or experimental workloads</li>
-                              <li>Monitor for usage pattern changes</li>
-                            </>
-                          )}
-                          {calculations.recommendation === 'Consider Spillover Model' && (
-                            <>
-                              <li>Balance between cost and flexibility</li>
-                              <li>Requires monitoring of overflow costs</li>
-                              <li>Good for growing applications</li>
-                            </>
-                          )}
-                          {calculations.recommendation === 'Full PTU Reservation' && (
-                            <>
-                              <li>Significant upfront commitment required</li>
-                              <li>Best for stable, predictable workloads</li>
-                              <li>Maximum cost savings potential</li>
-                            </>
-                          )}
-                        </ul>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5 text-blue-600" />
-                      <CardTitle>Analysis Summary</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="text-center">
-                        <div className="text-sm text-gray-600">Current TPM</div>
-                        <div className="text-2xl font-bold text-blue-600">{formData.avgTPM.toLocaleString()}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm text-gray-600">Recommended Cost</div>
-                        <div className="text-2xl font-bold text-green-600">
-                          ${calculations.recommendation === 'PAYGO' ? (calculations.monthlyPaygoCost?.toFixed(2) || '0.00') : 
-                            calculations.recommendation === 'Full PTU Reservation' ? (calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00') :
-                            (calculations.hybridTotalCost?.toFixed(2) || '0.00')}
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm text-gray-600">PTU Utilization</div>
-                        <div className="text-2xl font-bold text-orange-600">{((calculations.utilizationRate || 0) * 100).toFixed(1)}%</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm text-gray-600">Monthly Savings</div>
-                        <div className="text-2xl font-bold text-purple-600">${calculations.monthlySavings?.toFixed(2) || '0.00'}</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </CardContent>
-            </Card>
-
             {/* Interactive Analytics Dashboard with dynamic data - Updated */}
             {showInteractiveCharts && (
               <div className="interactive-charts-section">
@@ -3410,104 +3411,75 @@ AzureMetrics
               />
               </div>
             )}
-          </div>
-        )}
 
-        {/* TASK 2: Official Pricing Transparency Section */}
-        {formData.avgTPM > 0 && currentPricing?.officialPricing && (
-          <Card className="border-indigo-200 bg-indigo-50 mb-6">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-indigo-600" />
-                <CardTitle className="text-indigo-800">Official PTU Pricing Transparency</CardTitle>
-              </div>
-              <CardDescription className="text-indigo-700">
-                Aligned with Microsoft's official US$1/PTU-hour base rate with accurate regional and deployment multipliers
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Base Rate Structure */}
-                <div className="space-y-3">
-                  <h4 className="font-medium text-indigo-800 flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    Base Rate Structure
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <strong>Official Base:</strong> US$1.00/PTU-hour
-                    </div>
-                    <div>
-                      <strong>Your Region:</strong> {selectedRegion.toUpperCase()} 
-                      <span className="text-indigo-600"> ({currentPricing.officialPricing?.multipliers?.regional || 1}x)</span>
-                    </div>
-                    <div>
-                      <strong>Deployment:</strong> {selectedDeployment} 
-                      <span className="text-indigo-600"> ({currentPricing.officialPricing?.multipliers?.deployment || 1}x)</span>
-                    </div>
-                    <div className="pt-2 border-t border-indigo-200">
-                      <strong>Your Rate:</strong> ${currentPricing.ptu_hourly}/PTU-hour
-                    </div>
+            {/* Official Pricing Transparency */}
+            {formData.avgTPM > 0 && currentPricing?.officialPricing && (
+              <Card className="border-indigo-200 bg-indigo-50 mb-6">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-indigo-600" />
+                    <CardTitle className="text-indigo-800">Official PTU Pricing Transparency</CardTitle>
                   </div>
-                </div>
-
-                {/* Discount Structure */}
-                <div className="space-y-3">
-                  <h4 className="font-medium text-indigo-800 flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Official Discounts
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <strong>Monthly:</strong> No discount (base rate)
-                      <div className="text-xs text-indigo-600">${currentPricing.ptu_monthly}/PTU (730 hrs)</div>
+                  <CardDescription className="text-indigo-700">
+                    Aligned with Microsoft's official US$1/PTU-hour base rate with accurate regional and deployment multipliers
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-indigo-800 flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        Base Rate Structure
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div><strong>Official Base:</strong> US$1.00/PTU-hour</div>
+                        <div><strong>Your Region:</strong> {selectedRegion.toUpperCase()} <span className="text-indigo-600"> ({currentPricing.officialPricing?.multipliers?.regional || 1}x)</span></div>
+                        <div><strong>Deployment:</strong> {selectedDeployment} <span className="text-indigo-600"> ({currentPricing.officialPricing?.multipliers?.deployment || 1}x)</span></div>
+                        <div className="pt-2 border-t border-indigo-200"><strong>Your Rate:</strong> ${currentPricing.ptu_hourly}/PTU-hour</div>
+                      </div>
                     </div>
-                    <div>
-                      <strong>Yearly:</strong> {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% discount
-                      <div className="text-xs text-indigo-600">${currentPricing.ptu_yearly}/PTU annually</div>
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-indigo-800 flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Official Discounts
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div><strong>Monthly:</strong> No discount (base rate)<div className="text-xs text-indigo-600">${currentPricing.ptu_monthly}/PTU (730 hrs)</div></div>
+                        <div><strong>Yearly:</strong> {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% discount<div className="text-xs text-indigo-600">${currentPricing.ptu_yearly}/PTU annually</div></div>
+                        <div className="pt-2 border-t border-indigo-200"><strong>Annual Savings:</strong> ${((currentPricing.ptu_monthly * 12) - currentPricing.ptu_yearly).toFixed(0)}/PTU</div>
+                      </div>
                     </div>
-                    <div className="pt-2 border-t border-indigo-200">
-                      <strong>Annual Savings:</strong> ${((currentPricing.ptu_monthly * 12) - currentPricing.ptu_yearly).toFixed(0)}/PTU
-                    </div>
-                  </div>
-                </div>
-
-                {/* Calculation Transparency */}
-                <div className="space-y-3">
-                  <h4 className="font-medium text-indigo-800 flex items-center gap-2">
-                    <Zap className="h-4 w-4" />
-                    Your Calculations
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <strong>Required PTUs:</strong> {calculations.ptuNeeded || 0}
-                    </div>
-                    <div>
-                      <strong>Monthly Cost:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_monthly).toLocaleString()}
-                    </div>
-                    <div>
-                      <strong>Yearly Cost:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_yearly).toLocaleString()}
-                    </div>
-                    <div className="pt-2 border-t border-indigo-200">
-                      <strong>Annual Savings:</strong> ${((calculations.ptuNeeded * currentPricing.ptu_monthly * 12) - (calculations.ptuNeeded * currentPricing.ptu_yearly)).toLocaleString()}
-                      <div className="text-xs text-green-600">
-                        {currentPricing.officialPricing?.discount?.yearlyVsHourly || 30}% saved with yearly commitment
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-indigo-800 flex items-center gap-2">
+                        <Zap className="h-4 w-4" />
+                        Your Calculations
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div><strong>Required PTUs:</strong> {calculations.ptuNeeded || 0}</div>
+                        <div><strong>Monthly Cost:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_monthly).toLocaleString()}</div>
+                        <div><strong>Yearly Cost:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_yearly).toLocaleString()}</div>
+                        <div className="pt-2 border-t border-indigo-200">
+                          <strong>Annual Savings:</strong> ${((calculations.ptuNeeded * currentPricing.ptu_monthly * 12) - (calculations.ptuNeeded * currentPricing.ptu_yearly)).toLocaleString()}
+                          <div className="text-xs text-green-600">{currentPricing.officialPricing?.discount?.yearlyVsHourly || 30}% saved with yearly commitment</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-              
-              <div className="mt-4 p-3 bg-white rounded-lg border border-indigo-200">
-                <div className="flex items-start gap-2">
-                  <Info className="h-4 w-4 text-indigo-600 mt-0.5" />
-                  <div className="text-sm text-indigo-800">
-                    <strong>Pricing Accuracy:</strong> This calculator now uses Microsoft's official PTU pricing structure with accurate regional multipliers and the standard 30% yearly discount. All calculations are aligned with Azure's official pricing model.
+                  <div className="mt-4 p-3 bg-white rounded-lg border border-indigo-200">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 text-indigo-600 mt-0.5" />
+                      <div className="text-sm text-indigo-800">
+                        <strong>Pricing Accuracy:</strong> This calculator now uses Microsoft's official PTU pricing structure with accurate regional multipliers and the standard 30% yearly discount. All calculations are aligned with Azure's official pricing model.
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            )}
+
+              </TabsContent>
+            </Tabs>
+          </div>
         )}
 
 
