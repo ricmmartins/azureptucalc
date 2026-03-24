@@ -22,7 +22,6 @@ const AccessibilityEnhancements = ({ accessibilityMode, onToggleAccessibility })
       try {
         setSettings(JSON.parse(saved));
       } catch (error) {
-        console.warn('Failed to load accessibility settings:', error);
       }
     }
   }, []);

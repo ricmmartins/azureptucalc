@@ -86,7 +86,7 @@ function App() {
       try {
         setCustomPricing(JSON.parse(savedCustomPricing));
       } catch (error) {
-        console.warn('Failed to load custom pricing from localStorage:', error);
+        // silenced: failed to load custom pricing
       }
     }
     
@@ -154,7 +154,7 @@ function App() {
           try {
             const livePricing = await azurePricingService.getPricing(selectedModel, selectedRegion, selectedDeployment);
             setLivePricingData(livePricing);
-            console.log('Live Azure pricing loaded:', livePricing);
+            
             
             // Update pricing status based on live data availability
             setPricingStatus(prev => ({
@@ -167,7 +167,7 @@ function App() {
                 : prev.dataExpiry
             }));
           } catch (error) {
-            console.warn('Failed to load live Azure pricing, using fallback:', error);
+            
             setPricingStatus(prev => ({
               ...prev,
               usingLiveData: false,
@@ -179,7 +179,7 @@ function App() {
           }
         }
       } catch (error) {
-        console.warn('Failed to load external pricing:', error);
+        
       } finally {
         setIsLoadingExternalPricing(false);
       }
@@ -408,7 +408,7 @@ function App() {
           setCalculatorMode(data.calculatorMode || calculatorMode);
         }
       } catch (error) {
-        console.warn('Failed to load auto-saved data:', error);
+        
       }
     }
   }, []); // Only run once on mount
@@ -444,7 +444,7 @@ function App() {
       const updatedHistory = [historyEntry, ...history.slice(0, 9)]; // Keep last 10 entries
       localStorage.setItem('azurePTUInputHistory', JSON.stringify(updatedHistory));
     } catch (error) {
-      console.warn('Failed to save to input history:', error);
+      
     }
   };
 
@@ -453,9 +453,7 @@ function App() {
   // Test Azure API connection
   const testAzureAPI = async () => {
     try {
-      console.log('🧪 Manual Azure API test triggered...');
       const testResult = await azurePricingService.getPricing('gpt-4o', 'eastus2', 'global');
-      console.log('✅ Azure API test result:', testResult);
       
       const isDevelopment = testResult?.source === 'live-simulated';
       const isLive = testResult?.source === 'live';
@@ -512,8 +510,6 @@ Check browser console for detailed error information.`);
       const livePricing = await azurePricingService.getPricing(selectedModel, selectedRegion, selectedDeployment);
       setLivePricingData(livePricing);
       
-      console.log('Refreshed Azure pricing:', livePricing);
-      
       setPricingStatus(prev => ({
         ...prev,
         isLoading: false,
@@ -525,7 +521,7 @@ Check browser console for detailed error information.`);
           : new Date(Date.now() + 3 * 60 * 60 * 1000).toLocaleString()
       }));
     } catch (error) {
-      console.warn("Failed to refresh pricing:", error);
+      
       setPricingStatus(prev => ({
         ...prev,
         isLoading: false,
@@ -538,13 +534,13 @@ Check browser console for detailed error information.`);
   const calculateEnhancedPTU = (avgTPM, model, deploymentType) => {
     const modelConfig = enhancedModelConfig.models[model];
     if (!modelConfig) {
-      console.warn(`Model ${model} not found in enhanced config`);
+      
       return { calculatedPTU: 0, ptuNeeded: 0, isUsingMinimum: false, increment: 1, throughput: 50000 };
     }
 
     const deployment = modelConfig.deployments[deploymentType];
     if (!deployment) {
-      console.warn(`Deployment ${deploymentType} not available for ${model}`);
+      
       return { calculatedPTU: 0, ptuNeeded: 0, isUsingMinimum: false, increment: 1, throughput: 50000 };
     }
 
@@ -600,7 +596,7 @@ Check browser console for detailed error information.`);
           lastRefreshed: new Date().toLocaleString()
         }));
       } catch (error) {
-        console.warn("Failed to load live pricing, using fallback:", error);
+        
         setLivePricingData(null);
         setPricingStatus(prev => ({
           ...prev,
@@ -652,7 +648,7 @@ Check browser console for detailed error information.`);
           };
         }
         pricingSource = livePricingData.source === 'live' ? 'azure-api-live' : 'service-fallback';
-        console.log(`Using ${pricingSource} pricing:`, { livePAYGO, livePTU, timestamp: livePricingData.timestamp });
+        
       }
       
       // TASK 2: Use official PTU pricing alignment (prefer authoritative corrected_pricing_data.json)
@@ -994,7 +990,7 @@ Check browser console for detailed error information.`);
           );
           setPricingValidation(validation);
         } catch (error) {
-          console.warn('Pricing validation failed:', error);
+          
         }
       }
     };
@@ -1186,7 +1182,7 @@ Check browser console for detailed error information.`);
   const getAvailableModels = () => {
     try {
       if (!ptuModels || !ptuModels.ptu_supported_models) {
-        console.warn('ptuModels not loaded, using fallback models');
+        
         return [
           { id: 'gpt-4o', name: 'GPT-4o', minPTU: 15 },
           { id: 'gpt-4o-mini', name: 'GPT-4o Mini', minPTU: 10 },
@@ -1219,9 +1215,7 @@ Check browser console for detailed error information.`);
   // Enhanced: Get available regions organized by zone with region-specific model availability
   const getAvailableRegions = () => {
     try {
-      console.log('🔍 Attempting to load regions...');
       const regionsByZone = getRegionsByZone();
-      console.log('✅ Regions loaded successfully:', regionsByZone);
       
       return Object.entries(regionsByZone).map(([zoneName, regions]) => ({
         zone: zoneName === 'US' ? 'North America' : 
@@ -1239,7 +1233,6 @@ Check browser console for detailed error information.`);
       }));
     } catch (error) {
       console.error('❌ Error loading regions:', error);
-      console.warn('Error loading regions, using fallback:', error);
       // Fallback to simplified list if regionModelAvailability fails
       return [
         {

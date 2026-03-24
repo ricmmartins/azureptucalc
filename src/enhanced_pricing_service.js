@@ -7,8 +7,7 @@ class AzureOpenAIPricingService {
     this.cache = new Map();
     this.cacheExpiry = 3 * 60 * 60 * 1000; // 3 hours
     this.fallbackPricing = this.loadFallbackPricing();
-    this.apiAvailable = null; // null = unknown, true/false after first attempt
-    console.log('🔧 Azure Pricing Service initialized');
+    this.apiAvailable = null;
   }
 
   // Load fallback pricing data
@@ -97,14 +96,12 @@ class AzureOpenAIPricingService {
 
   // Main entry point: get pricing for a model/region/deployment
   async getPricing(model, region = 'eastus2', deploymentType = 'global') {
-    console.log('💰 Getting pricing for', { model, region, deploymentType });
     const cacheKey = `${model}-${region}-${deploymentType}`;
 
     // Check cache first
     if (this.cache.has(cacheKey)) {
       const cached = this.cache.get(cacheKey);
       if (Date.now() - cached.timestamp < this.cacheExpiry) {
-        console.log('📋 Using cached pricing (source:', cached.data.source, ')');
         return cached.data;
       }
       this.cache.delete(cacheKey);
@@ -116,18 +113,15 @@ class AzureOpenAIPricingService {
       try {
         livePricing = await this.fetchFromProxy(model, region, deploymentType);
       } catch (error) {
-        console.warn('⚠️ Proxy API call failed:', error.message);
       }
     }
 
     if (livePricing) {
-      console.log('✅ Live pricing obtained for', model);
       this.cache.set(cacheKey, { data: livePricing, timestamp: Date.now() });
       return livePricing;
     }
 
     // Fallback to hardcoded pricing
-    console.log('🔄 Using fallback pricing for', model);
     const fallback = this.getFallbackPricing(model, deploymentType);
     this.cache.set(cacheKey, { data: fallback, timestamp: Date.now() });
     return fallback;
@@ -136,9 +130,8 @@ class AzureOpenAIPricingService {
   // Fetch pricing from the Vercel serverless proxy (/api/azure-pricing)
   async fetchFromProxy(model, region, deploymentType) {
     const apiUrl = `/api/azure-pricing?model=${encodeURIComponent(model)}&region=${encodeURIComponent(region)}&deployment=${encodeURIComponent(deploymentType)}`;
-    console.log(`📡 Fetching from proxy: ${apiUrl}`);
 
-    const controller = new AbortController();
+    const controller= new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
     try {
@@ -148,13 +141,11 @@ class AzureOpenAIPricingService {
       // If we get HTML back (SPA fallback), the API route isn't available
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('text/html')) {
-        console.warn('⚠️ Proxy returned HTML — API route not available (local dev or misconfigured)');
         this.apiAvailable = false;
         return null;
       }
 
       if (!response.ok) {
-        console.warn(`⚠️ Proxy returned ${response.status}`);
         if (response.status === 404) {
           this.apiAvailable = false;
         }
@@ -162,7 +153,6 @@ class AzureOpenAIPricingService {
       }
 
       const data = await response.json();
-      console.log('📊 Proxy response:', { success: data.success, source: data.source, items: data.total_items });
 
       if (!data.success) {
         return null;
@@ -177,7 +167,6 @@ class AzureOpenAIPricingService {
 
       // If the API returned zeros for everything, treat it as a miss
       if (paygoInput === 0 && paygoOutput === 0 && ptuGlobal === 0) {
-        console.warn('⚠️ Proxy returned all-zero pricing, falling back');
         return null;
       }
 
@@ -203,9 +192,9 @@ class AzureOpenAIPricingService {
     } catch (error) {
       clearTimeout(timeout);
       if (error.name === 'AbortError') {
-        console.warn('⚠️ Proxy request timed out');
+        // proxy request timed out
       } else {
-        console.warn('⚠️ Proxy fetch error:', error.message);
+        // proxy fetch error
       }
       return null;
     }
@@ -216,7 +205,6 @@ class AzureOpenAIPricingService {
     const fallback = this.fallbackPricing[model];
     
     if (!fallback) {
-      console.log(`⚠️ No fallback pricing for model: ${model}`);
       return {
         paygo: { input: 0, output: 0 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 },

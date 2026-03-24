@@ -177,14 +177,12 @@ const ShareAnalysis = ({
       try {
         const decodedData = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
         // Load shared analysis data
-        console.log('Loaded shared analysis:', decodedData);
         setShareStats(prev => ({ ...prev, views: prev.views + 1 }));
       } catch (error) {
         console.error('Error loading shared analysis:', error);
       }
     } else if (shortId) {
       // In a real implementation, this would fetch data from an API
-      console.log('Loading shared analysis with ID:', shortId);
       setShareStats(prev => ({ ...prev, views: prev.views + 1 }));
     }
   }, []);

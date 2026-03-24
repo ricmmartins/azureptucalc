@@ -19,7 +19,6 @@ class CorrectedPricingService {
   getModelPricing(modelId, deploymentType = 'global') {
     const model = this.pricingData.models[modelId];
     if (!model) {
-      console.warn(`Model ${modelId} not found in pricing data`);
       return this.getDefaultPricing();
     }
 

@@ -4,88 +4,96 @@
 
 export const OFFICIAL_TOKEN_PRICING = {
   // GPT-5 Series (prices per 1M tokens from official Azure pricing page)
-  "gpt-5": {
-    input: 1.25,     // $1.25 per million input tokens (Global Standard)
-    output: 10.00,   // $10 per million output tokens
-    description: "Most advanced reasoning model for coding and agentic tasks"
+  "gpt-5.4": {
+    input: 2.50,
+    output: 10.00,
+    description: "Latest frontier model with enhanced reasoning and multimodal capabilities"
   },
-  "gpt-5-mini": {
-    input: 0.25,     // $0.25 per million input tokens
-    output: 2.00,    // $2 per million output tokens
-    description: "Faster, cost-efficient version of GPT-5"
-  },
-  "gpt-5-nano": {
-    input: 0.05,     // $0.05 per million input tokens
-    output: 0.40,    // $0.40 per million output tokens
-    description: "Lightweight GPT-5 variant optimized for speed"
-  },
-  "gpt-5-chat": {
-    input: 1.25,     // $1.25 per million input tokens
-    output: 10.00,   // $10 per million output tokens
-    description: "Text-only chat optimized version of GPT-5"
-  },
-  "gpt-5.1": {
-    input: 1.25,     // $1.25 per million input tokens (Global Standard)
-    output: 10.00,   // $10 per million output tokens
-    description: "Enhanced GPT-5 with improved reasoning and problem-solving capabilities"
+  "gpt-5.3-codex": {
+    input: 2.50,
+    output: 10.00,
+    description: "Codex model optimized for code generation"
   },
   "gpt-5.2": {
-    input: 1.75,     // $1.75 per million input tokens (Global Standard)
-    output: 14.00,   // $14 per million output tokens
-    description: "Latest GPT-5 iteration with advanced agentic capabilities and enhanced performance"
+    input: 2.50,
+    output: 10.00,
+    description: "Advanced reasoning model with agentic capabilities"
+  },
+  "gpt-5.2-codex": {
+    input: 2.50,
+    output: 10.00,
+    description: "Codex variant of GPT-5.2 for code tasks"
+  },
+  "gpt-5.1": {
+    input: 2.50,
+    output: 10.00,
+    description: "Enhanced GPT-5 with improved reasoning and problem-solving"
+  },
+  "gpt-5.1-codex": {
+    input: 2.50,
+    output: 10.00,
+    description: "Codex variant of GPT-5.1 for code tasks"
+  },
+  "gpt-5": {
+    input: 1.25,
+    output: 10.00,
+    description: "Advanced reasoning model for coding and agentic tasks"
+  },
+  "gpt-5-mini": {
+    input: 0.30,
+    output: 1.25,
+    description: "Faster, cost-efficient version of GPT-5"
   },
 
-  // GPT-4 Series
+  // GPT-4.1 Series
+  "gpt-4.1": {
+    input: 2.50,
+    output: 10.00,
+    description: "Low-latency model with strong coding and instruction-following"
+  },
+  "gpt-4.1-mini": {
+    input: 0.40,
+    output: 1.60,
+    description: "Cost-efficient variant of GPT-4.1"
+  },
+  "gpt-4.1-nano": {
+    input: 0.10,
+    output: 0.40,
+    description: "Fastest and most affordable GPT-4.1 variant"
+  },
+
+  // Reasoning Models (o-series)
+  "o3": {
+    input: 2.50,
+    output: 10.00,
+    description: "Advanced reasoning model for complex problem-solving"
+  },
+  "o4-mini": {
+    input: 1.10,
+    output: 4.40,
+    description: "Cost-efficient reasoning model"
+  },
+  "o3-mini": {
+    input: 1.10,
+    output: 4.40,
+    description: "Smaller, efficient reasoning model"
+  },
+  "o1": {
+    input: 15.00,
+    output: 60.00,
+    description: "First-generation reasoning model"
+  },
+
+  // GPT-4o Series (previous generation)
   "gpt-4o": {
-    input: 2.50,     // $2.50 per million input tokens
-    output: 10.00,   // $10 per million output tokens
-    description: "Latest multimodal model with text and image capabilities"
+    input: 2.50,
+    output: 10.00,
+    description: "Multimodal model with text and image capabilities"
   },
   "gpt-4o-mini": {
-    input: 0.15,     // $0.15 per million input tokens
-    output: 0.60,    // $0.60 per million output tokens
-    description: "Smaller, faster version of GPT-4o with cost optimization"
-  },
-  "gpt-4": {
-    input: 30.00,    // $30 per million input tokens
-    output: 60.00,   // $60 per million output tokens
-    description: "Advanced language model with superior reasoning capabilities"
-  },
-  "gpt-4-turbo": {
-    input: 10.00,    // $10 per million input tokens
-    output: 30.00,   // $30 per million output tokens
-    description: "Enhanced GPT-4 with improved performance and larger context window"
-  },
-
-  // GPT-3.5 Series
-  "gpt-35-turbo": {
-    input: 0.50,     // $0.50 per million input tokens
-    output: 1.50,    // $1.50 per million output tokens
-    description: "Fast and efficient model for most conversational tasks"
-  },
-
-  // Embedding Models (no output tokens for embeddings)
-  "text-embedding-ada-002": {
-    input: 0.10,     // $0.10 per million tokens
-    output: 0.00,    // No output tokens for embeddings
-    description: "High-quality text embeddings for semantic search"
-  },
-  "text-embedding-3-large": {
-    input: 0.13,     // $0.13 per million tokens
-    output: 0.00,    // No output tokens for embeddings
-    description: "Latest large embedding model with improved performance"
-  },
-  "text-embedding-3-small": {
-    input: 0.02,     // $0.02 per million tokens
-    output: 0.00,    // No output tokens for embeddings
-    description: "Efficient embedding model for cost-sensitive applications"
-  },
-
-  // Audio Models
-  "whisper": {
-    input: 6.00,     // $6 per million tokens (estimated based on audio processing)
-    output: 0.00,    // No output tokens for transcription
-    description: "Speech-to-text model for audio transcription"
+    input: 0.15,
+    output: 0.60,
+    description: "Smaller, faster version of GPT-4o"
   }
 };
 
@@ -102,7 +110,6 @@ for (const [modelId, modelData] of Object.entries(correctedPricingData.models ||
         description: modelData.displayName || modelId
       };
       // eslint-disable-next-line no-console
-      console.log(`Auto-populated token pricing for model ${modelId} from corrected_pricing_data.json`);
     }
   } catch (e) {
     // ignore
@@ -118,12 +125,10 @@ export function getTokenPricing(modelName) {
   // Try to source PAYGO rates from corrected_pricing_data.json if available
   const corrected = correctedPricingData.models?.[modelName]?.paygo?.global;
   if (corrected && (corrected.input != null || corrected.output != null)) {
-    console.warn(`Pricing not found in OFFICIAL_TOKEN_PRICING for model: ${modelName}. Using corrected_pricing_data.json rates.`);
     return { input: corrected.input ?? 0, output: corrected.output ?? 0, isFallback: true };
   }
 
   // Final fallback to GPT-4o-mini pricing
-  console.warn(`Pricing not found for model: ${modelName}. Using GPT-4o-mini fallback.`);
   const fallback = OFFICIAL_TOKEN_PRICING["gpt-4o-mini"];
   return { ...fallback, isFallback: true };
 }

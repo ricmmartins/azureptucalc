@@ -16,7 +16,6 @@ const InputHistory = ({ onLoadHistory }) => {
           setHistory(JSON.parse(saved));
         }
       } catch (error) {
-        console.warn('Failed to load input history:', error);
       }
     };
 

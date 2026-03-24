@@ -49,7 +49,6 @@ export class ExternalPricingService {
       
       return externalData;
     } catch (error) {
-      console.warn('Failed to load external pricing data, using fallback:', error);
       return this.getFallbackPricingData();
     }
   }
