@@ -110,10 +110,10 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
 
     const findAndHighlightElement = async (step) => {
       // If we're on a results-dependent step and need data, populate it first
-      if ((currentStep === 2 || currentStep === 3) && !isDataPopulated && onPopulateSampleData) {
+      if (currentStep >= 2 && !isDataPopulated && onPopulateSampleData) {
         await handleDataPopulation();
-        // Add extra delay for results sections to stabilize
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Add extra delay for results sections to stabilize after calculation
+        await new Promise(resolve => setTimeout(resolve, 1500));
       }
 
       // Try to find the target element, use fallback if not found
