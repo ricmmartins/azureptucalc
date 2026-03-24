@@ -8,7 +8,7 @@ import { Badge } from './components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Alert, AlertDescription } from './components/ui/alert';
 
-import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap, Keyboard } from 'lucide-react';
+import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, AlertTriangle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap, Keyboard } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Core functionality imports
@@ -695,7 +695,23 @@ Check browser console for detailed error information.`);
         paygoIsFallback: tokenPricingIsFallback && !livePAYGO?.input,
         pricingSource: pricingSource,
         livePricingTimestamp: livePricingData?.timestamp,
-        isLoadingLivePricing: isLoadingLivePricing
+        isLoadingLivePricing: isLoadingLivePricing,
+        // Pricing discrepancy detection: compare live API vs hardcoded values
+        pricingDiscrepancy: (() => {
+          if (!livePAYGO || tokenPricingIsFallback) return null;
+          const inputDiff = Math.abs(livePAYGO.input - tokenPricing.input) / Math.max(tokenPricing.input, 0.01);
+          const outputDiff = Math.abs(livePAYGO.output - tokenPricing.output) / Math.max(tokenPricing.output, 0.01);
+          if (inputDiff > 0.1 || outputDiff > 0.1) {
+            return {
+              hasDiscrepancy: true,
+              live: { input: livePAYGO.input, output: livePAYGO.output },
+              hardcoded: { input: tokenPricing.input, output: tokenPricing.output },
+              inputDiffPercent: Math.round(inputDiff * 100),
+              outputDiffPercent: Math.round(outputDiff * 100)
+            };
+          }
+          return { hasDiscrepancy: false };
+        })()
       };
     } catch (error) {
       console.error('Error getting pricing:', error);
@@ -1469,33 +1485,32 @@ AzureMetrics
                 </span>
               </div>
               
-              {/* pricingValidation && (
-                <div className={`flex items-center gap-2 p-2 rounded-md text-xs ${ 
-                  pricingValidation.status === 'accurate' ? 'bg-green-50 border border-green-200' :
-                  pricingValidation.status === 'minor_differences' ? 'bg-yellow-50 border border-yellow-200' :
-                  'bg-orange-50 border border-orange-200'
-                }`}>
-                  <Shield className={`h-3 w-3 ${ 
-                    pricingValidation.status === 'accurate' ? 'text-green-600' :
-                    pricingValidation.status === 'minor_differences' ? 'text-yellow-600' :
-                    'text-orange-600'
-                  }`} />
-                  <span className={`font-medium ${ 
-                    pricingValidation.status === 'accurate' ? 'text-green-800' :
-                    pricingValidation.status === 'minor_differences' ? 'text-yellow-800' :
-                    'text-orange-800'
-                  }`}>
-                    Pricing Validation: {pricingValidation.accuracy?.toFixed(0)}% accurate
-                    {pricingValidation.warnings.length > 0 && ` (${pricingValidation.warnings.length} warnings)`}
+              {currentPricing.pricingDiscrepancy?.hasDiscrepancy && (
+                <div className="flex items-start gap-2 p-2 rounded-md text-xs bg-orange-50 border border-orange-200">
+                  <AlertTriangle className="h-3 w-3 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-medium text-orange-800">
+                      Pricing Discrepancy Detected
+                    </span>
+                    <p className="text-orange-700 mt-1">
+                      Live Azure API prices differ from cached values by {Math.max(currentPricing.pricingDiscrepancy.inputDiffPercent, currentPricing.pricingDiscrepancy.outputDiffPercent)}%.
+                      Using live prices for calculations. Cached: ${currentPricing.pricingDiscrepancy.hardcoded.input}/M input, ${currentPricing.pricingDiscrepancy.hardcoded.output}/M output.
+                      Live: ${currentPricing.pricingDiscrepancy.live.input}/M input, ${currentPricing.pricingDiscrepancy.live.output}/M output.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {currentPricing.pricingSource === 'azure-api-live' && !currentPricing.pricingDiscrepancy?.hasDiscrepancy && (
+                <div className="flex items-center gap-2 p-2 rounded-md text-xs bg-green-50 border border-green-200">
+                  <CheckCircle className="h-3 w-3 text-green-600" />
+                  <span className="font-medium text-green-800">
+                    Pricing Validated — live Azure API prices match cached values
                   </span>
                 </div>
-              ) */}
+              )}
               
               <div className="text-sm text-gray-600">
                 Last refreshed: {pricingStatus.lastRefreshed}
-                {/* pricingValidation && (
-                  <span className="ml-2">• Validated: {new Date(pricingValidation.timestamp).toLocaleTimeString()}</span>
-                ) */}
               </div>
             </div>
           </CardContent>
@@ -3105,10 +3120,10 @@ AzureMetrics
                   <Info className="h-5 w-5 text-blue-600" />
                   <CardTitle>PTU Cost-Effectiveness Guidelines</CardTitle>
                 </div>
-                <CardDescription>Understand when to use PAYGO, Hybrid, or full PTU reservations based on your usage patterns</CardDescription>
+                <CardDescription>Understand when to use PAYGO, Priority Processing, Hybrid, or full PTU reservations based on your usage patterns</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <Card className="border-red-200 bg-red-50">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-2">
@@ -3120,6 +3135,22 @@ AzureMetrics
                         <div><strong>PTU Utilization:</strong> &lt;20% capacity</div>
                         <div><strong>Why PAYGO:</strong> Only pay for actual usage</div>
                         <div><strong>Cost Impact:</strong> Avoid paying for unused capacity</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">⚡</span>
+                        <h3 className="font-medium text-amber-800">Priority Processing</h3>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div><strong>When:</strong> Need guaranteed low-latency</div>
+                        <div><strong>Pricing:</strong> ~70% premium over standard PAYGO</div>
+                        <div><strong>Best For:</strong> Latency-sensitive apps, SLA requirements</div>
+                        <div><strong>Models:</strong> GPT-5.4, 5.2, 5.1, 4.1, 4.1-mini, o4-mini</div>
+                        <div><strong>Note:</strong> Global & Data Zone deployments only</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -3167,6 +3198,7 @@ AzureMetrics
                       <li><strong>• Usage Consistency:</strong> PTUs work best for predictable, sustained workloads</li>
                       <li><strong>• Capacity Planning:</strong> Each PTU provides guaranteed throughput capacity (varies by model)</li>
                       <li><strong>• Break-Even Point:</strong> PTUs typically become cost-effective at 60%+ utilization</li>
+                      <li><strong>• Latency Requirements:</strong> Priority Processing provides SLA-backed latency guarantees without PTU commitment; consider it for latency-sensitive workloads that don't justify full PTU</li>
                       <li><strong>• Growth Projections:</strong> Consider future usage patterns, not just current needs</li>
                     </ul>
                   </CardContent>
