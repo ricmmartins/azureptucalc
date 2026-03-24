@@ -689,9 +689,9 @@ Check browser console for detailed error information.`);
       const tokenPricing = getTokenPricing(selectedModel);
       const tokenPricingIsFallback = tokenPricing.isFallback === true;
       
-      // PRIORITY 3: Prefer explicit reservation (monthly/yearly) from corrected_pricing_data.json when present
-      const ptuMonthly = livePTU?.monthly || correctedReservations?.monthly || officialPTUPricing?.monthly || (officialPTUPricing?.hourly ? Math.round(officialPTUPricing.hourly * 24 * 30.4167) : 730);
-      const ptuYearly = livePTU?.yearly || correctedReservations?.yearly || officialPTUPricing?.yearly || Math.round(ptuMonthly * 12 * 0.7);
+      // PRIORITY 3: Use per-deployment reservation rates from officialPTUPricing (which has correct rates per deployment type)
+      const ptuMonthly = livePTU?.monthly || officialPTUPricing?.reservationMonthly || correctedReservations?.monthly || (officialPTUPricing?.hourly ? Math.round(officialPTUPricing.hourly * 24 * 30.4167) : 730);
+      const ptuYearly = livePTU?.yearly || officialPTUPricing?.yearly || correctedReservations?.yearly || Math.round(ptuMonthly * 12 * 0.7);
 
       return {
         paygo_input: livePAYGO?.input || tokenPricing.input,
