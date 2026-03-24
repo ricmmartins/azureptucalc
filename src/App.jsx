@@ -232,6 +232,7 @@ function App() {
       ...prev,
       avgTPM: 25000,        // Sample: 25K tokens per minute
       p99TPM: 45000,        // Sample: 45K peak tokens per minute
+      maxTPM: 60000,        // Sample: 60K max tokens per minute
       recommendedPTU: 0,    // Will be calculated
       monthlyMinutes: 43800 // Keep existing monthly minutes
     }));
@@ -2538,6 +2539,49 @@ AzureMetrics
             </CardContent>
           </Card>
         )}
+
+        {/* Priority Processing Information — always visible */}
+        <Card className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-amber-600" />
+              <CardTitle className="text-amber-900">⚡ Priority Processing (GA)</CardTitle>
+            </div>
+            <CardDescription className="text-amber-700">
+              A new pay-per-token option with SLA-backed low-latency guarantees
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <h4 className="font-semibold text-amber-900 mb-1">What is it?</h4>
+                <p className="text-amber-800">Priority Processing provides guaranteed throughput and SLA-backed latency for Azure OpenAI requests. It's a pay-per-token model (like PAYGO) with a ~70% premium, but with performance guarantees.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-amber-900 mb-1">When to consider?</h4>
+                <ul className="text-amber-800 space-y-1">
+                  <li>• Latency-sensitive production apps</li>
+                  <li>• Need SLA guarantees without PTU commitment</li>
+                  <li>• Variable workloads that need consistent performance</li>
+                  <li>• Can combine with PTU (baseline + priority overflow)</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-amber-900 mb-1">Availability</h4>
+                <ul className="text-amber-800 space-y-1">
+                  <li>• <strong>Models:</strong> GPT-5.4, 5.2, 5.1, 4.1, 4.1-mini, o4-mini</li>
+                  <li>• <strong>Deployments:</strong> Global Standard, Data Zone Standard</li>
+                  <li>• <strong>Pricing:</strong> ~70% premium over standard PAYGO rates</li>
+                </ul>
+                <a href="https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing"
+                   target="_blank" rel="noopener noreferrer"
+                   className="inline-block mt-2 text-amber-700 underline font-medium hover:text-amber-900">
+                  Learn more →
+                </a>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Results Section - Only show if user has entered valid data */}
         {!hasValidData ? (

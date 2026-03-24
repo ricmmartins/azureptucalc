@@ -105,30 +105,44 @@ function buildModelSearchTerms(model) {
   const m = model.toLowerCase();
   const terms = [];
 
-  if (m === 'gpt-5.2') {
-    terms.push('GPT 5.2 chat inp Gl', 'GPT 5.2 chat opt Gl', '5.2 chat');
+  if (m === 'gpt-5.4') {
+    terms.push('GPT 5.4', 'gpt-5.4', '5.4');
+  } else if (m === 'gpt-5.3-codex') {
+    terms.push('GPT 5.3 Codex', 'gpt-5.3-codex', '5.3 codex');
+  } else if (m === 'gpt-5.2-codex') {
+    terms.push('GPT 5.2 Codex', 'gpt-5.2-codex', '5.2 codex');
+  } else if (m === 'gpt-5.2') {
+    terms.push('GPT 5.2 chat inp Gl', 'GPT 5.2 chat opt Gl', 'gpt-5.2', '5.2 chat');
+  } else if (m === 'gpt-5.1-codex') {
+    terms.push('GPT 5.1 Codex', 'gpt-5.1-codex', '5.1 codex');
   } else if (m === 'gpt-5.1') {
-    terms.push('GPT 5.1 chat inp Gl', 'GPT 5.1 chat opt Gl', '5.1 chat');
+    terms.push('GPT 5.1 chat inp Gl', 'GPT 5.1 chat opt Gl', 'gpt-5.1', '5.1 chat');
   } else if (m === 'gpt-5') {
-    terms.push('GPT 5 inpt Glbl', 'GPT 5 outpt Glbl', 'GPT 5 ');
+    terms.push('GPT 5 inpt Glbl', 'GPT 5 outpt Glbl', 'gpt-5 ', 'GPT 5 ');
   } else if (m === 'gpt-5-mini') {
-    terms.push('GPT 5 Mini', '5 Mini');
-  } else if (m === 'gpt-5-nano') {
-    terms.push('GPT 5 Nano', '5 Nano');
-  } else if (m === 'gpt-5-chat') {
-    terms.push('GPT 5 chat', '5 chat');
+    terms.push('GPT 5 Mini', 'gpt-5-mini', '5 Mini');
+  } else if (m === 'gpt-4.1-nano') {
+    terms.push('GPT 4.1 Nano', 'gpt-4.1-nano', '4.1 nano');
+  } else if (m === 'gpt-4.1-mini') {
+    terms.push('GPT 4.1 Mini', 'gpt-4.1-mini', '4.1 mini');
+  } else if (m === 'gpt-4.1') {
+    terms.push('GPT 4.1 ', 'gpt-4.1 ', 'gpt-4.1-');
   } else if (m.startsWith('gpt-4o-mini')) {
-    terms.push('gpt 4o mini', '4o mini');
+    terms.push('gpt-4o-mini', 'gpt 4o mini', '4o mini');
   } else if (m.startsWith('gpt-4o')) {
-    terms.push('gpt 4o ', 'gpt-4o');
+    terms.push('gpt-4o ', 'gpt 4o ', 'gpt-4o');
   } else if (m.startsWith('gpt-4')) {
-    terms.push('gpt 4 ', 'gpt-4');
+    terms.push('gpt-4 ', 'gpt 4 ', 'gpt-4');
+  } else if (m === 'o3') {
+    terms.push('o3 ', 'o3-');
+  } else if (m === 'o4-mini') {
+    terms.push('o4-mini', 'o4 mini');
+  } else if (m === 'o3-mini') {
+    terms.push('o3-mini', 'o3 mini');
+  } else if (m === 'o1') {
+    terms.push('o1 ', 'o1-');
   } else if (m.startsWith('o1-mini')) {
-    terms.push('o1 mini');
-  } else if (m.startsWith('o3-mini')) {
-    terms.push('o3 mini');
-  } else if (m.startsWith('o4-mini')) {
-    terms.push('o4 mini');
+    terms.push('o1-mini', 'o1 mini');
   } else {
     terms.push(model.replace(/-/g, ' '));
   }
@@ -156,7 +170,7 @@ function parsePaygoItems(items, model, modelNormalized) {
   const inputPattern = /\b(inp|input|inpt|prompt)\b/i;
   const outputPattern = /\b(opt|outpt|output|completion|generated)\b/i;
   const globalPattern = /\b(gl\b|glbl|global)/i;
-  const excludePattern = /\b(batch|cached|cd\b|cchd|fine.?tun|grdr)/i;
+  const excludePattern = /\b(batch|cached|cd\b|cchd|fine.?tun|grdr|dev ft|ft |tts|aud)/i;
 
   let bestInput = null;
   let bestOutput = null;
