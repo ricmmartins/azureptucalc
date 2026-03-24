@@ -43,31 +43,31 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
       highlight: 'Most important: Average Tokens Per Minute (TPM)'
     },
     {
-      id: 'results',
-      title: 'Step 3: Review Recommendations',
-      description: 'Enter some usage data first, then the calculator will analyze your data and recommend the most cost-effective pricing strategy.',
-      target: '.results-section',
-      fallbackTarget: '.usage-inputs-section', // Fallback if results not visible
+      id: 'cost-cards',
+      title: 'Step 3: Compare Pricing Options',
+      description: 'See all pricing tiers side by side — PAYGO, PTU On-Demand, 1-Year and 3-Year reservations, and Priority Processing when available.',
+      target: '.cost-cards-section',
+      fallbackTarget: '.usage-inputs-section',
       position: 'top',
       icon: <BarChart3 className="h-4 w-4" />,
-      highlight: 'Look for green savings indicators and clear recommendations'
+      highlight: 'Green cards show the best savings opportunities'
     },
     {
-      id: 'charts',
-      title: 'Step 4: Interactive Analytics',
-      description: 'With data entered, explore detailed cost analysis, utilization patterns, and growth projections in the dashboard.',
-      target: '.interactive-charts-section',
-      fallbackTarget: '.results-section',
+      id: 'recommendation',
+      title: 'Step 4: Review Recommendation',
+      description: 'The calculator analyzes your usage pattern and recommends the most cost-effective strategy with projected savings.',
+      target: '.recommendation-section',
+      fallbackTarget: '.cost-cards-section',
       position: 'top',
-      icon: <BarChart3 className="h-4 w-4" />,
-      highlight: '4 tabs: Costs, Utilization, Projections, and Patterns'
+      icon: <Target className="h-4 w-4" />,
+      highlight: 'Personalized recommendation based on your utilization rate'
     },
     {
       id: 'export',
       title: 'Step 5: Export & Share',
       description: 'Generate reports in CSV or JSON format to share with stakeholders and support decision-making.',
       target: '.export-section',
-      fallbackTarget: '.interactive-charts-section',
+      fallbackTarget: '.recommendation-section',
       position: 'top',
       icon: <Download className="h-4 w-4" />,
       highlight: 'Perfect for executive presentations and budget planning'
@@ -75,7 +75,7 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
     {
       id: 'advanced',
       title: 'Step 6: Advanced Features',
-      description: 'Customize pricing for enterprise agreements and explore additional configuration options.',
+      description: 'Explore the Patterns and Advanced tabs for burst analysis, interactive charts, and custom pricing options.',
       target: '.custom-pricing-section',
       position: 'bottom',
       icon: <Settings className="h-4 w-4" />,
@@ -265,13 +265,13 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
               </p>
               
               {/* Show status message for steps that might not be visible */}
-              {(currentStep === 2 || currentStep === 3 || currentStep === 4) && (
+              {(currentStep >= 2 && currentStep <= 4) && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
                   <div className="flex items-start gap-2">
                     <Zap className="h-3 w-3 text-yellow-600 flex-shrink-0 mt-1" />
                     <p className="text-xs text-yellow-700">
-                      {currentStep === 2 && "Adding sample data to show results..."}
-                      {currentStep === 3 && "Interactive charts appear when you have usage data"}
+                      {currentStep === 2 && "Sample data loaded — see the cost breakdown below"}
+                      {currentStep === 3 && "Scroll down to see the full recommendation"}
                       {currentStep === 4 && "Export features are always available"}
                     </p>
                   </div>

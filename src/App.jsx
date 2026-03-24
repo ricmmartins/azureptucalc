@@ -2585,7 +2585,7 @@ AzureMetrics
             )}
             
             {/* Cost Comparison Cards */}
-            <div className={`grid grid-cols-1 md:grid-cols-2 ${calculations.isPrioritySupported ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
+            <div className={`cost-cards-section grid grid-cols-1 md:grid-cols-2 ${calculations.isPrioritySupported ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
               <Card className="bg-gray-50 border-gray-200">
                 <CardContent className="p-4 text-center">
                   <h3 className="font-medium text-gray-800">PAYGO</h3>
@@ -2717,7 +2717,7 @@ AzureMetrics
             </Card>
 
             {/* Recommendation */}
-            <Card>
+            <Card className="recommendation-section">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Target className="h-5 w-5 text-blue-600" />
