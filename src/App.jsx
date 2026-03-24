@@ -833,7 +833,7 @@ Check browser console for detailed error information.`);
   const yearlyPtuReservationCost = (currentPricing.ptu_yearly * ptuNeeded) / 12;
     
     // FIXED: Dynamic utilization calculation
-    const utilizationRate = formData.avgTPM > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
+    const utilizationRate = formData.avgTPM > 0 && ptuNeeded > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
     
     // Task 6: Break-even analysis calculations
     const breakEvenAnalysis = (() => {
@@ -915,7 +915,7 @@ Check browser console for detailed error information.`);
     
     // Priority Processing calculations
     const priorityPricing = PRIORITY_PROCESSING_PRICING[selectedModel];
-    const isPrioritySupported = !!priorityPricing?.supported && PRIORITY_PROCESSING_DEPLOYMENTS.includes(selectedDeployment);
+    const isPrioritySupported = !!priorityPricing?.supported && typeof priorityPricing?.input === 'number' && typeof priorityPricing?.output === 'number' && PRIORITY_PROCESSING_DEPLOYMENTS.includes(selectedDeployment);
     let monthlyPriorityCost = 0;
     let priorityBreakdown = null;
     if (isPrioritySupported && monthlyTokens > 0) {
