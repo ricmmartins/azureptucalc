@@ -13,8 +13,31 @@ class AzureOpenAIPricingService {
   // Load fallback pricing data
   loadFallbackPricing() {
     return {
-      // GPT-5 series: PAYGO per 1M tokens, PTU per PTU/hr (all models same PTU rate)
-      // Source: https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
+      // GPT-5 series
+      'gpt-5.4': {
+        paygo: { input: 2.50, output: 10.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
+      },
+      'gpt-5.3-codex': {
+        paygo: { input: 2.50, output: 10.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
+      },
+      'gpt-5.2': {
+        paygo: { input: 1.75, output: 14.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
+      },
+      'gpt-5.2-codex': {
+        paygo: { input: 2.50, output: 10.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
+      },
+      'gpt-5.1': {
+        paygo: { input: 1.25, output: 10.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
+      },
+      'gpt-5.1-codex': {
+        paygo: { input: 2.50, output: 10.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
+      },
       'gpt-5': {
         paygo: { input: 1.25, output: 10.00 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
@@ -23,22 +46,20 @@ class AzureOpenAIPricingService {
         paygo: { input: 0.25, output: 2.00 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
-      'gpt-5-nano': {
-        paygo: { input: 0.05, output: 0.40 },
+      // GPT-4.1 series
+      'gpt-4.1': {
+        paygo: { input: 2.00, output: 8.00 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
-      'gpt-5-chat': {
-        paygo: { input: 1.25, output: 10.00 },
+      'gpt-4.1-mini': {
+        paygo: { input: 0.40, output: 1.60 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
-      'gpt-5.1': {
-        paygo: { input: 1.25, output: 10.00 },
+      'gpt-4.1-nano': {
+        paygo: { input: 0.10, output: 0.40 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
-      'gpt-5.2': {
-        paygo: { input: 1.75, output: 14.00 },
-        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
-      },
+      // GPT-4o series
       'gpt-4o': {
         paygo: { input: 2.50, output: 10.00 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
@@ -47,38 +68,24 @@ class AzureOpenAIPricingService {
         paygo: { input: 0.15, output: 0.60 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
-      'gpt-4': {
-        paygo: { input: 30.00, output: 60.00 },
-        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
-      },
-      'gpt-4-turbo': {
-        paygo: { input: 10.00, output: 30.00 },
-        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
-      },
-      'gpt-35-turbo': {
-        paygo: { input: 0.50, output: 1.50 },
-        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
-      },
-      'o1': {
-        paygo: { input: 15.00, output: 60.00 },
-        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
-      },
-      'o1-mini': {
-        paygo: { input: 3.00, output: 12.00 },
-        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
-      },
+      // Reasoning models
       'o3': {
-        paygo: { input: 10.00, output: 40.00 },
-        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
-      },
-      'o3-mini': {
-        paygo: { input: 1.10, output: 4.40 },
+        paygo: { input: 2.00, output: 8.00 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'o4-mini': {
         paygo: { input: 1.10, output: 4.40 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
+      'o3-mini': {
+        paygo: { input: 1.10, output: 4.40 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
+      },
+      'o1': {
+        paygo: { input: 15.00, output: 60.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
+      },
+      // Embedding models
       'text-embedding-ada-002': {
         paygo: { input: 0.10, output: 0 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }

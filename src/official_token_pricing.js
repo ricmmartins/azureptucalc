@@ -29,8 +29,8 @@ export const OFFICIAL_TOKEN_PRICING = {
     description: "Codex model optimized for code generation"
   },
   "gpt-5.2": {
-    input: 2.50,
-    output: 10.00,
+    input: 1.75,
+    output: 14.00,
     description: "Advanced reasoning model with agentic capabilities"
   },
   "gpt-5.2-codex": {
@@ -39,7 +39,7 @@ export const OFFICIAL_TOKEN_PRICING = {
     description: "Codex variant of GPT-5.2 for code tasks"
   },
   "gpt-5.1": {
-    input: 2.50,
+    input: 1.25,
     output: 10.00,
     description: "Enhanced GPT-5 with improved reasoning and problem-solving"
   },
@@ -54,15 +54,15 @@ export const OFFICIAL_TOKEN_PRICING = {
     description: "Advanced reasoning model for coding and agentic tasks"
   },
   "gpt-5-mini": {
-    input: 0.30,
-    output: 1.25,
+    input: 0.25,
+    output: 2.00,
     description: "Faster, cost-efficient version of GPT-5"
   },
 
   // GPT-4.1 Series
   "gpt-4.1": {
-    input: 2.50,
-    output: 10.00,
+    input: 2.00,
+    output: 8.00,
     description: "Low-latency model with strong coding and instruction-following"
   },
   "gpt-4.1-mini": {
@@ -78,8 +78,8 @@ export const OFFICIAL_TOKEN_PRICING = {
 
   // Reasoning Models (o-series)
   "o3": {
-    input: 2.50,
-    output: 10.00,
+    input: 2.00,
+    output: 8.00,
     description: "Advanced reasoning model for complex problem-solving"
   },
   "o4-mini": {

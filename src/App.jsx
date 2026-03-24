@@ -39,7 +39,7 @@ import Modal from './components/ui/Modal';
 
 function App() {
   // Enhanced features state
-  // console.log('🎯 FULL AZURE PTU CALCULATOR APP IS LOADING! Time:', new Date().toLocaleTimeString()); // Removed for production
+  // console.log('🎯 App loading'); // Debug only
   const [showInteractiveCharts, setShowInteractiveCharts] = useState(true);
   const [collapsed, setCollapsed] = useState({
     pricingStatus: true,
@@ -477,8 +477,8 @@ Source: ${
 }
 
 PAYG Pricing:
-• Input: $${testResult?.paygo?.input || 'N/A'}/1K tokens
-• Output: $${testResult?.paygo?.output || 'N/A'}/1K tokens
+• Input: $${testResult?.paygo?.input || 'N/A'}/1M tokens
+• Output: $${testResult?.paygo?.output || 'N/A'}/1M tokens
 
 PTU Pricing:
 • Global: $${testResult?.ptu?.global || 'N/A'}/hour
@@ -754,7 +754,7 @@ Check browser console for detailed error information.`);
   useEffect(() => {
     const pricing = getCurrentPricing();
     setCurrentPricing(pricing);
-  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing, formData.model, livePricingData, selectedRegion]);
+  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing, livePricingData, selectedRegion]);
 
   // Calculate costs and recommendations
   useEffect(() => {
@@ -1063,7 +1063,7 @@ Check browser console for detailed error information.`);
 
   // Handle form input changes
   const handleInputChange = (field, value) => {
-    // console.log(`Input change: ${field} = ${value}`); // Removed for production
+    // console.log(`Input: ${field} = ${value}`);
     let parsed = parseFloat(value);
     if (isNaN(parsed) || parsed < 0) parsed = 0;
     setFormData(prev => ({
@@ -1114,8 +1114,7 @@ Check browser console for detailed error information.`);
       exportService.downloadCSV();
     } catch (error) {
       console.error('Export CSV failed:', error);
-      // TODO: Replace with proper toast notification
-      setCalculations(prev => ({ 
+      setCalculations(prev => ({
         ...prev, 
         exportError: 'Failed to export CSV. Please try again.' 
       }));
@@ -1309,7 +1308,7 @@ Check browser console for detailed error information.`);
   // KQL Query code - Dynamic based on selected model
   const kqlQuery = `// Burst-Aware Azure OpenAI PTU Sizing Analysis
 // Run this query in Azure Monitor Log Analytics for accurate capacity planning
-// PTU calculator for model: ${formData.model}
+// PTU calculator for model: ${selectedModel}
 
 let window = 1m;              // granularity for burst detection
 let p = 0.99;                 // percentile for burst sizing
@@ -1544,7 +1543,7 @@ AzureMetrics
               <ChevronDown className={`h-5 w-5 transition-transform ${collapsed.kqlQuery ? '' : 'rotate-180'}`} />
             </div>
             <CardDescription>
-              Run this KQL query in your Azure Log Analytics workspace to calculate PTU requirements for <strong>{formData.model}</strong>
+              Run this KQL query in your Azure Log Analytics workspace to calculate PTU requirements for <strong>{selectedModel}</strong>
             </CardDescription>
           </CardHeader>
           {!collapsed.kqlQuery && <CardContent>
@@ -2350,7 +2349,7 @@ AzureMetrics
                     <Input
                       id="inputOutputRatio"
                       type="number"
-                      step="0.1"
+                      step="0.01"
                       min="0"
                       max="1"
                       value={formData.inputOutputRatio}
@@ -2447,126 +2446,6 @@ AzureMetrics
           </CardContent>
         </Card>
 
-        {/* Pricing Validation Section - temporarily disabled */}
-        {false && pricingValidation && (
-          <Card className={`mb-6 border-2 ${
-            pricingValidation.status === 'accurate' ? 'border-green-200 bg-green-50' :
-            pricingValidation.status === 'minor_differences' ? 'border-yellow-200 bg-yellow-50' :
-            pricingValidation.status === 'significant_differences' ? 'border-orange-200 bg-orange-50' :
-            'border-gray-200 bg-gray-50'
-          }`}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Shield className={`h-5 w-5 ${
-                    pricingValidation.status === 'accurate' ? 'text-green-600' :
-                    pricingValidation.status === 'minor_differences' ? 'text-yellow-600' :
-                    pricingValidation.status === 'significant_differences' ? 'text-orange-600' :
-                    'text-gray-600'
-                  }`} />
-                  <CardTitle className="text-sm">Pricing Data Validation</CardTitle>
-                  <Badge variant={pricingValidation.status === 'accurate' ? 'default' : 'secondary'} className={`text-xs ${
-                    pricingValidation.status === 'accurate' ? 'bg-green-100 text-green-800' :
-                    pricingValidation.status === 'minor_differences' ? 'bg-yellow-100 text-yellow-800' :
-                    pricingValidation.status === 'significant_differences' ? 'bg-orange-100 text-orange-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {pricingValidation.accuracy?.toFixed(0)}% Accurate
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleValidatePricing}
-                    disabled={isValidatingPricing}
-                    className="text-xs"
-                  >
-                    {isValidatingPricing ? (
-                      <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full mr-1" />
-                    ) : (
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                    )}
-                    Verify
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowPricingValidation(!showPricingValidation)}
-                    className="text-xs"
-                  >
-                    {showPricingValidation ? 'Hide' : 'Details'}
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                <div className="text-center">
-                  <div className="text-xs text-gray-600">Data Source</div>
-                  <div className={`font-medium text-sm ${
-                    pricingValidation.dataSource === 'live' ? 'text-green-600' : 'text-orange-600'
-                  }`}>
-                    {pricingValidation.dataSource === 'live' ? '🌐 Live Azure API' : '📁 Static Data'}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-gray-600">Last Validated</div>
-                  <div className="font-medium text-sm text-gray-800">
-                    {new Date(pricingValidation.timestamp).toLocaleTimeString()}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-gray-600">Status</div>
-                  <div className={`font-medium text-sm ${
-                    pricingValidation.status === 'accurate' ? 'text-green-600' :
-                    pricingValidation.status === 'minor_differences' ? 'text-yellow-600' :
-                    'text-orange-600'
-                  }`}>
-                    {pricingValidation.status === 'accurate' ? '✅ Verified' :
-                     pricingValidation.status === 'minor_differences' ? '⚠️ Minor Diffs' :
-                     pricingValidation.status === 'significant_differences' ? '🚨 Major Diffs' :
-                     pricingValidation.status === 'api_unavailable' ? '📡 API Unavailable' : '❌ Error'}
-                  </div>
-                </div>
-              </div>
-              
-              {pricingValidation.warnings.length > 0 && (
-                <Alert className="border-orange-200 bg-orange-50 mb-3">
-                  <AlertCircle className="h-4 w-4 text-orange-600" />
-                  <AlertDescription className="text-orange-800">
-                    <strong>Pricing Warnings:</strong>
-                    <ul className="mt-1 text-xs list-disc list-inside">
-                      {pricingValidation.warnings.slice(0, 3).map((warning, index) => (
-                        <li key={index}>{warning}</li>
-                      ))}
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              {showPricingValidation && pricingValidation.live && (
-                <div className="bg-white p-3 rounded border text-xs">
-                  <h4 className="font-medium mb-2">Live vs Static Pricing Comparison:</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <strong>Static Data:</strong>
-                      <div>Input: ${pricingValidation.static.token?.input || 'N/A'}/M tokens</div>
-                      <div>Output: ${pricingValidation.static.token?.output || 'N/A'}/M tokens</div>
-                      <div>PTU: ${pricingValidation.static.ptu?.hourly || 'N/A'}/hour</div>
-                    </div>
-                    <div>
-                      <strong>Live Azure API:</strong>
-                      <div>Input: ${pricingValidation.live.paygo?.input || 'N/A'}/M tokens</div>
-                      <div>Output: ${pricingValidation.live.paygo?.output || 'N/A'}/M tokens</div>
-                      <div>PTU: ${pricingValidation.live.ptu?.regional || pricingValidation.live.ptu?.global || 'N/A'}/hour</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
 
         {/* Priority Processing Information — always visible */}
         <Card className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
@@ -2780,20 +2659,18 @@ AzureMetrics
               <Card className="bg-green-50 border-green-300">
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium text-green-800">PTU (Yearly)</h3>
+                    <h3 className="font-medium text-green-800">PTU (1-Year)</h3>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% off
+                      25% off
                     </Badge>
                   </div>
                   <p className="text-xs text-green-600 mb-2">
                     Save ${calculations.oneYearSavings?.toFixed(2) || '0.00'}/mo
-                    {currentPricing.officialPricing && (
-                      <span className="block text-xs text-green-700">Official {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% yearly discount</span>
-                    )}
+                    <span className="block text-xs text-green-700">vs on-demand hourly</span>
                   </p>
                   <div className="text-right">
                     <span className="text-xs text-green-600">
-                      {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% off
+                      1-year commitment
                     </span>
                     <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00'}</div>
                   </div>
@@ -2803,17 +2680,17 @@ AzureMetrics
               <Card className="bg-green-100 border-green-300">
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium text-green-800">PTU (Multi-Year)</h3>
+                    <h3 className="font-medium text-green-800">PTU (3-Year)</h3>
                     <Badge variant="secondary" className="bg-green-200 text-green-900">
-                      {(currentPricing.officialPricing?.discount?.yearlyVsHourly?.toFixed(1)) || '45'}% off
+                      45% off
                     </Badge>
                   </div>
                   <p className="text-xs text-green-700 mb-2">
                     Save ${calculations.threeYearSavings?.toFixed(2) || '0.00'}/mo
-                    <span className="block text-xs text-green-600">vs hourly billing</span>
+                    <span className="block text-xs text-green-600">vs on-demand hourly</span>
                   </p>
                   <div className="text-right">
-                    <span className="text-xs text-green-700">45% off</span>
+                    <span className="text-xs text-green-700">3-year commitment</span>
                     <div className="text-2xl font-bold text-green-800">${((calculations.yearlyPtuReservationCost || 0) / 12).toFixed(2)}</div>
                   </div>
                 </CardContent>
@@ -3395,7 +3272,7 @@ AzureMetrics
                   paygo: calculations.monthlyPaygoCost || 100,
                   ptuHourly: calculations.monthlyPtuHourlyCost || 80,
                   ptuMonthly: calculations.monthlyPtuReservationCost || 60,
-                  ptuYearly: (calculations.yearlyPtuReservationCost / 12) || 50,
+                  ptuYearly: calculations.yearlyPtuReservationCost || 50,
                   savings: calculations.monthlySavings || 20
                 }}
                 utilizationData={{
@@ -3499,12 +3376,26 @@ AzureMetrics
 
 
         {/* Footer */}
-        <footer className="mt-4 pt-6 border-t border-gray-200">
-          <div className="text-center space-y-2">
-            <p className="text-sm text-gray-500">
+        <footer className="mt-8 pt-6 border-t border-gray-200">
+          <div className="text-center space-y-3">
+            <p className="text-sm text-gray-600">
               Made with ❤️ for the Azure community
             </p>
-            <p className="text-xs text-gray-400">
+            <div className="flex items-center justify-center gap-4 text-sm">
+              <a href="https://github.com/ricmmartins/azureptucalc" 
+                 target="_blank" rel="noopener noreferrer" 
+                 className="inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-800 transition-colors">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                Open Source on GitHub
+              </a>
+              <span className="text-gray-300">|</span>
+              <a href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/" 
+                 target="_blank" rel="noopener noreferrer" 
+                 className="text-gray-500 hover:text-gray-800 transition-colors">
+                Official Azure Pricing
+              </a>
+            </div>
+            <p className="text-xs text-gray-400 max-w-2xl mx-auto">
               Pricing estimates are based on publicly available Azure pricing data and may not reflect negotiated rates, 
               regional variations, or the latest pricing changes. Always verify with the{' '}
               <a href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/" 
@@ -3515,21 +3406,6 @@ AzureMetrics
             </p>
           </div>
         </footer>
-        
-        {/* Mobile Action Buttons */}
-        {/* Mobile optimization disabled while useMobileDetection is not available */}
-        {false && (
-          <div className="fixed bottom-4 right-4 z-40 space-y-2">
-            <Button
-              onClick={() => setShowInteractiveCharts(!showInteractiveCharts)}
-              variant={showInteractiveCharts ? 'default' : 'outline'}
-              className="flex items-center gap-2 shadow-lg bg-white"
-            >
-              <BarChart3 className="h-4 w-4" />
-              Charts
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Onboarding Components */}

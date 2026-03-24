@@ -82,7 +82,7 @@ export const calculateOfficialPTUPricing = (region, deploymentType) => {
   // Use official reservation overrides if available
   const reservations = OFFICIAL_PTU_PRICING.RESERVATION_OVERRIDES?.[deploymentType];
   const reservationMonthly = reservations?.monthly || (hourlyRate * 730);
-  const reservationYearly = reservations?.yearly || (reservationMonthly * 12 * 0.85);
+  const reservationYearly = reservations?.yearly || (reservationMonthly * 12 * 0.70);
   
   // Calculate discount percentages
   const hourlyAnnualized = hourlyRate * 730 * 12;
