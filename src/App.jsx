@@ -8,7 +8,7 @@ import { Badge } from './components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Alert, AlertDescription } from './components/ui/alert';
 
-import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, AlertTriangle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap, Keyboard, ChevronDown } from 'lucide-react';
+import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, AlertTriangle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap, Keyboard, ChevronDown, Settings, XCircle, HelpCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Core functionality imports
@@ -1534,7 +1534,7 @@ AzureMetrics
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-blue-600" />
-                <CardTitle>Step 1: Get Your Token Data</CardTitle>
+                <CardTitle><Badge className="bg-blue-100 text-blue-800 mr-2">Step 1</Badge>Get Your Token Data</CardTitle>
               </div>
               <ChevronDown className={`h-5 w-5 transition-transform ${collapsed.kqlQuery ? '' : 'rotate-180'}`} />
             </div>
@@ -1743,7 +1743,7 @@ AzureMetrics
           <CardHeader>
             <div className="flex items-center gap-2">
               <Globe className="h-5 w-5 text-blue-600" />
-              <CardTitle>Step 2: Configure Your Deployment</CardTitle>
+              <CardTitle><Badge className="bg-blue-100 text-blue-800 mr-2">Step 2</Badge>Configure Your Deployment</CardTitle>
             </div>
             <CardDescription>
               Select your Azure region, OpenAI model, and deployment type for accurate pricing
@@ -2602,7 +2602,7 @@ AzureMetrics
 
         {/* Sticky Executive Summary */}
         {hasValidData && Object.keys(calculations).length > 0 && (
-          <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border rounded-lg shadow-md p-4">
+          <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-50/95 to-indigo-50/95 backdrop-blur-sm border border-blue-200 rounded-lg shadow-md p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-xs text-gray-500 uppercase">Recommendation</div>
@@ -2679,9 +2679,9 @@ AzureMetrics
             
             <Tabs defaultValue="costs" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="costs">💰 Cost Analysis</TabsTrigger>
-                <TabsTrigger value="patterns">📊 Usage Patterns</TabsTrigger>
-                <TabsTrigger value="advanced">⚙️ Advanced</TabsTrigger>
+                <TabsTrigger value="costs"><DollarSign className="h-4 w-4 mr-1 inline" /> Cost Analysis</TabsTrigger>
+                <TabsTrigger value="patterns"><BarChart3 className="h-4 w-4 mr-1 inline" /> Usage Patterns</TabsTrigger>
+                <TabsTrigger value="advanced"><Settings className="h-4 w-4 mr-1 inline" /> Advanced</TabsTrigger>
               </TabsList>
               
               <TabsContent value="costs" className="space-y-6">
@@ -2766,7 +2766,7 @@ AzureMetrics
                 </CardContent>
               </Card>
 
-              <Card className="bg-green-100 border-green-300">
+              <Card className="bg-green-50 border-green-300">
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium text-green-800">PTU (Yearly)</h3>
@@ -2789,7 +2789,7 @@ AzureMetrics
                 </CardContent>
               </Card>
 
-              <Card className="bg-green-50 border-green-200">
+              <Card className="bg-green-100 border-green-300">
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium text-green-800">PTU (Multi-Year)</h3>
@@ -2832,7 +2832,7 @@ AzureMetrics
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-purple-600" />
+                  <Target className="h-5 w-5 text-blue-600" />
                   <CardTitle>Recommendation</CardTitle>
                 </div>
                 <CardDescription>Optimized pricing strategy for your usage pattern</CardDescription>
@@ -2841,7 +2841,10 @@ AzureMetrics
                 <Card className="bg-yellow-50 border-yellow-200 mb-4">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">{calculations.recommendationIcon || '❓'}</span>
+                      {calculations.recommendation === 'Full PTU Reservation' ? <CheckCircle className="h-8 w-8 text-green-600" /> :
+                       calculations.recommendation === 'Consider Spillover Model' ? <AlertTriangle className="h-8 w-8 text-amber-500" /> :
+                       calculations.recommendation === 'PAYGO' ? <XCircle className="h-8 w-8 text-red-400" /> :
+                       <HelpCircle className="h-8 w-8 text-gray-400" />}
                       <h3 className="font-medium text-yellow-800">Recommended: {calculations.recommendation || 'N/A'}</h3>
                     </div>
                     <p className="text-yellow-700 mb-4">{calculations.recommendationReason || 'Enter TPM values to see recommendations'}</p>
@@ -3310,7 +3313,7 @@ AzureMetrics
                   <Card className="border-red-200 bg-red-50">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">❌</span>
+                        <XCircle className="h-6 w-6 text-red-400" />
                         <h3 className="font-medium text-red-800">Stay on PAYGO</h3>
                       </div>
                       <div className="space-y-2 text-sm">
@@ -3325,7 +3328,7 @@ AzureMetrics
                   <Card className="border-yellow-200 bg-yellow-50">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">⚠️</span>
+                        <AlertTriangle className="h-6 w-6 text-amber-500" />
                         <h3 className="font-medium text-yellow-800">Consider Spillover Model</h3>
                       </div>
                       <div className="space-y-2 text-sm">
@@ -3340,7 +3343,7 @@ AzureMetrics
                   <Card className="border-green-200 bg-green-50">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">✅</span>
+                        <CheckCircle className="h-6 w-6 text-green-600" />
                         <h3 className="font-medium text-green-800">Full PTU Reservation</h3>
                       </div>
                       <div className="space-y-2 text-sm">
@@ -3485,32 +3488,22 @@ AzureMetrics
 
 
         {/* Footer */}
-        <Card className="mt-8 border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
-          <CardContent className="p-6 text-center">
-            <div className="space-y-2">
-              <p className="text-lg font-medium text-gray-800">
-                Made with ❤️ for the Azure community
-              </p>
-              <p className="text-sm text-gray-600">
-                Optimize your Azure OpenAI costs with confidence using real data and intelligent analysis.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div style={{ marginTop: '2rem', padding: '1rem', background: '#f8f8f8', borderRadius: '8px', color: '#333', fontSize: '0.95rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <strong>Disclaimer:</strong> The information provided on this website is for informational purposes only. While we strive for accuracy, no guarantee is made regarding the completeness or correctness of the data. Microsoft and the site operators are not responsible for any errors, omissions, or decisions made based on this information. Users should verify all information independently before making any decisions.
-          <a
-            href="https://github.com/ricmmartins/azureptucalc"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg border border-gray-700 transition-colors duration-150"
-            style={{ textDecoration: 'none' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M12 0C5.37 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.085 1.84 1.237 1.84 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.334-5.466-5.931 0-1.31.468-2.381 1.236-3.221-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23.957-.266 1.984-.399 3.003-.404 1.018.005 2.046.138 3.006.404 2.289-1.552 3.295-1.23 3.295-1.23.653 1.653.242 2.873.119 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.804 5.624-5.475 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.218.694.825.576C20.565 21.796 24 17.299 24 12c0-6.627-5.373-12-12-12z"/></svg>
-            GitHub Repo
-          </a>
-        </div>
+        <footer className="mt-4 pt-6 border-t border-gray-200">
+          <div className="text-center space-y-2">
+            <p className="text-sm text-gray-500">
+              Made with ❤️ for the Azure community
+            </p>
+            <p className="text-xs text-gray-400">
+              Pricing estimates are based on publicly available Azure pricing data and may not reflect negotiated rates, 
+              regional variations, or the latest pricing changes. Always verify with the{' '}
+              <a href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/" 
+                 target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 underline">
+                official Azure pricing page
+              </a>{' '}
+              before making purchasing decisions.
+            </p>
+          </div>
+        </footer>
         
         {/* Mobile Action Buttons */}
         {/* Mobile optimization disabled while useMobileDetection is not available */}

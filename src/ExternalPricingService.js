@@ -1,53 +1,21 @@
 // Task 9: External Pricing Data Service
-// Manages loading, caching, and updating of pricing data from external sources
+// Manages loading and display of pricing data from bundled configuration
+
+import externalConfig from './external_pricing_config.json';
 
 export class ExternalPricingService {
   constructor() {
     this.cachedData = null;
-    this.lastUpdateCheck = null;
-    this.updateCheckInterval = 1000 * 60 * 60; // 1 hour
-    this.storageKey = 'azurePTUExternalPricing';
-    this.versionKey = 'azurePTUPricingVersion';
   }
 
-  // Load pricing data from external configuration
+  // Load pricing data from the bundled configuration
   async loadPricingData() {
     try {
-      // Try to load from cache first
-      const cachedVersion = localStorage.getItem(this.versionKey);
-      const cachedPricing = localStorage.getItem(this.storageKey);
-      
-      if (cachedPricing && cachedVersion) {
-        const cached = JSON.parse(cachedPricing);
-        // Check if cache is still valid (not expired)
-        const expiryDate = new Date(cached.dataExpiry);
-        if (expiryDate > new Date()) {
-          this.cachedData = cached;
-          return cached;
-        }
-      }
-
-      // Load from external source (simulated - in real app this would be an API call)
-      const response = await fetch('./src/external_pricing_config.json');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch pricing data: ${response.status}`);
-      }
-      
-      const externalData = await response.json();
-      
-      // Validate data structure
-      if (!this.validatePricingData(externalData)) {
+      if (!this.validatePricingData(externalConfig)) {
         throw new Error('Invalid pricing data structure');
       }
-
-      // Cache the data
-      localStorage.setItem(this.storageKey, JSON.stringify(externalData));
-      localStorage.setItem(this.versionKey, externalData.version);
-      
-      this.cachedData = externalData;
-      this.lastUpdateCheck = new Date();
-      
-      return externalData;
+      this.cachedData = externalConfig;
+      return externalConfig;
     } catch (error) {
       return this.getFallbackPricingData();
     }
@@ -59,55 +27,40 @@ export class ExternalPricingService {
     return requiredFields.every(field => data.hasOwnProperty(field));
   }
 
-  // Check for updates
+  // Check data freshness
   async checkForUpdates() {
-    try {
-      if (this.lastUpdateCheck && 
-          (Date.now() - this.lastUpdateCheck.getTime()) < this.updateCheckInterval) {
-        return { hasUpdate: false, message: 'Recently checked' };
-      }
-
-      // In a real implementation, this would check a version endpoint
-      const currentVersion = localStorage.getItem(this.versionKey);
-      const response = await fetch('./src/external_pricing_config.json');
-      const latestData = await response.json();
-      
-      if (latestData.version !== currentVersion) {
-        return { 
-          hasUpdate: true, 
-          currentVersion,
-          latestVersion: latestData.version,
-          message: `Update available: ${currentVersion} → ${latestData.version}` 
-        };
-      }
-      
-      this.lastUpdateCheck = new Date();
-      return { hasUpdate: false, message: 'Up to date' };
-    } catch (error) {
-      return { hasUpdate: false, message: 'Update check failed', error };
+    const data = this.cachedData || externalConfig;
+    const lastUpdated = new Date(data.lastUpdated);
+    const daysSinceUpdate = Math.floor((Date.now() - lastUpdated.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysSinceUpdate > 30) {
+      return { 
+        hasUpdate: false, 
+        message: `Data is ${daysSinceUpdate} days old — may need manual update`,
+        currentVersion: data.version
+      };
     }
+    return { hasUpdate: false, message: 'Up to date', currentVersion: data.version };
   }
 
-  // Force update pricing data
+  // Reload pricing data from config
   async updatePricingData() {
-    localStorage.removeItem(this.storageKey);
-    localStorage.removeItem(this.versionKey);
     this.cachedData = null;
     return await this.loadPricingData();
   }
 
-  // Get fallback pricing data if external loading fails
+  // Get fallback pricing data if config is invalid
   getFallbackPricingData() {
     return {
-      version: "fallback-2025.09.30",
+      version: "fallback-2026.03",
       lastUpdated: new Date().toISOString(),
       source: "Internal Fallback",
-      sourceUrl: "https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/provisioned-throughput-onboarding",
-      dataExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+      sourceUrl: "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      dataExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       ptuPricing: {
         baseHourlyRate: 1.00,
         discounts: { monthly: 0.0, yearly: 0.30 },
-        deploymentMultipliers: { regional: 1.0, dataZone: 1.2, global: 1.4 },
+        deploymentMultipliers: { global: 1.0, dataZone: 1.1, regional: 2.0 },
         regionalMultipliers: { eastus: 1.0, westus: 1.05, northeurope: 1.05 }
       },
       tokenPricing: {
@@ -137,29 +90,24 @@ export class ExternalPricingService {
 
   // Get current data version and metadata
   getDataInfo() {
-    if (!this.cachedData) return null;
-    
+    const data = this.cachedData || externalConfig;
     return {
-      version: this.cachedData.version,
-      lastUpdated: this.cachedData.lastUpdated,
-      source: this.cachedData.source,
-      dataExpiry: this.cachedData.dataExpiry,
-      isExpired: new Date(this.cachedData.dataExpiry) < new Date()
+      version: data.version,
+      lastUpdated: data.lastUpdated,
+      source: data.source,
+      dataExpiry: data.dataExpiry,
+      isExpired: new Date(data.dataExpiry) < new Date()
     };
   }
 
   // Calculate PTU pricing using external data
   calculatePTUPricing(region, deploymentType) {
-    if (!this.cachedData) {
-      throw new Error('Pricing data not loaded');
-    }
-
-    const pricing = this.cachedData.ptuPricing;
+    const data = this.cachedData || externalConfig;
+    const pricing = data.ptuPricing;
     const baseRate = pricing.baseHourlyRate;
-    const regionalMultiplier = pricing.regionalMultipliers[region] || 1.0;
     const deploymentMultiplier = pricing.deploymentMultipliers[deploymentType] || 1.0;
     
-    const hourlyRate = baseRate * regionalMultiplier * deploymentMultiplier;
+    const hourlyRate = baseRate * deploymentMultiplier;
     const monthlyRate = hourlyRate * 730;
     const yearlyRate = monthlyRate * 12 * (1 - pricing.discounts.yearly);
     
@@ -175,20 +123,14 @@ export class ExternalPricingService {
 
   // Get token pricing for a model
   getTokenPricing(modelName) {
-    if (!this.cachedData) {
-      throw new Error('Pricing data not loaded');
-    }
-
-    return this.cachedData.tokenPricing[modelName] || this.cachedData.tokenPricing['gpt-4o-mini'];
+    const data = this.cachedData || externalConfig;
+    return data.tokenPricing[modelName] || data.tokenPricing['gpt-4o-mini'];
   }
 
   // Get model configuration
   getModelConfiguration(modelName) {
-    if (!this.cachedData) {
-      throw new Error('Pricing data not loaded');
-    }
-
-    return this.cachedData.modelConfigurations[modelName];
+    const data = this.cachedData || externalConfig;
+    return data.modelConfigurations[modelName];
   }
 }
 
