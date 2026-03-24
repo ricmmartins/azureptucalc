@@ -895,7 +895,7 @@ Check browser console for detailed error information.`);
     const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
     const hybridOverflowTPM = Math.max(0, formData.p99TPM - (hybridBasePTU * currentPricing.tokensPerPTUPerMinute));
     const hybridOverflowTokensMonthly = (hybridOverflowTPM * formData.monthlyMinutes) / 1000000;
-    const hybridOverflowCost = (hybridOverflowTokensMonthly * 0.5 * currentPricing.paygo_input) + (hybridOverflowTokensMonthly * 0.5 * currentPricing.paygo_output);
+    const hybridOverflowCost = (hybridOverflowTokensMonthly * formData.inputOutputRatio * currentPricing.paygo_input) + (hybridOverflowTokensMonthly * (1 - formData.inputOutputRatio) * currentPricing.paygo_output);
     const hybridBaseCost = hybridBasePTU * currentPricing.ptu_monthly;
     const hybridTotalCost = hybridBaseCost + hybridOverflowCost;
     
@@ -2558,11 +2558,7 @@ AzureMetrics
             {/* Enhanced Results Component (Enhancement #4) */}
             {enableEnhancedResults && (
               <EnhancedResults
-                calculations={calculations}
-                formData={formData}
-                selectedModel={selectedModel}
-                selectedRegion={selectedRegion}
-                selectedDeployment={selectedDeployment}
+                results={calculations}
                 onExport={handleExportCSV}
               />
             )}
@@ -2723,7 +2719,7 @@ AzureMetrics
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium text-green-800">PTU (Yearly)</h3>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      {currentPricing.officialPricing?.discount.yearlyVsMonthly || 30}% off
+                      {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% off
                     </Badge>
                   </div>
                   <p className="text-xs text-green-600 mb-2">
@@ -2734,7 +2730,7 @@ AzureMetrics
                   </p>
                   <div className="text-right">
                     <span className="text-xs text-green-600">
-                      {currentPricing.officialPricing?.discount.yearlyVsMonthly || 30}% off
+                      {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% off
                     </span>
                     <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00'}</div>
                   </div>

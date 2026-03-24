@@ -25,21 +25,21 @@ export const EnhancedResults = ({ results, onExport }) => {
       currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(amount);
+    }).format(amount || 0);
   };
 
-  const getSavingsBadge = (savings) => {
-    const percent = (savings.percentage || 0);
-    if (percent > 20) return <Badge className="bg-green-100 text-green-800">Significant Savings</Badge>;
-    if (percent > 5) return <Badge className="bg-yellow-100 text-yellow-800">Moderate Savings</Badge>;
+  if (!results || Object.keys(results).length === 0) {
+    return null;
+  }
+
+  const monthlySavings = results.monthlySavings || 0;
+  const recommendation = results.recommendation || 'PAYGO';
+  const savingsPercent = results.oneYearSavingsPercent || 0;
+
+  const getSavingsBadge = () => {
+    if (savingsPercent > 20) return <Badge className="bg-green-100 text-green-800">Significant Savings</Badge>;
+    if (savingsPercent > 5) return <Badge className="bg-yellow-100 text-yellow-800">Moderate Savings</Badge>;
     return <Badge className="bg-blue-100 text-blue-800">Current Optimal</Badge>;
-  };
-
-  const getRecommendation = () => {
-    const { recommended, monthlyUsage } = results;
-    if (monthlyUsage > 500000) return "High volume detected - PTU recommended";
-    if (monthlyUsage < 50000) return "Low volume - PAYGO is most cost-effective";
-    return "Variable usage - consider hybrid approach";
   };
 
   return (
@@ -64,10 +64,10 @@ export const EnhancedResults = ({ results, onExport }) => {
                   <span className="font-medium">Monthly Savings</span>
                 </div>
                 <div className="text-2xl font-bold text-green-700">
-                  {formatCurrency(results.savings?.monthly || 0)}
+                  {formatCurrency(monthlySavings)}
                 </div>
                 <div className="text-sm text-green-600">
-                  vs current spending
+                  vs PAYGO spending
                 </div>
               </div>
               
@@ -77,10 +77,10 @@ export const EnhancedResults = ({ results, onExport }) => {
                   <span className="font-medium">Recommended</span>
                 </div>
                 <div className="text-lg font-bold text-blue-700">
-                  {results.recommended?.toUpperCase() || 'HYBRID'}
+                  {recommendation}
                 </div>
                 <div className="text-sm text-blue-600">
-                  {getSavingsBadge(results.savings)}
+                  {getSavingsBadge()}
                 </div>
               </div>
               
@@ -90,7 +90,7 @@ export const EnhancedResults = ({ results, onExport }) => {
                   <span className="font-medium">Annual Impact</span>
                 </div>
                 <div className="text-2xl font-bold text-purple-700">
-                  {formatCurrency((results.savings?.monthly || 0) * 12)}
+                  {formatCurrency(monthlySavings * 12)}
                 </div>
                 <div className="text-sm text-purple-600">
                   projected savings
@@ -99,8 +99,10 @@ export const EnhancedResults = ({ results, onExport }) => {
             </div>
             
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-700 mb-2">Smart Recommendation</h4>
-              <p className="text-sm text-gray-600">{getRecommendation()}</p>
+              <h4 className="font-medium text-gray-700 mb-2">
+                {results.recommendationIcon || '📊'} Smart Recommendation
+              </h4>
+              <p className="text-sm text-gray-600">{results.recommendationReason || 'Enter usage data to see recommendations.'}</p>
             </div>
             
             <div className="flex gap-2 mt-4">
@@ -134,11 +136,25 @@ export const EnhancedResults = ({ results, onExport }) => {
         </CardHeader>
         {expandedSections.breakdown && (
           <CardContent>
-            <div className="space-y-4">
-              {/* Cost comparison table would go here */}
-              <div className="text-sm text-gray-500">
-                Detailed cost breakdown by pricing model...
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                <span className="text-sm font-medium">PAYGO Monthly</span>
+                <span className="font-semibold">{formatCurrency(results.monthlyPaygoCost)}</span>
               </div>
+              <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
+                <span className="text-sm font-medium">PTU On-Demand ({results.ptuNeeded || 0} PTUs)</span>
+                <span className="font-semibold">{formatCurrency(results.monthlyPtuCost)}</span>
+              </div>
+              <div className="flex justify-between items-center p-2 bg-green-50 rounded">
+                <span className="text-sm font-medium">PTU 1-Year Reserved</span>
+                <span className="font-semibold">{formatCurrency(results.monthlyPtuReservationCost)}</span>
+              </div>
+              {results.hybridTotalCost > 0 && (
+                <div className="flex justify-between items-center p-2 bg-purple-50 rounded">
+                  <span className="text-sm font-medium">Spillover Model</span>
+                  <span className="font-semibold">{formatCurrency(results.hybridTotalCost)}</span>
+                </div>
+              )}
             </div>
           </CardContent>
         )}
@@ -157,11 +173,25 @@ export const EnhancedResults = ({ results, onExport }) => {
         </CardHeader>
         {expandedSections.details && (
           <CardContent>
-            <div className="space-y-4">
-              {/* Technical details would go here */}
-              <div className="text-sm text-gray-500">
-                Model specifications, regional pricing, etc...
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Utilization Rate</span>
+                <span className="font-medium">{((results.utilizationRate || 0) * 100).toFixed(1)}%</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Usage Pattern</span>
+                <span className="font-medium">{results.usagePattern || 'Steady'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Burst Ratio</span>
+                <span className="font-medium">{(results.burstRatio || 1).toFixed(2)}x</span>
+              </div>
+              {results.breakEvenAnalysis && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Break-Even PTUs</span>
+                  <span className="font-medium">{results.breakEvenAnalysis.breakEvenPTUs || 0}</span>
+                </div>
+              )}
             </div>
           </CardContent>
         )}

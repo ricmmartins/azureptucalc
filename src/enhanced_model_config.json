@@ -1,52 +1,100 @@
 {
   "models": {
-    "gpt-4o": {
-      "name": "GPT-4o",
-      "description": "Latest multimodal model with text and image capabilities",
-      "throughput_per_ptu": 2500,
+    "gpt-5.4": {
+      "name": "GPT-5.4",
+      "description": "Latest GPT-5 series model with top-tier capabilities",
+      "throughput_per_ptu": 2400,
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
-        "global": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "dataZone": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "regional": {
-          "min_ptu": 50,
-          "increment": 50,
-          "available": true
-        }
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
       },
-      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+      "regions": ["eastus2", "polandcentral", "southcentralus", "swedencentral"]
     },
-    "gpt-4o-mini": {
-      "name": "GPT-4o Mini",
-      "description": "Smaller, faster version of GPT-4o with cost optimization",
-      "throughput_per_ptu": 37000,
+    "gpt-5.3-codex": {
+      "name": "GPT-5.3 Codex",
+      "description": "Code-optimized GPT-5.3 for software engineering tasks",
+      "throughput_per_ptu": 3400,
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
-        "global": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "dataZone": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "regional": {
-          "min_ptu": 25,
-          "increment": 25,
-          "available": true
-        }
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
       },
-      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral"]
+    },
+    "gpt-5.2": {
+      "name": "GPT-5.2",
+      "description": "Advanced GPT-5 iteration with enhanced agentic capabilities",
+      "throughput_per_ptu": 3400,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+    },
+    "gpt-5.2-codex": {
+      "name": "GPT-5.2 Codex",
+      "description": "Code-optimized GPT-5.2 for software engineering tasks",
+      "throughput_per_ptu": 3400,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral"]
+    },
+    "gpt-5.1": {
+      "name": "GPT-5.1",
+      "description": "Enhanced GPT-5 with improved reasoning and problem-solving",
+      "throughput_per_ptu": 4750,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+    },
+    "gpt-5.1-codex": {
+      "name": "GPT-5.1 Codex",
+      "description": "Code-optimized GPT-5.1 for software engineering tasks",
+      "throughput_per_ptu": 4750,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral"]
+    },
+    "gpt-5": {
+      "name": "GPT-5",
+      "description": "GPT-5 base model with advanced capabilities",
+      "throughput_per_ptu": 4750,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+    },
+    "gpt-5-mini": {
+      "name": "GPT-5 Mini",
+      "description": "Compact GPT-5 for cost-efficient high-throughput applications",
+      "throughput_per_ptu": 23750,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 25, "increment": 25, "available": true }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
     },
     "gpt-4.1": {
       "name": "GPT-4.1",
@@ -54,23 +102,11 @@
       "throughput_per_ptu": 3000,
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
-        "global": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "dataZone": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "regional": {
-          "min_ptu": 50,
-          "increment": 50,
-          "available": true
-        }
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
       },
-      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
     },
     "gpt-4.1-mini": {
       "name": "GPT-4.1 Mini",
@@ -78,23 +114,11 @@
       "throughput_per_ptu": 14900,
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
-        "global": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "dataZone": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "regional": {
-          "min_ptu": 25,
-          "increment": 25,
-          "available": true
-        }
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 25, "increment": 25, "available": true }
       },
-      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
     },
     "gpt-4.1-nano": {
       "name": "GPT-4.1 Nano",
@@ -102,95 +126,35 @@
       "throughput_per_ptu": 59400,
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
-        "global": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "dataZone": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "regional": {
-          "min_ptu": 25,
-          "increment": 25,
-          "available": true
-        }
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 25, "increment": 25, "available": true }
       },
-      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
     },
-    "gpt-5.1": {
-      "name": "GPT-5.1",
-      "description": "Enhanced GPT-5 with improved reasoning and problem-solving capabilities",
-      "throughput_per_ptu": 1800,
+    "gpt-4o": {
+      "name": "GPT-4o",
+      "description": "Multimodal model with text and image capabilities (previous generation)",
+      "throughput_per_ptu": 2500,
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
-        "global": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "dataZone": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "regional": {
-          "min_ptu": 50,
-          "increment": 25,
-          "available": true
-        }
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
       },
-      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
     },
-    "gpt-5.2": {
-      "name": "GPT-5.2",
-      "description": "Latest GPT-5 iteration with advanced agentic capabilities and enhanced performance",
-      "throughput_per_ptu": 1600,
+    "gpt-4o-mini": {
+      "name": "GPT-4o Mini",
+      "description": "Smaller, faster version of GPT-4o with cost optimization (previous generation)",
+      "throughput_per_ptu": 37000,
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
-        "global": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "dataZone": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "regional": {
-          "min_ptu": 50,
-          "increment": 25,
-          "available": true
-        }
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 25, "increment": 25, "available": true }
       },
-      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
-    },
-    "o1": {
-      "name": "o1",
-      "description": "Reasoning-focused model for complex problem solving",
-      "throughput_per_ptu": 230,
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
-      "deployments": {
-        "global": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "dataZone": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "regional": {
-          "min_ptu": 25,
-          "increment": 50,
-          "available": true
-        }
-      },
-      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
     },
     "o3": {
       "name": "o3",
@@ -198,90 +162,74 @@
       "throughput_per_ptu": 3000,
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
-        "global": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "dataZone": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "regional": {
-          "min_ptu": 50,
-          "increment": 50,
-          "available": true
-        }
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
       },
-      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+    },
+    "o4-mini": {
+      "name": "o4 Mini",
+      "description": "Compact reasoning model optimized for efficient problem solving",
+      "throughput_per_ptu": 5400,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 25, "increment": 25, "available": true }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+    },
+    "o1": {
+      "name": "o1",
+      "description": "Reasoning-focused model for complex problem solving (previous generation)",
+      "throughput_per_ptu": 230,
+      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 25, "increment": 50, "available": true }
+      },
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
     },
     "o3-mini": {
       "name": "o3 Mini",
-      "description": "Compact reasoning model for efficient problem solving",
+      "description": "Compact reasoning model for efficient problem solving (previous generation)",
       "throughput_per_ptu": 2500,
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
-        "global": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "dataZone": {
-          "min_ptu": 15,
-          "increment": 5,
-          "available": true
-        },
-        "regional": {
-          "min_ptu": 25,
-          "increment": 25,
-          "available": true
-        }
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 25, "increment": 25, "available": true }
       },
-      "regions": ["eastus", "eastus2", "westus", "westus2", "northcentralus", "southcentralus", "westeurope", "northeurope"]
+      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
     }
   },
   "deployment_types": {
     "global": {
       "name": "Global Deployment",
       "description": "Multi-region deployment with automatic failover and load balancing",
-      "price_multiplier": 1.3
+      "price_multiplier": 1.0
     },
     "dataZone": {
-      "name": "Data Zone Deployment", 
+      "name": "Data Zone Deployment",
       "description": "Geographic-based deployment (EU or US) for data residency",
       "price_multiplier": 1.1
     },
     "regional": {
       "name": "Regional Deployment",
       "description": "Local region deployment for lowest latency",
-      "price_multiplier": 1.0
+      "price_multiplier": 2.0
     }
   },
   "regions": {
-    "eastus": {
-      "name": "East US",
-      "available_deployments": ["global", "dataZone", "regional"]
-    },
-    "eastus2": {
-      "name": "East US 2",
-      "available_deployments": ["global", "dataZone", "regional"]
-    },
-    "westus": {
-      "name": "West US",
-      "available_deployments": ["global", "dataZone", "regional"]
-    },
-    "westus2": {
-      "name": "West US 2",
-      "available_deployments": ["global", "dataZone", "regional"]
-    },
-    "westeurope": {
-      "name": "West Europe",
-      "available_deployments": ["global", "dataZone", "regional"]
-    },
-    "northeurope": {
-      "name": "North Europe",
-      "available_deployments": ["global", "dataZone", "regional"]
-    }
+    "eastus": { "name": "East US", "available_deployments": ["global", "dataZone", "regional"] },
+    "eastus2": { "name": "East US 2", "available_deployments": ["global", "dataZone", "regional"] },
+    "westus": { "name": "West US", "available_deployments": ["global", "dataZone", "regional"] },
+    "westus3": { "name": "West US 3", "available_deployments": ["global", "dataZone", "regional"] },
+    "northcentralus": { "name": "North Central US", "available_deployments": ["global", "dataZone", "regional"] },
+    "southcentralus": { "name": "South Central US", "available_deployments": ["global", "dataZone", "regional"] },
+    "swedencentral": { "name": "Sweden Central", "available_deployments": ["global", "dataZone", "regional"] },
+    "westeurope": { "name": "West Europe", "available_deployments": ["global", "dataZone", "regional"] }
   }
 }
