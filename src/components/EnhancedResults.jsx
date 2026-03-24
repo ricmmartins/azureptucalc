@@ -141,6 +141,12 @@ export const EnhancedResults = ({ results, onExport }) => {
                 <span className="text-sm font-medium">PAYGO Monthly</span>
                 <span className="font-semibold">{formatCurrency(results.monthlyPaygoCost)}</span>
               </div>
+              {results.isPrioritySupported && results.monthlyPriorityCost > 0 && (
+                <div className="flex justify-between items-center p-2 bg-amber-50 rounded">
+                  <span className="text-sm font-medium">Priority Processing</span>
+                  <span className="font-semibold">{formatCurrency(results.monthlyPriorityCost)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
                 <span className="text-sm font-medium">PTU On-Demand ({results.ptuNeeded || 0} PTUs)</span>
                 <span className="font-semibold">{formatCurrency(results.monthlyPtuCost)}</span>

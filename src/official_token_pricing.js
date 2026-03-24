@@ -1,6 +1,20 @@
 // Official Azure OpenAI Token Pricing per Million Tokens (USD)
-// Updated: February 2026
+// Updated: March 2026
 // Source: https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
+
+// Priority Processing pricing (per 1M tokens, GlobalStandard/DataZoneStandard only)
+// Docs: https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing
+export const PRIORITY_PROCESSING_PRICING = {
+  "gpt-5.4": { input: 4.25, output: 17.00, supported: true },
+  "gpt-5.2": { input: 4.25, output: 17.00, supported: true },
+  "gpt-5.1": { input: 4.25, output: 17.00, supported: true },
+  "gpt-4.1": { input: 4.25, output: 17.00, supported: true },
+  "gpt-4.1-mini": { input: 0.70, output: 2.80, supported: true },
+  "o4-mini": { input: 1.87, output: 7.48, supported: true }
+};
+
+// Supported deployment types for Priority Processing
+export const PRIORITY_PROCESSING_DEPLOYMENTS = ['global', 'dataZone'];
 
 export const OFFICIAL_TOKEN_PRICING = {
   // GPT-5 Series (prices per 1M tokens from official Azure pricing page)

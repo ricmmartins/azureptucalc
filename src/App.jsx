@@ -17,7 +17,7 @@ import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
 import enhancedModelConfig from "./enhanced_model_config.json";
 import correctedPricingData from './corrected_pricing_data.json';
 import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTUPricing.js";
-import { getTokenPricing, calculatePAYGCost, OFFICIAL_TOKEN_PRICING } from "./official_token_pricing.js";
+import { getTokenPricing, calculatePAYGCost, OFFICIAL_TOKEN_PRICING, PRIORITY_PROCESSING_PRICING, PRIORITY_PROCESSING_DEPLOYMENTS } from "./official_token_pricing.js";
 import { REGION_MODEL_AVAILABILITY, getRegionsByZone, isGovernmentRegion, getGovernmentAvailableModels } from "./regionModelAvailability.js";
 import ExternalPricingService from './ExternalPricingService.js';
 import ExportService from './ExportService.js';
@@ -858,18 +858,20 @@ Check browser console for detailed error information.`);
     let recommendationReason = 'Very low utilization. PTU reservations would be cost-ineffective. Stick with PAYGO for maximum flexibility.';
     let recommendationIcon = '❌';
     
+    const priorityNote = isPrioritySupported ? ' Priority Processing is also available for this model if you need SLA-backed low-latency guarantees.' : '';
+    
     // Base recommendation on actual cost comparison and utilization
     if (monthlyPtuReservationCost < monthlyPaygoCost && utilizationRate > 0.6) {
       recommendation = 'Full PTU Reservation';
-      recommendationReason = 'High utilization with significant cost savings. PTU reservations offer substantial monthly savings.';
+      recommendationReason = 'High utilization with significant cost savings. PTU reservations offer substantial monthly savings.' + priorityNote;
       recommendationIcon = '✅';
     } else if (monthlyPtuReservationCost < monthlyPaygoCost && utilizationRate > 0.2) {
       recommendation = 'Consider Spillover Model';
-      recommendationReason = 'Moderate utilization with some cost benefits. Hybrid approach balances cost savings and flexibility.';
+      recommendationReason = 'Moderate utilization with some cost benefits. Hybrid approach balances cost savings and flexibility.' + priorityNote;
       recommendationIcon = '⚠️';
     } else if (utilizationRate < 0.2) {
       recommendation = 'PAYGO';
-      recommendationReason = 'Low utilization makes PTU cost-ineffective. PAYGO provides better value for variable workloads.';
+      recommendationReason = 'Low utilization makes PTU cost-ineffective. PAYGO provides better value for variable workloads.' + (isPrioritySupported ? ' Consider Priority Processing if you need guaranteed low-latency with pay-per-token flexibility.' : '');
       recommendationIcon = '❌';
     }
     
@@ -895,9 +897,29 @@ Check browser console for detailed error information.`);
     const hybridBaseCost = hybridBasePTU * currentPricing.ptu_monthly;
     const hybridTotalCost = hybridBaseCost + hybridOverflowCost;
     
+    // Priority Processing calculations
+    const priorityPricing = PRIORITY_PROCESSING_PRICING[selectedModel];
+    const isPrioritySupported = !!priorityPricing?.supported && PRIORITY_PROCESSING_DEPLOYMENTS.includes(selectedDeployment);
+    let monthlyPriorityCost = 0;
+    let priorityBreakdown = null;
+    if (isPrioritySupported && monthlyTokens > 0) {
+      const inputTokensM = monthlyTokens * formData.inputOutputRatio;
+      const outputTokensM = monthlyTokens * (1 - formData.inputOutputRatio);
+      const inputCost = inputTokensM * priorityPricing.input;
+      const outputCost = outputTokensM * priorityPricing.output;
+      monthlyPriorityCost = inputCost + outputCost;
+      priorityBreakdown = {
+        inputCost,
+        outputCost,
+        totalCost: monthlyPriorityCost,
+        pricing: { input: priorityPricing.input, output: priorityPricing.output }
+      };
+    }
+
     // Chart data
     const chartData = [
       { name: 'PAYGO', cost: monthlyPaygoCost },
+      ...(isPrioritySupported ? [{ name: 'Priority', cost: monthlyPriorityCost }] : []),
       { name: 'PTU (On-Demand)', cost: monthlyPtuCost },
       { name: 'PTU (1 Year)', cost: monthlyPtuReservationCost },
       { name: 'PTU (3 Year)', cost: yearlyPtuReservationCost / 12 },
@@ -945,6 +967,10 @@ Check browser console for detailed error information.`);
       hybridBaseCost,
       hybridTotalCost,
       chartData,
+      // Priority Processing
+      isPrioritySupported,
+      monthlyPriorityCost,
+      priorityBreakdown,
       // Task 3: PAYG breakdown for detailed cost display
       paygoBreakdown
     });
@@ -2664,7 +2690,7 @@ AzureMetrics
             </Card>
 
             {/* Cost Comparison Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className={`grid grid-cols-1 md:grid-cols-2 ${calculations.isPrioritySupported ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
               <Card className="bg-gray-50 border-gray-200">
                 <CardContent className="p-4 text-center">
                   <h3 className="font-medium text-gray-800">PAYGO</h3>
@@ -2688,6 +2714,34 @@ AzureMetrics
                   </div>
                 </CardContent>
               </Card>
+
+              {calculations.isPrioritySupported && (
+                <Card className="bg-amber-50 border-amber-300">
+                  <CardContent className="p-4 text-center">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-medium text-amber-800">Priority</h3>
+                      <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-[10px]">
+                        SLA-backed
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-amber-700 mb-2">Low-latency with guaranteed throughput</p>
+                    {calculations.priorityBreakdown && (
+                      <div className="text-xs text-amber-700 mb-2 space-y-1">
+                        <div>Input: ${calculations.priorityBreakdown.inputCost?.toFixed(2) || '0.00'}</div>
+                        <div>Output: ${calculations.priorityBreakdown.outputCost?.toFixed(2) || '0.00'}</div>
+                        <div className="mt-1 pt-1 border-t border-amber-300">
+                          <div>${calculations.priorityBreakdown.pricing.input}/M input</div>
+                          <div>${calculations.priorityBreakdown.pricing.output}/M output</div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="text-right">
+                      <span className="text-xs text-amber-700">~{calculations.monthlyPaygoCost > 0 ? Math.round(((calculations.monthlyPriorityCost / calculations.monthlyPaygoCost) - 1) * 100) : 70}% premium</span>
+                      <div className="text-2xl font-bold text-amber-700">${calculations.monthlyPriorityCost?.toFixed(2) || '0.00'}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-4 text-center">
@@ -2756,6 +2810,21 @@ AzureMetrics
                 <Info className="h-4 w-4 text-orange-600 flex-shrink-0" />
                 <AlertDescription className="text-orange-800">
                   <strong>Using Minimum PTU Requirement:</strong> Your calculated need is {calculations.calculatedPTU || 0} PTU(s), but Azure requires a minimum of {calculations.enhancedPTUData?.minPTU || 0} PTUs for this model and deployment type. You'll pay for {calculations.ptuNeeded || 0} PTUs but get extra capacity for bursts.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Priority Processing Info */}
+            {calculations.isPrioritySupported && (
+              <Alert className="border-amber-200 bg-amber-50 flex items-start gap-2">
+                <Info className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <AlertDescription className="text-amber-800">
+                  <strong>Priority Processing Available:</strong> This model supports{' '}
+                  <a href="https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing" 
+                     target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                    Priority Processing
+                  </a>
+                  {' '}— a pay-per-token option with SLA-backed low-latency guarantees. It costs ~70% more than standard PAYGO but provides guaranteed throughput. Available on Global Standard and Data Zone Standard deployments. Can be combined with PTU for a hybrid approach (PTU baseline + Priority Processing overflow).
                 </AlertDescription>
               </Alert>
             )}
