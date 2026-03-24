@@ -8,7 +8,7 @@ import { Badge } from './components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Alert, AlertDescription } from './components/ui/alert';
 
-import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, AlertTriangle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap, Keyboard, ChevronDown, Settings, XCircle, HelpCircle } from 'lucide-react';
+import { RefreshCw, TrendingUp, Info, CheckCircle, AlertCircle, AlertTriangle, Brain, Globe, MapPin, DollarSign, Copy, Download, BarChart3, Target, Shield, Clock, Zap, Keyboard, ChevronDown, Settings, XCircle, HelpCircle, Search } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Core functionality imports
@@ -2112,15 +2112,15 @@ AzureMetrics
                     <span className="text-indigo-600 font-bold text-sm">?</span>
                   </div>
                   <div className="space-y-2">
-                    <div className="font-semibold">📊 Choose Your Input Method:</div>
+                    <div className="font-semibold text-gray-800 mb-1">📊 Choose Your Input Method:</div>
                     <div className="grid md:grid-cols-2 gap-4 text-sm">
-                      <div className="bg-white p-3 rounded border">
-                        <div className="font-medium text-indigo-700 mb-1">🔍 Have Azure Log Analytics data?</div>
-                        <div>Use TPM fields below (from KQL queries)</div>
+                      <div className="bg-indigo-50 p-3 rounded border-2 border-indigo-300 border-l-4 border-l-indigo-500">
+                        <div className="font-medium text-indigo-700 mb-1">🔍 Method A: Azure Log Analytics</div>
+                        <div className="text-indigo-600">Use the <span className="font-semibold">indigo fields</span> below (from KQL queries)</div>
                       </div>
-                      <div className="bg-white p-3 rounded border">
-                        <div className="font-medium text-orange-700 mb-1">🎯 Know exact token usage?</div>
-                        <div>Skip TPM and use Token Usage section below</div>
+                      <div className="bg-orange-50 p-3 rounded border-2 border-orange-300 border-l-4 border-l-orange-500">
+                        <div className="font-medium text-orange-700 mb-1">🎯 Method B: Direct Token Counts</div>
+                        <div className="text-orange-600">Skip to the <span className="font-semibold">orange section</span> below</div>
                       </div>
                     </div>
                   </div>
@@ -2128,8 +2128,13 @@ AzureMetrics
               </AlertDescription>
             </Alert>
 
-            {/* KQL Input Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 usage-inputs-section">
+            {/* KQL Input Fields — Method A (Indigo) */}
+            <div className="border-2 border-indigo-200 rounded-lg p-5 bg-indigo-50/30 mt-2">
+              <h4 className="text-sm font-semibold text-indigo-700 mb-4 flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                Method A: KQL / TPM Input Fields
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 usage-inputs-section">
               <div>
                 <Label htmlFor="avgTPM">
                   Average TPM (from KQL)
@@ -2263,6 +2268,7 @@ AzureMetrics
                 <p className="text-sm text-gray-600 mt-1">Base PTU reservation for spillover approach</p>
               </div>
             </div>
+            </div>
 
             {/* Task 4: PTU Validation Warnings */}
             {(() => {
@@ -2289,12 +2295,12 @@ AzureMetrics
               );
             })()}
 
-            {/* Task 3: PAYG Token-based Pricing Inputs */}
-            <Card className="mt-6 border-orange-200">
-              <CardHeader className="bg-orange-50">
+            {/* Task 3: PAYG Token-based Pricing Inputs — Method B (Orange) */}
+            <Card className="mt-6 border-2 border-orange-300">
+              <CardHeader className="bg-orange-50 border-b border-orange-200">
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-orange-600" />
-                  PAYG Token Usage (Alternative to TPM)
+                  Method B: PAYG Token Usage (Alternative to TPM)
                 </CardTitle>
                 <CardDescription>
                   <div className="space-y-2">
