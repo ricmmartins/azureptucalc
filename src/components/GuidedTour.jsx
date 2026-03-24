@@ -112,8 +112,25 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
       // If we're on a results-dependent step and need data, populate it first
       if (currentStep >= 2 && !isDataPopulated && onPopulateSampleData) {
         await handleDataPopulation();
-        // Add extra delay for results sections to stabilize after calculation
-        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+
+      // Wait for results to render in the DOM before highlighting
+      if (currentStep >= 2 && isDataPopulated) {
+        let attempts = 0;
+        const waitForResults = () => new Promise(resolve => {
+          const check = () => {
+            const el = document.querySelector(step.target);
+            if (el && el.textContent && !el.textContent.includes('N/A') && !el.textContent.includes('Ready for Analysis')) {
+              resolve();
+            } else if (attempts++ < 40) {
+              setTimeout(check, 150);
+            } else {
+              resolve(); // give up after ~6 seconds
+            }
+          };
+          check();
+        });
+        await waitForResults();
       }
 
       // Try to find the target element, use fallback if not found
