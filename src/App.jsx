@@ -653,7 +653,7 @@ Check browser console for detailed error information.`);
       }
       
       // TASK 2: Use official PTU pricing alignment (prefer authoritative corrected_pricing_data.json)
-      const officialPTUPricing = calculateOfficialPTUPricing
+      let officialPTUPricing = calculateOfficialPTUPricing
         ? calculateOfficialPTUPricing(selectedRegion, selectedDeployment)
         : null;
 
@@ -661,6 +661,11 @@ Check browser console for detailed error information.`);
       // fall back to corrected_pricing_data.json which contains authoritative reservation rates.
       const correctedModel = correctedPricingData.models?.[selectedModel];
       const correctedReservations = correctedModel?.reservations || null;
+
+      // Ensure officialPTUPricing is a valid object before accessing properties
+      if (!officialPTUPricing) {
+        officialPTUPricing = { hourly: 1.00, multipliers: {} };
+      }
 
       // Safety guard: Global deployments should not receive a regional premium.
       if (selectedDeployment === 'global') {
@@ -870,7 +875,34 @@ Check browser console for detailed error information.`);
     // FIXED: Dynamic monthly savings calculation
     const monthlySavings = Math.max(0, monthlyPaygoCost - monthlyPtuReservationCost);
     
-    // FIXED: Aligned recommendation logic with cost calculations
+    // Spillover model calculations
+    const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
+    const hybridOverflowTPM = Math.max(0, formData.p99TPM - (hybridBasePTU * currentPricing.tokensPerPTUPerMinute));
+    const hybridOverflowTokensMonthly = (hybridOverflowTPM * formData.monthlyMinutes) / 1000000;
+    const hybridOverflowCost = (hybridOverflowTokensMonthly * formData.inputOutputRatio * currentPricing.paygo_input) + (hybridOverflowTokensMonthly * (1 - formData.inputOutputRatio) * currentPricing.paygo_output);
+    const hybridBaseCost = hybridBasePTU * currentPricing.ptu_monthly;
+    const hybridTotalCost = hybridBaseCost + hybridOverflowCost;
+    
+    // Priority Processing calculations (MUST be before recommendation logic)
+    const priorityPricing = PRIORITY_PROCESSING_PRICING[selectedModel];
+    const isPrioritySupported = !!priorityPricing?.supported && typeof priorityPricing?.input === 'number' && typeof priorityPricing?.output === 'number' && PRIORITY_PROCESSING_DEPLOYMENTS.includes(selectedDeployment);
+    let monthlyPriorityCost = 0;
+    let priorityBreakdown = null;
+    if (isPrioritySupported && monthlyTokens > 0) {
+      const inputTokensM = monthlyTokens * formData.inputOutputRatio;
+      const outputTokensM = monthlyTokens * (1 - formData.inputOutputRatio);
+      const inputCost = inputTokensM * priorityPricing.input;
+      const outputCost = outputTokensM * priorityPricing.output;
+      monthlyPriorityCost = inputCost + outputCost;
+      priorityBreakdown = {
+        inputCost,
+        outputCost,
+        totalCost: monthlyPriorityCost,
+        pricing: { input: priorityPricing.input, output: priorityPricing.output }
+      };
+    }
+
+    // Recommendation logic (uses isPrioritySupported from above)
     let recommendation = 'PAYGO';
     let recommendationReason = 'Very low utilization. PTU reservations would be cost-ineffective. Stick with PAYGO for maximum flexibility.';
     let recommendationIcon = '❌';
@@ -905,33 +937,6 @@ Check browser console for detailed error information.`);
     
     // FIXED: Dynamic peak efficiency calculation
     const peakEfficiency = Math.min(utilizationRate * 100, 100);
-    
-    // Spillover model calculations
-    const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
-    const hybridOverflowTPM = Math.max(0, formData.p99TPM - (hybridBasePTU * currentPricing.tokensPerPTUPerMinute));
-    const hybridOverflowTokensMonthly = (hybridOverflowTPM * formData.monthlyMinutes) / 1000000;
-    const hybridOverflowCost = (hybridOverflowTokensMonthly * formData.inputOutputRatio * currentPricing.paygo_input) + (hybridOverflowTokensMonthly * (1 - formData.inputOutputRatio) * currentPricing.paygo_output);
-    const hybridBaseCost = hybridBasePTU * currentPricing.ptu_monthly;
-    const hybridTotalCost = hybridBaseCost + hybridOverflowCost;
-    
-    // Priority Processing calculations
-    const priorityPricing = PRIORITY_PROCESSING_PRICING[selectedModel];
-    const isPrioritySupported = !!priorityPricing?.supported && typeof priorityPricing?.input === 'number' && typeof priorityPricing?.output === 'number' && PRIORITY_PROCESSING_DEPLOYMENTS.includes(selectedDeployment);
-    let monthlyPriorityCost = 0;
-    let priorityBreakdown = null;
-    if (isPrioritySupported && monthlyTokens > 0) {
-      const inputTokensM = monthlyTokens * formData.inputOutputRatio;
-      const outputTokensM = monthlyTokens * (1 - formData.inputOutputRatio);
-      const inputCost = inputTokensM * priorityPricing.input;
-      const outputCost = outputTokensM * priorityPricing.output;
-      monthlyPriorityCost = inputCost + outputCost;
-      priorityBreakdown = {
-        inputCost,
-        outputCost,
-        totalCost: monthlyPriorityCost,
-        pricing: { input: priorityPricing.input, output: priorityPricing.output }
-      };
-    }
 
     // Chart data
     const chartData = [
