@@ -210,17 +210,22 @@ function parsePaygoItems(items, model, modelNormalized) {
       inputCandidates.push({ price: pricePerMillion, meter: item.meterName, unit });
     } else if (isOutput && isGlobal) {
       outputCandidates.push({ price: pricePerMillion, meter: item.meterName, unit });
-    } else if (isInput && !globalPattern.test(meter)) {
-      // Data Zone or Regional input — lower priority
-      inputCandidates.push({ price: pricePerMillion, meter: item.meterName, unit, nonGlobal: true });
-    } else if (isOutput && !globalPattern.test(meter)) {
-      outputCandidates.push({ price: pricePerMillion, meter: item.meterName, unit, nonGlobal: true });
+    } else if (isInput) {
+      const depType = /data.?zone/i.test(meter + ' ' + sku) ? 'dataZone' : 'regional';
+      inputCandidates.push({ price: pricePerMillion, meter: item.meterName, unit, nonGlobal: true, deploymentType: depType });
+    } else if (isOutput) {
+      const depType = /data.?zone/i.test(meter + ' ' + sku) ? 'dataZone' : 'regional';
+      outputCandidates.push({ price: pricePerMillion, meter: item.meterName, unit, nonGlobal: true, deploymentType: depType });
     }
   }
 
   // Prefer global candidates, fall back to any
   const globalInputs = inputCandidates.filter(c => !c.nonGlobal);
   const globalOutputs = outputCandidates.filter(c => !c.nonGlobal);
+  const dzInputs = inputCandidates.filter(c => c.deploymentType === 'dataZone');
+  const dzOutputs = outputCandidates.filter(c => c.deploymentType === 'dataZone');
+  const regInputs = inputCandidates.filter(c => c.deploymentType === 'regional');
+  const regOutputs = outputCandidates.filter(c => c.deploymentType === 'regional');
 
   bestInput = (globalInputs.length > 0 ? globalInputs : inputCandidates)[0]?.price || 0;
   bestOutput = (globalOutputs.length > 0 ? globalOutputs : outputCandidates)[0]?.price || 0;
@@ -230,7 +235,21 @@ function parsePaygoItems(items, model, modelNormalized) {
   return {
     input: Number(bestInput.toFixed(4)),
     output: Number(bestOutput.toFixed(4)),
-    found_items: items.length
+    found_items: items.length,
+    byDeployment: {
+      global: {
+        input: globalInputs[0]?.price ? Number(globalInputs[0].price.toFixed(4)) : 0,
+        output: globalOutputs[0]?.price ? Number(globalOutputs[0].price.toFixed(4)) : 0
+      },
+      dataZone: {
+        input: dzInputs[0]?.price ? Number(dzInputs[0].price.toFixed(4)) : 0,
+        output: dzOutputs[0]?.price ? Number(dzOutputs[0].price.toFixed(4)) : 0
+      },
+      regional: {
+        input: regInputs[0]?.price ? Number(regInputs[0].price.toFixed(4)) : 0,
+        output: regOutputs[0]?.price ? Number(regOutputs[0].price.toFixed(4)) : 0
+      }
+    }
   };
 }
 
@@ -260,54 +279,81 @@ function isModelMatch(meter, sku, product, model) {
 
 async function fetchPTUPricing() {
   // PTU pricing is uniform across all models — query for "Provisioned Managed" meters
-  const query = `contains(productName, 'OpenAI') and contains(meterName, 'Provisioned Managed')`;
+  // Also fetch from the reservation product for monthly/yearly reservation rates
+  const queries = [
+    `contains(productName, 'OpenAI') and contains(meterName, 'Provisioned Managed')`,
+    `contains(productName, 'Foundry Provisioned Throughput Reservation') and contains(meterName, 'Provisioned Managed')`
+  ];
 
-  try {
-    const url = `https://prices.azure.com/api/retail/prices?$filter=${encodeURIComponent(query)}&$top=100`;
-    const response = await fetch(url, {
-      headers: { 'Accept': 'application/json' }
-    });
+  let allItems = [];
 
-    if (!response.ok) {
-      console.warn('PTU query failed:', response.status);
-      return { global: 0, dataZone: 0, regional: 0, found_items: 0 };
+  for (const query of queries) {
+    try {
+      const url = `https://prices.azure.com/api/retail/prices?$filter=${encodeURIComponent(query)}&$top=100`;
+      const response = await fetch(url, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) continue;
+      const data = await response.json();
+      if (data.Items) allItems.push(...data.Items);
+    } catch (e) {
+      console.warn('PTU query failed:', e.message);
     }
-
-    const data = await response.json();
-    const items = data.Items || [];
-
-    console.log(`PTU query returned ${items.length} items`);
-
-    let global = 0, dataZone = 0, regional = 0;
-
-    for (const item of items) {
-      const meter = (item.meterName || '').toLowerCase();
-      const unit = (item.unitOfMeasure || '').toLowerCase();
-      const price = parseFloat(item.retailPrice || item.unitPrice || 0);
-
-      if (price <= 0) continue;
-      if (!unit.includes('hour')) continue; // Only hourly PTU rates
-      if (item.type === 'Reservation') continue; // Skip reservation entries
-
-      if (meter.includes('global')) {
-        if (!global || price < global) global = price; // Take lowest (base rate)
-      } else if (meter.includes('data zone')) {
-        if (!dataZone || price < dataZone) dataZone = price;
-      } else if (meter.includes('regional')) {
-        if (!regional || price < regional) regional = price;
-      }
-    }
-
-    console.log(`PTU rates: global=$${global}/hr, dataZone=$${dataZone}/hr, regional=$${regional}/hr`);
-
-    return {
-      global: global || 0,
-      dataZone: dataZone || 0,
-      regional: regional || 0,
-      found_items: items.length
-    };
-  } catch (error) {
-    console.error('PTU fetch error:', error.message);
-    return { global: 0, dataZone: 0, regional: 0, found_items: 0 };
   }
+
+  console.log(`PTU queries returned ${allItems.length} total items`);
+
+  let global = 0, dataZone = 0, regional = 0;
+  // Reservation prices: keyed by deployment type and term
+  let reservations = {
+    global: { monthly: 0, yearly: 0 },
+    dataZone: { monthly: 0, yearly: 0 },
+    regional: { monthly: 0, yearly: 0 }
+  };
+
+  for (const item of allItems) {
+    const meter = (item.meterName || '').toLowerCase();
+    const unit = (item.unitOfMeasure || '').toLowerCase();
+    const price = parseFloat(item.retailPrice || item.unitPrice || 0);
+    const term = (item.reservationTerm || '').toLowerCase();
+
+    if (price <= 0) continue;
+    if (!unit.includes('hour')) continue;
+
+    // Determine deployment type
+    let depType = null;
+    if (meter.includes('global')) depType = 'global';
+    else if (meter.includes('data zone')) depType = 'dataZone';
+    else if (meter.includes('regional')) depType = 'regional';
+    if (!depType) continue;
+
+    if (item.type === 'Reservation') {
+      // Reservation pricing (monthly or yearly term)
+      if (term.includes('month')) {
+        if (!reservations[depType].monthly || price < reservations[depType].monthly) {
+          reservations[depType].monthly = price;
+        }
+      } else if (term.includes('year')) {
+        if (!reservations[depType].yearly || price < reservations[depType].yearly) {
+          reservations[depType].yearly = price;
+        }
+      }
+    } else {
+      // Hourly consumption pricing
+      if (depType === 'global' && (!global || price < global)) global = price;
+      else if (depType === 'dataZone' && (!dataZone || price < dataZone)) dataZone = price;
+      else if (depType === 'regional' && (!regional || price < regional)) regional = price;
+    }
+  }
+
+  console.log(`PTU rates: global=$${global}/hr, dataZone=$${dataZone}/hr, regional=$${regional}/hr`);
+  console.log(`PTU reservations:`, JSON.stringify(reservations));
+
+  return {
+    global: global || 0,
+    dataZone: dataZone || 0,
+    regional: regional || 0,
+    reservations,
+    found_items: allItems.length
+  };
 }

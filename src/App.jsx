@@ -640,17 +640,22 @@ Check browser console for detailed error information.`);
         const hasPtu = (livePricingData.ptu?.global > 0 || livePricingData.ptu?.dataZone > 0 || livePricingData.ptu?.regional > 0);
         
         if (hasPaygo) {
+          // Use per-deployment PAYGO rates if available, fall back to global
+          const depPaygo = livePricingData.paygo?.byDeployment?.[selectedDeployment];
+          const hasDepPaygo = depPaygo && (depPaygo.input > 0 || depPaygo.output > 0);
           livePAYGO = {
-            input: livePricingData.paygo.input,
-            output: livePricingData.paygo.output
+            input: hasDepPaygo ? depPaygo.input : livePricingData.paygo.input,
+            output: hasDepPaygo ? depPaygo.output : livePricingData.paygo.output
           };
         }
         if (hasPtu) {
           const hourlyRate = livePricingData.ptu?.[selectedDeployment] || livePricingData.ptu?.global || 0;
+          // Use live reservation prices if available from the API
+          const liveRes = livePricingData.ptu?.reservations?.[selectedDeployment];
           livePTU = {
             hourly: hourlyRate,
-            monthly: Math.round(hourlyRate * 24 * 30.4167),
-            yearly: Math.round(hourlyRate * 24 * 365 * 0.7)
+            monthly: liveRes?.monthly || Math.round(hourlyRate * 730),
+            yearly: liveRes?.yearly || Math.round(hourlyRate * 730 * 12 * 0.7)
           };
         }
         pricingSource = livePricingData.source === 'live' ? 'azure-api-live' : 'service-fallback';

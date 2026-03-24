@@ -176,12 +176,14 @@ class AzureOpenAIPricingService {
       return {
         paygo: {
           input: paygoInput || fallback.paygo?.input || 0,
-          output: paygoOutput || fallback.paygo?.output || 0
+          output: paygoOutput || fallback.paygo?.output || 0,
+          byDeployment: data.paygo?.byDeployment || null
         },
         ptu: {
           global: data.ptu?.global || fallback.ptu?.global || 1.00,
           dataZone: data.ptu?.dataZone || fallback.ptu?.dataZone || 1.10,
-          regional: data.ptu?.regional || fallback.ptu?.regional || 2.00
+          regional: data.ptu?.regional || fallback.ptu?.regional || 2.00,
+          reservations: data.ptu?.reservations || null
         },
         source: 'live',
         timestamp: data.timestamp || new Date().toISOString(),
