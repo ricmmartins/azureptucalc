@@ -2545,7 +2545,7 @@ AzureMetrics
           <CardHeader>
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-amber-600" />
-              <CardTitle className="text-amber-900">⚡ Priority Processing (GA)</CardTitle>
+              <CardTitle className="text-amber-900">Priority Processing (GA)</CardTitle>
             </div>
             <CardDescription className="text-amber-700">
               A new pay-per-token option with SLA-backed low-latency guarantees
