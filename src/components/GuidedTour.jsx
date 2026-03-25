@@ -75,7 +75,7 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
     {
       id: 'advanced',
       title: 'Step 6: Advanced Features',
-      description: 'Explore the Patterns and Advanced tabs for burst analysis, interactive charts, and custom pricing options.',
+      description: 'Explore the Usage Patterns and Advanced tabs for burst analysis, interactive charts, and custom pricing options.',
       target: '.custom-pricing-section',
       position: 'bottom',
       icon: <Settings className="h-4 w-4" />,

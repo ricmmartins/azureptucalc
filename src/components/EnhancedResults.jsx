@@ -47,7 +47,7 @@ export const EnhancedResults = ({ results, onExport }) => {
       if (monthlySavings > 100) return <Badge className="bg-green-100 text-green-800">PTU Cost-Effective</Badge>;
       return <Badge className="bg-yellow-100 text-yellow-800">Moderate Savings</Badge>;
     }
-    return <Badge className="bg-yellow-100 text-yellow-800">Hybrid Recommended</Badge>;
+    return <Badge className="bg-yellow-100 text-yellow-800">Spillover Recommended</Badge>;
   };
 
   return (
@@ -163,11 +163,11 @@ export const EnhancedResults = ({ results, onExport }) => {
                 <span className="font-semibold">{formatCurrency(results.monthlyPtuCost)}</span>
               </div>
               <div className="flex justify-between items-center p-2 bg-green-50 rounded">
-                <span className="text-sm font-medium">PTU Monthly Reserved</span>
+                <span className="text-sm font-medium">PTU Monthly Reservation</span>
                 <span className="font-semibold">{formatCurrency(results.monthlyPtuReservationCost)}</span>
               </div>
               <div className="flex justify-between items-center p-2 bg-green-100 rounded">
-                <span className="text-sm font-medium">PTU 1-Year Reserved</span>
+                <span className="text-sm font-medium">PTU 1-Year Reservation</span>
                 <span className="font-semibold">{formatCurrency(results.yearlyReservationMonthly)}</span>
               </div>
               {results.hybridTotalCost > 0 && (

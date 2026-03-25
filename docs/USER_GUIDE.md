@@ -198,4 +198,4 @@ AzureMetrics
 
 ---
 
-**Made with with love for the Azure community** - [ptucalc.com](https://www.ptucalc.com)
+**Made with love for the Azure community** - [ptucalc.com](https://www.ptucalc.com)

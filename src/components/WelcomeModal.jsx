@@ -62,13 +62,13 @@ const WelcomeModal = ({ isOpen, onClose, onStartTour }) => {
               </CardHeader>
               <CardContent className="space-y-2">
                 <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
-                  Reserved
+                  Provisioned
                 </Badge>
                 <p className="text-sm text-gray-600">
-                  Reserve capacity at lower cost. Best for consistent, high-volume usage.
+                  Reserve dedicated capacity. Best for consistent, high-volume usage with reservation discounts.
                 </p>
                 <div className="text-xs text-blue-600 font-medium">
-                  ✓ Lower cost • ✓ Guaranteed capacity • ✗ Fixed commitment
+                  ✓ Lower cost • ✓ Guaranteed capacity • ✓ Monthly or yearly reservations
                 </div>
               </CardContent>
             </Card>
@@ -77,9 +77,9 @@ const WelcomeModal = ({ isOpen, onClose, onStartTour }) => {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-purple-700">
                   <TrendingUp className="h-5 w-5" />
-                  Hybrid
+                  Spillover
                 </CardTitle>
-                <CardDescription>PTU + PAYGO overflow</CardDescription>
+                <CardDescription>PTU base + PAYGO overflow</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
@@ -117,7 +117,7 @@ const WelcomeModal = ({ isOpen, onClose, onStartTour }) => {
                     <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                     <div>
                       <p className="font-medium">Calculates Costs</p>
-                      <p className="text-sm text-gray-600">Compare PAYGO, PTU, hybrid, and Priority Processing</p>
+                      <p className="text-sm text-gray-600">Compare PAYGO, PTU, spillover, and Priority Processing</p>
                     </div>
                   </div>
                 </div>

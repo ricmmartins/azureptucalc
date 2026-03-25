@@ -6,9 +6,9 @@
 // Docs: https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing
 export const PRIORITY_PROCESSING_PRICING = {
   "gpt-5.4": { input: 4.25, output: 17.00, supported: true },
-  "gpt-5.2": { input: 4.25, output: 17.00, supported: true },
-  "gpt-5.1": { input: 4.25, output: 17.00, supported: true },
-  "gpt-4.1": { input: 4.25, output: 17.00, supported: true },
+  "gpt-5.2": { input: 2.98, output: 23.80, supported: true },
+  "gpt-5.1": { input: 2.13, output: 17.00, supported: true },
+  "gpt-4.1": { input: 3.40, output: 13.60, supported: true },
   "gpt-4.1-mini": { input: 0.70, output: 2.80, supported: true },
   "o4-mini": { input: 1.87, output: 7.48, supported: true }
 };

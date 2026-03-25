@@ -314,8 +314,8 @@ function App() {
     paygo_input: 0.15,
     paygo_output: 0.60,
     ptu_hourly: 1.00,      // Official US$1/PTU-hour base rate
-    ptu_monthly: 730,      // Official monthly calculation
-    ptu_yearly: 6132,      // Official yearly calculation with 30% discount
+    ptu_monthly: 260,      // Official monthly reservation (Global)
+    ptu_yearly: 2652,      // Official yearly reservation (Global)
     minPTU: 15,
     tokensPerPTUPerMinute: 50000  // Will be updated dynamically
   });
@@ -655,7 +655,7 @@ Check browser console for detailed error information.`);
           livePTU = {
             hourly: hourlyRate,
             monthly: liveRes?.monthly || Math.round(hourlyRate * 730),
-            yearly: liveRes?.yearly || Math.round(hourlyRate * 730 * 12 * 0.7)
+            yearly: liveRes?.yearly || Math.round(hourlyRate * 730 * 12 * 0.3027)
           };
         }
         pricingSource = livePricingData.source === 'live' ? 'azure-api-live' : 'service-fallback';
@@ -686,7 +686,7 @@ Check browser console for detailed error information.`);
       // Ensure PTU hourly/monthly/yearly align with the official base rate when available
       officialPTUPricing.hourly = officialPTUPricing.hourly || 1.00;
       officialPTUPricing.monthly = officialPTUPricing.monthly || Math.round(officialPTUPricing.hourly * 24 * 30.4167);
-      officialPTUPricing.yearly = officialPTUPricing.yearly || Math.round(officialPTUPricing.monthly * 12 * 0.7);
+      officialPTUPricing.yearly = officialPTUPricing.yearly || Math.round(officialPTUPricing.hourly * 730 * 12 * 0.3027);
       
       // PRIORITY 2: Use official token pricing for PAYG (fallback from live API)
       const tokenPricing = getTokenPricing(selectedModel);
@@ -694,7 +694,7 @@ Check browser console for detailed error information.`);
       
       // PRIORITY 3: Use per-deployment reservation rates from officialPTUPricing (which has correct rates per deployment type)
       const ptuMonthly = livePTU?.monthly || officialPTUPricing?.reservationMonthly || correctedReservations?.monthly || (officialPTUPricing?.hourly ? Math.round(officialPTUPricing.hourly * 24 * 30.4167) : 730);
-      const ptuYearly = livePTU?.yearly || officialPTUPricing?.yearly || correctedReservations?.yearly || Math.round(ptuMonthly * 12 * 0.7);
+      const ptuYearly = livePTU?.yearly || officialPTUPricing?.yearly || correctedReservations?.yearly || 2652;
 
       return {
         // Guard: never use $0 from live API when we have a known good hardcoded price
@@ -739,8 +739,8 @@ Check browser console for detailed error information.`);
       // Final fallback: use corrected_pricing_data.json entries or safe defaults
       const correctedModel = correctedPricingData.models?.[selectedModel];
       const fallbackTokenPricing = getTokenPricing(selectedModel);
-      const ptuMonthly = correctedModel?.reservations?.monthly || 730;
-      const ptuYearly = correctedModel?.reservations?.yearly || 6132;
+      const ptuMonthly = correctedModel?.reservations?.monthly || 260;
+      const ptuYearly = correctedModel?.reservations?.yearly || 2652;
       return {
         paygo_input: fallbackTokenPricing.input,
         paygo_output: fallbackTokenPricing.output,
@@ -2065,9 +2065,9 @@ AzureMetrics
                         step="1"
                         value={customPricing.ptu_monthly}
                         onChange={(e) => handleCustomPricingChange('ptu_monthly', e.target.value)}
-                        placeholder="730"
+                        placeholder="260"
                       />
-                      <p className="text-xs text-red-600 mt-1">Official: $730/month</p>
+                      <p className="text-xs text-red-600 mt-1">Official: $260/month (monthly reservation)</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">PTU Yearly ($/year)</Label>
@@ -2076,9 +2076,9 @@ AzureMetrics
                         step="1"
                         value={customPricing.ptu_yearly}
                         onChange={(e) => handleCustomPricingChange('ptu_yearly', e.target.value)}
-                        placeholder="6132"
+                        placeholder="2652"
                       />
-                      <p className="text-xs text-red-600 mt-1">Official: $6,132/year (30% discount)</p>
+                      <p className="text-xs text-red-600 mt-1">Official: $2,652/year (1-year reservation)</p>
                     </div>
                     
                     {/* Task 7: Reset button for custom pricing */}
@@ -2092,8 +2092,8 @@ AzureMetrics
                             paygo_input: tokens.input,
                             paygo_output: tokens.output,
                             ptu_hourly: official.hourly,
-                            ptu_monthly: official.monthly,
-                            ptu_yearly: official.yearly
+                            ptu_monthly: official.reservationMonthly || 260,
+                            ptu_yearly: official.yearly || 2652
                           });
                         }}
                         className="mt-2"
@@ -2766,7 +2766,7 @@ AzureMetrics
                           {calculations.recommendation === 'Full PTU Reservation' && (
                             <>
                               <li>Consider 1-year PTU reservations for maximum savings</li>
-                              <li>Start with 1-year for flexibility</li>
+                              <li>Start with monthly reservation for flexibility</li>
                               <li>Monitor utilization and optimize sizing</li>
                             </>
                           )}
