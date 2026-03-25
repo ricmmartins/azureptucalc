@@ -45,7 +45,7 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
     {
       id: 'cost-cards',
       title: 'Step 3: Compare Pricing Options',
-      description: 'See all pricing tiers side by side — PAYGO, PTU On-Demand, 1-Year and 3-Year reservations, and Priority Processing when available.',
+      description: 'See all pricing tiers side by side — PAYGO, PTU On-Demand, Monthly and 1-Year reservations, Spillover, and Priority Processing when available.',
       target: '.cost-cards-section',
       fallbackTarget: '.usage-inputs-section',
       position: 'top',

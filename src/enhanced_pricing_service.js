@@ -211,12 +211,19 @@ class AzureOpenAIPricingService {
 
   // Get fallback pricing when API is unavailable
   getFallbackPricing(model, deploymentType = 'global') {
+    // Official reservation prices per deployment type
+    const reservations = {
+      global:   { monthly: 260, yearly: 2652 },
+      dataZone: { monthly: 286, yearly: 2916 },
+      regional: { monthly: 286, yearly: 2916 }
+    };
+
     const fallback = this.fallbackPricing[model];
     
     if (!fallback) {
       return {
         paygo: { input: 0, output: 0 },
-        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00, reservations },
         source: 'fallback',
         timestamp: new Date().toISOString()
       };
@@ -224,7 +231,7 @@ class AzureOpenAIPricingService {
 
     return {
       paygo: { ...fallback.paygo },
-      ptu: { ...fallback.ptu },
+      ptu: { ...fallback.ptu, reservations },
       source: 'fallback',
       timestamp: new Date().toISOString()
     };

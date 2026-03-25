@@ -75,13 +75,13 @@ function App() {
     inputOutputRatio: 0.5  // Default 50/50 split
   });
   
-  // Custom pricing data - aligned with official PTU pricing structure
+  // Custom pricing data - aligned with official PTU reservation pricing
   const [customPricing, setCustomPricing] = useState({
     paygo_input: 0.15,
     paygo_output: 0.60,
-    ptu_hourly: 1.00,      // Official US$1/PTU-hour base rate
-    ptu_monthly: 730,      // 730 hours/month * US$1/hour = $730/month
-    ptu_yearly: 6132       // Monthly * 12 * 0.7 (30% yearly discount) = $6132/year
+    ptu_hourly: 1.00,      // Official US$1/PTU-hour base rate (on-demand)
+    ptu_monthly: 260,      // Monthly reservation: $260/PTU/month (Global)
+    ptu_yearly: 2652       // 1-Year reservation: $2,652/PTU/year (Global)
   });
 
   // Task 7: Load custom pricing from localStorage on component mount
@@ -680,9 +680,7 @@ Check browser console for detailed error information.`);
       // Safety guard: Global deployments should not receive a regional premium.
       if (selectedDeployment === 'global') {
         officialPTUPricing.multipliers = officialPTUPricing.multipliers || {};
-        officialPTUPricing.multipliers.regional = 1;
         officialPTUPricing.multipliers.deployment = 1;
-        officialPTUPricing.multipliers.combined = 1;
       }
 
       // Ensure PTU hourly/monthly/yearly align with the official base rate when available
@@ -828,7 +826,7 @@ Check browser console for detailed error information.`);
       const outputTokensInMillions = formData.outputTokensMonthly / 1000000;
       paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions);
       monthlyPaygoCost = paygoBreakdown.totalCost;
-      monthlyTokens = formData.inputTokensMonthly + formData.outputTokensMonthly;
+      monthlyTokens = (formData.inputTokensMonthly + formData.outputTokensMonthly) / 1000000;
     } else if (formData.avgTPM > 0) {
       // Calculate from TPM using input/output ratio
       monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
@@ -1947,20 +1945,20 @@ AzureMetrics
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                           <div>
-                            <strong>Monthly:</strong> ${currentPricing.ptu_monthly}/PTU
-                            <div className="text-xs text-blue-600">730 hours × ${currentPricing.ptu_hourly}</div>
+                            <strong>Monthly Reservation:</strong> ${currentPricing.ptu_monthly}/PTU/mo
+                            <div className="text-xs text-blue-600">{currentPricing.officialPricing?.discount?.monthlyVsHourly ?? 64}% off on-demand (${(currentPricing.ptu_hourly * 730).toFixed(0)}/mo)</div>
                           </div>
                           <div>
-                            <strong>Yearly:</strong> ${currentPricing.ptu_yearly}/PTU
-                            <div className="text-xs text-blue-600">{currentPricing.officialPricing?.discount?.yearlyVsHourly || 30}% discount vs monthly</div>
+                            <strong>1-Year Reservation:</strong> ${currentPricing.ptu_yearly}/PTU/year
+                            <div className="text-xs text-blue-600">{currentPricing.officialPricing?.discount?.yearlyVsHourly ?? 70}% off on-demand (${(currentPricing.ptu_yearly / 12).toFixed(0)}/mo)</div>
                           </div>
                           <div>
-                            <strong>Regional Multiplier:</strong> {currentPricing.officialPricing?.multipliers?.combined || 1}x
-                            <div className="text-xs text-blue-600">{selectedRegion.toUpperCase()} + {selectedDeployment}</div>
+                            <strong>Deployment Multiplier:</strong> {currentPricing.officialPricing?.multipliers?.deployment || 1}x
+                            <div className="text-xs text-blue-600">{selectedRegion.toUpperCase()} / {selectedDeployment}</div>
                           </div>
                         </div>
                         <div className="mt-2 text-xs text-blue-700">
-                          💡 <strong>Discount Transparency:</strong> Yearly reservations provide {currentPricing.officialPricing?.discount?.yearlyVsHourly || 30}% savings compared to monthly billing
+                          💡 <strong>Discount Transparency:</strong> 1-Year reservations provide {currentPricing.officialPricing?.discount?.yearlyVsHourly ?? 70}% savings vs on-demand hourly, and {currentPricing.officialPricing?.discount?.yearlyVsMonthly ?? 15}% savings vs monthly reservation
                         </div>
                       </div>
                     )}
@@ -2651,7 +2649,7 @@ AzureMetrics
                     )}
                   </p>
                   <div className="text-right">
-                    <span className="text-xs text-blue-600">Reserved</span>
+                    <span className="text-xs text-blue-600">On-demand hourly</span>
                     <div className="text-2xl font-bold text-blue-600">${calculations.monthlyPtuCost?.toFixed(2) || '0.00'}</div>
                   </div>
                 </CardContent>
@@ -2662,7 +2660,7 @@ AzureMetrics
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium text-green-800">PTU (Monthly)</h3>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      {calculations.monthlyReservationDiscount || '64'}% off
+                      {calculations.monthlyReservationDiscount ?? 64}% off
                     </Badge>
                   </div>
                   <p className="text-xs text-green-600 mb-2">
@@ -2683,7 +2681,7 @@ AzureMetrics
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium text-green-800">PTU (1-Year)</h3>
                     <Badge variant="secondary" className="bg-green-200 text-green-900">
-                      {calculations.yearlyReservationDiscount || '70'}% off
+                      {calculations.yearlyReservationDiscount ?? 70}% off
                     </Badge>
                   </div>
                   <p className="text-xs text-green-700 mb-2">
@@ -2761,7 +2759,7 @@ AzureMetrics
                           )}
                           {calculations.recommendation === 'Full PTU Reservation' && (
                             <>
-                              <li>Consider 1-year or 3-year PTU reservations</li>
+                              <li>Consider 1-year PTU reservations for maximum savings</li>
                               <li>Start with 1-year for flexibility</li>
                               <li>Monitor utilization and optimize sizing</li>
                             </>
@@ -2968,7 +2966,7 @@ AzureMetrics
                     <CardContent className="p-4 text-center">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-medium text-green-800">Monthly Reservation</h3>
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">{calculations.monthlyReservationDiscount || '64'}% off</Badge>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">{calculations.monthlyReservationDiscount ?? 64}% off</Badge>
                       </div>
                       <p className="text-xs text-green-600 mb-2">Save ${calculations.monthlySavingsVsOnDemand?.toFixed(2) || '0.00'}/mo</p>
                       <div className="text-right">
@@ -2982,7 +2980,7 @@ AzureMetrics
                     <CardContent className="p-4 text-center">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-medium text-green-800">1-Year Reservation</h3>
-                        <Badge variant="secondary" className="bg-green-200 text-green-900">{calculations.yearlyReservationDiscount || '70'}% off</Badge>
+                        <Badge variant="secondary" className="bg-green-200 text-green-900">{calculations.yearlyReservationDiscount ?? 70}% off</Badge>
                       </div>
                       <p className="text-xs text-green-700 mb-2">Save ${calculations.oneYearSavings?.toFixed(2) || '0.00'}/mo</p>
                       <div className="text-right">
@@ -3318,7 +3316,7 @@ AzureMetrics
                     <CardTitle className="text-indigo-800">Official PTU Pricing Transparency</CardTitle>
                   </div>
                   <CardDescription className="text-indigo-700">
-                    Aligned with Microsoft's official US$1/PTU-hour base rate with accurate regional and deployment multipliers
+                    Aligned with Microsoft's official PTU pricing with accurate deployment multipliers and reservation discounts
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -3329,35 +3327,41 @@ AzureMetrics
                         Base Rate Structure
                       </h4>
                       <div className="space-y-2 text-sm">
-                        <div><strong>Official Base:</strong> US$1.00/PTU-hour</div>
-                        <div><strong>Your Region:</strong> {selectedRegion.toUpperCase()} <span className="text-indigo-600"> ({currentPricing.officialPricing?.multipliers?.regional || 1}x)</span></div>
-                        <div><strong>Deployment:</strong> {selectedDeployment} <span className="text-indigo-600"> ({currentPricing.officialPricing?.multipliers?.deployment || 1}x)</span></div>
-                        <div className="pt-2 border-t border-indigo-200"><strong>Your Rate:</strong> ${currentPricing.ptu_hourly}/PTU-hour</div>
+                        <div><strong>On-Demand Hourly:</strong> US${currentPricing.ptu_hourly}/PTU-hour</div>
+                        <div><strong>On-Demand Monthly:</strong> ${(currentPricing.ptu_hourly * 730).toFixed(0)}/PTU (730 hrs)</div>
+                        <div><strong>Your Region:</strong> {selectedRegion.toUpperCase()}</div>
+                        <div><strong>Deployment:</strong> {selectedDeployment} ({currentPricing.officialPricing?.multipliers?.deployment || 1}x multiplier)</div>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <h4 className="font-medium text-indigo-800 flex items-center gap-2">
                         <Clock className="h-4 w-4" />
-                        Official Discounts
+                        Reservation Discounts
                       </h4>
                       <div className="space-y-2 text-sm">
-                        <div><strong>Monthly:</strong> No discount (base rate)<div className="text-xs text-indigo-600">${currentPricing.ptu_monthly}/PTU (730 hrs)</div></div>
-                        <div><strong>Yearly:</strong> {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 30}% discount<div className="text-xs text-indigo-600">${currentPricing.ptu_yearly}/PTU annually</div></div>
-                        <div className="pt-2 border-t border-indigo-200"><strong>Annual Savings:</strong> ${((currentPricing.ptu_monthly * 12) - currentPricing.ptu_yearly).toFixed(0)}/PTU</div>
+                        <div>
+                          <strong>Monthly Reservation:</strong> {currentPricing.officialPricing?.discount?.monthlyVsHourly || 64}% off on-demand
+                          <div className="text-xs text-indigo-600">${currentPricing.ptu_monthly}/PTU/month</div>
+                        </div>
+                        <div>
+                          <strong>1-Year Reservation:</strong> {currentPricing.officialPricing?.discount?.yearlyVsHourly || 70}% off on-demand
+                          <div className="text-xs text-indigo-600">${currentPricing.ptu_yearly}/PTU/year (${(currentPricing.ptu_yearly / 12).toFixed(0)}/mo)</div>
+                        </div>
+                        <div className="pt-2 border-t border-indigo-200"><strong>1-Year vs Monthly:</strong> {currentPricing.officialPricing?.discount?.yearlyVsMonthly || 15}% additional savings</div>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <h4 className="font-medium text-indigo-800 flex items-center gap-2">
                         <Zap className="h-4 w-4" />
-                        Your Calculations
+                        Your Calculations ({calculations.ptuNeeded || 0} PTUs)
                       </h4>
                       <div className="space-y-2 text-sm">
-                        <div><strong>Required PTUs:</strong> {calculations.ptuNeeded || 0}</div>
-                        <div><strong>Monthly Cost:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_monthly).toLocaleString()}</div>
-                        <div><strong>Yearly Cost:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_yearly).toLocaleString()}</div>
+                        <div><strong>On-Demand:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_hourly * 730).toLocaleString()}/mo</div>
+                        <div><strong>Monthly Reserved:</strong> ${(calculations.ptuNeeded * currentPricing.ptu_monthly).toLocaleString()}/mo</div>
+                        <div><strong>1-Year Reserved:</strong> ${((calculations.ptuNeeded * currentPricing.ptu_yearly) / 12).toLocaleString()}/mo</div>
                         <div className="pt-2 border-t border-indigo-200">
-                          <strong>Annual Savings:</strong> ${((calculations.ptuNeeded * currentPricing.ptu_monthly * 12) - (calculations.ptuNeeded * currentPricing.ptu_yearly)).toLocaleString()}
-                          <div className="text-xs text-green-600">{currentPricing.officialPricing?.discount?.yearlyVsHourly || 30}% saved with yearly commitment</div>
+                          <strong>Annual Savings (1-Year vs On-Demand):</strong> ${((calculations.ptuNeeded * currentPricing.ptu_hourly * 730 * 12) - (calculations.ptuNeeded * currentPricing.ptu_yearly)).toLocaleString()}
+                          <div className="text-xs text-green-600">{currentPricing.officialPricing?.discount?.yearlyVsHourly || 70}% saved with 1-year commitment</div>
                         </div>
                       </div>
                     </div>
@@ -3366,7 +3370,7 @@ AzureMetrics
                     <div className="flex items-start gap-2">
                       <Info className="h-4 w-4 text-indigo-600 mt-0.5" />
                       <div className="text-sm text-indigo-800">
-                        <strong>Pricing Accuracy:</strong> This calculator now uses Microsoft's official PTU pricing structure with accurate regional multipliers and the standard 30% yearly discount. All calculations are aligned with Azure's official pricing model.
+                        <strong>Pricing Source:</strong> Live rates from Azure Retail Prices API with official reservation overrides. On-demand = hourly × 730 hours/month. Monthly reservation and 1-Year reservation are separate Azure commitment tiers. Azure does not offer a 3-year PTU reservation.
                       </div>
                     </div>
                   </div>
