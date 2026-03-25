@@ -1,0 +1,226 @@
+# Azure PTU Calculator — Complete Project Context & Session History
+# Last updated: 2026-03-25
+# Save location: repo root (for future Copilot sessions to find)
+
+================================================================================
+PROJECT OVERVIEW
+================================================================================
+App:        Azure OpenAI PTU Calculator
+Live URL:   https://www.ptucalc.com
+Repo:       https://github.com/ricmmartins/azureptucalc
+Stack:      React 18 + Vite + Tailwind CSS + shadcn/ui + Recharts
+Deploy:     Vercel (auto-deploy from main branch)
+License:    MIT
+Owner:      Ricardo Martins (ricardomac)
+
+================================================================================
+ARCHITECTURE
+================================================================================
+- MONOLITH: src/App.jsx (~3400 lines) — all state, calculations, UI
+- Components: EnhancedResults, GuidedTour, WelcomeModal, InteractiveCharts
+- Serverless proxy: api/azure-pricing.js (Vercel function, proxies Azure Retail Prices API)
+- No TypeScript — plain JavaScript/JSX throughout
+
+================================================================================
+KEY FILES MAP
+================================================================================
+src/App.jsx                      Main app — state, calculations, all JSX
+src/officialPTUPricing.js        PTU rates, RESERVATION_OVERRIDES, discount calc
+src/official_token_pricing.js    PAYGO rates + Priority Processing rates per model
+src/enhanced_pricing_service.js  AzureOpenAIPricingService class, 3hr cache, fallback
+src/ExternalPricingService.js    Fallback pricing config reader (last resort)
+src/external_pricing_config.json Static fallback pricing data
+src/enhanced_model_config.json   17 PTU model configs (throughputs, min PTUs)
+src/ptu_supported_models.json    Model list with regions
+src/corrected_pricing_data.json  Fallback pricing (Global-only reservations)
+api/azure-pricing.js             Vercel serverless proxy for Azure Retail Prices API
+src/components/EnhancedResults.jsx   Executive summary, cost breakdown, badges
+src/components/GuidedTour.jsx        6-step interactive tour with sample data
+src/components/WelcomeModal.jsx      Welcome dialog with input method descriptions
+src/components/InteractiveCharts.jsx Analytics dashboard (4 tabs: Costs/Utilization/Projections/Patterns)
+
+================================================================================
+PRICING PIPELINE (4-TIER PRIORITY)
+================================================================================
+1. Custom Override — user-entered rates in custom pricing panel
+2. Live Azure API — real-time from Azure Retail Prices API (3-hour cache)
+3. Official Hardcoded — officialPTUPricing.js + official_token_pricing.js
+4. Fallback — enhanced_pricing_service.js fallback + external_pricing_config.json
+
+getCurrentPricing() in App.jsx (~line 619) implements this cascade.
+
+================================================================================
+AZURE PTU PRICING (verified March 2025)
+================================================================================
+Deployment   | Hourly(On-Demand) | Monthly Res. | 1-Year Res.(annual) | 1-Year(monthly)
+-------------|-------------------|--------------|---------------------|----------------
+Global       | $1.00             | $260         | $2,652              | $221
+Data Zone    | $1.10             | $286         | $2,916              | $243
+Regional     | $2.00             | $286         | $2,916              | $243
+
+CRITICAL: Azure offers Monthly and 1-Year PTU reservations ONLY. NO 3-year reservation.
+
+Discount percentages (vs on-demand hourly):
+- Monthly Reservation: ~64% off
+- 1-Year Reservation: ~70% off
+- 1-Year vs Monthly: ~15% additional savings
+
+================================================================================
+17 PTU-SUPPORTED MODELS
+================================================================================
+gpt-5.4, gpt-5.3-codex, gpt-5.2, gpt-5.2-codex, gpt-5.1, gpt-5.1-codex,
+gpt-5, gpt-5-mini, gpt-4.1, gpt-4.1-mini, gpt-4.1-nano, gpt-4o, gpt-4o-mini,
+o3, o4-mini, o3-mini, o1
+
+Model Throughput (Input TPM per PTU):
+gpt-5.4:2400  gpt-5.3-codex:3400  gpt-5.2:3400  gpt-5.1:4750  gpt-5:4750
+gpt-5-mini:23750  gpt-4.1:3000  gpt-4.1-mini:14900  gpt-4.1-nano:59400
+gpt-4o:2500  gpt-4o-mini:37000  o3:3000  o4-mini:5400  o3-mini:2500  o1:230
+
+Min PTU: Global/DataZone=15 (most), 25 (mini/small). Regional=50 (large), 25 (mini).
+Increment: 5 PTUs.
+
+================================================================================
+PRIORITY PROCESSING (GA)
+================================================================================
+- Pay-per-token with SLA-backed latency guarantees
+- ~70% premium over standard PAYGO rates (varies by model)
+- Supported models: gpt-5.4, gpt-5.2, gpt-5.1, gpt-4.1, gpt-4.1-mini, o4-mini
+- Deployments: GlobalStandard, DataZoneStandard only
+- Shows in: cost cards, main chart, dashboard (Costs+Projections tabs),
+  executive summary breakdown, recommendation text, welcome modal, guided tour
+
+================================================================================
+APP FEATURES
+================================================================================
+- 5 pricing tiers compared: PAYGO, PTU On-Demand, PTU Monthly Res, PTU 1-Year Res, Spillover
+- Priority Processing comparison (when model supports it)
+- Two input methods: KQL/TPM (Method A), Token Counts (Method B)
+- 6-step guided tour with sample data (25K avg, 45K P99, 60K max TPM)
+- 3 result tabs: Cost Analysis, Usage Patterns, Advanced
+- Sticky executive summary bar (recommendation, savings, PTUs, utilization)
+- Interactive Analytics Dashboard (4 sub-tabs: Costs, Utilization, Projections, Patterns)
+- Context-aware badges (PAYGO Best Value / PTU Cost-Effective / Spillover Recommended)
+- Export as CSV / Copy as JSON
+- Built-in KQL query for Azure Log Analytics
+- Live pricing status display with refresh button
+- Custom pricing override panel with Reset to Official
+- Official PTU Pricing Transparency section
+- Spillover strategy explainer
+- Priority Processing info card (always visible)
+
+================================================================================
+CRITICAL BUGS FIXED (this session — in order)
+================================================================================
+ 1. CRASH ON INPUT: EnhancedResults expected `results` prop but got `calculations`
+ 2. OPTIONAL CHAINING: missing ?. on officialPricing?.discount.yearlyVsMonthly
+ 3. TDZ BUG: `const isPrioritySupported` at line 925, used at line 884 → ReferenceError
+ 4. ALL-ZEROS BUG: TDZ silently caught by try/catch, prevented setCalculations()
+ 5. BROKEN FETCH: ExternalPricingService fetched ./src/... at runtime (doesn't exist in Vite build)
+ 6. DOUBLE DIVISION: yearlyReservationMonthly was already ÷12 but divided again
+ 7. 3-YEAR PHANTOM TIER: calculated as 55% of on-demand (MORE expensive than 1-Year!)
+ 8. $0 SAVINGS CLAMPING: Math.max(0,...) hid PAYGO advantage when PTU more expensive
+ 9. YEARLY FALLBACK *0.7: kept 70% of price instead of applying 70% discount → $6,132 vs $2,652
+10. INITIAL STATE: ptu_monthly=730 (on-demand) should be 260 (reservation)
+11. CUSTOM RESET: used official.monthly (on-demand $730) not official.reservationMonthly ($260)
+12. PAYGO $0 OUTPUT: Azure API parser sometimes returns $0; guard falls back to hardcoded
+13. PRIORITY RATES COPY-PASTE: gpt-5.2, gpt-5.1, gpt-4.1 had gpt-5.4's rates
+14. 5 WRONG PAYGO RATES: external_pricing_config.json (gpt-5.2, gpt-5.1, gpt-5-mini, gpt-4.1, o3)
+15. UTILIZATION ×100: utilizationRate is 0-1, display needed ×100 for percentage
+16. RANDOM CHART DATA: InteractiveCharts used Math.random() ignoring actual utilization
+17. PTU PROJECTIONS GROWING: reservation costs are fixed, shouldn't grow 1%/month
+18. FAKE FALLBACK DATA: App.jsx passed 100/80/60/50 as defaults masking zero values
+
+================================================================================
+TERMINOLOGY CONVENTIONS
+================================================================================
+- "Spillover" (NOT "Hybrid") — PTU base + PAYGO overflow strategy
+- "Provisioned" (NOT "Reserved") — PTU badge descriptor
+- "Reservation" (NOT "Reserved") — noun form for pricing tiers
+- "PAYGO Advantage" (NOT "$0 savings") — when PAYGO is cheaper than PTU
+- "PTU Savings" — when PTU is cheaper than PAYGO
+- "Azure OpenAI" — primary term (not "Foundry" alone; optionally "part of Azure AI Foundry")
+
+================================================================================
+COMMIT HISTORY (this session)
+================================================================================
+1281cf3 Add Priority Processing to Interactive Analytics Dashboard
+32c3831 Rewrite Interactive Analytics Dashboard - all 4 tabs
+61ece89 Fix Interactive Analytics Dashboard showing wrong metrics
+c25ed0f Fix all findings from deep 4-agent code audit
+15e1d90 Replace misleading External Pricing Data section with live Pricing Data Status
+16f5c5d Fix Welcome Modal and Guided Tour text accuracy
+54356cf Rewrite User Guide with current features and pricing tiers
+575122a Fix PAYGO pricing guard: never use $0 from live API
+443bf52 Rewrite README with accurate feature list and pricing info
+fe5aab3 Deep audit: fix calculation bugs, labels, and pricing consistency
+b7ba403 Fix context-aware badge and future date bug
+62af6b4 Fix savings display and Cost Breakdown labels
+79f33e2 Fix reservation tiers to match actual Azure pricing
+0548e33 Fix 3-year reservation pricing and double-division bug
+38f558a Fix Quick Tour targeting wrong sections due to tabbed layout
+312fa60 Final review cleanup: fix pricing bugs, remove dead code, delete stale files
+c853fe2 Add color-coded input method sections
+e876003 Enable fully dynamic pricing from Azure Retail Prices API
+4aefc6f Fix per-deployment reservation pricing and add missing models
+d54b8f4 Visual polish and fix broken External Pricing Data section
+23fcd12 Improve UI: collapsible sections, sticky summary, tabs, consolidation
+83dca45 Fix critical calculation bug: isPrioritySupported used before declaration
+49cc695 Fix Quick Tour: poll DOM for actual results
+44aeb6d Fix Quick Tour timing
+fc4ff7b Fix duplicated icon on Priority Processing card title
+
+================================================================================
+KNOWN LIMITATIONS (low priority, documented)
+================================================================================
+1.  PAYGO fallback loses deployment-specific rates (falls back to global)
+2.  API PAYGO parser picks first match, not sorted by best price
+3.  No API pagination ($top=100 limit)
+4.  Break-even uses monthly reservation (rough heuristic)
+5.  Spillover base PTU defaults to 1 when avgPTU field is empty
+6.  Priority Processing "~70%" premium is approximate (varies by model)
+7.  App.jsx is 3400-line monolith (could benefit from component extraction)
+8.  corrected_pricing_data.json has Global-only reservation prices
+9.  corrected_pricing_data.json contains phantom models (gpt-5-nano, gpt-5-chat)
+10. officialPTUPricing.js REGIONAL_MULTIPLIERS are unused dead code
+11. ExternalPricingService.js is mostly dead code (only absolute last fallback)
+
+================================================================================
+USER PREFERENCES
+================================================================================
+- No Co-authored-by trailers in git commits
+- Thorough principal-level audits before shipping
+- Context-aware UI labels (never show $0 when there's meaningful data)
+- Correct Azure terminology throughout
+- Keep "Azure OpenAI" as primary term (optionally mention Azure AI Foundry)
+
+================================================================================
+PRIORITY PROCESSING COVERAGE MAP
+================================================================================
+Location                              | Has Priority Processing?
+--------------------------------------|-------------------------
+Info card (always visible)            | YES
+Cost cards (5-column grid)            | YES — amber card
+Main cost comparison chart            | YES — bar
+Executive Summary recommendation     | YES — contextual note in text
+Cost Breakdown rows (EnhancedResults) | YES — amber row
+Dashboard — Costs tab                 | YES — amber bar
+Dashboard — Projections tab           | YES — dashed amber line
+Dashboard — Utilization tab           | N/A (PTU capacity metric)
+Dashboard — Patterns tab              | N/A (workload shape)
+Welcome Modal                        | YES — mentioned
+Guided Tour Step 3                    | YES — mentioned
+Export/Copy                           | YES — included in data
+
+================================================================================
+LINKEDIN POST (DRAFT — ready to publish)
+================================================================================
+See conversation for full draft. Key points to include:
+- Live Azure pricing from Retail Prices API
+- Priority Processing (GA) support
+- 5 pricing tiers + spillover
+- 17 PTU models
+- Smart recommendations
+- Two input methods (KQL + tokens)
+- Open source, MIT licensed
+- Use "Azure OpenAI" as primary term, optionally "(part of Azure AI Foundry)"
