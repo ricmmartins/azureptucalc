@@ -697,8 +697,9 @@ Check browser console for detailed error information.`);
       const ptuYearly = livePTU?.yearly || officialPTUPricing?.yearly || correctedReservations?.yearly || Math.round(ptuMonthly * 12 * 0.7);
 
       return {
-        paygo_input: livePAYGO?.input || tokenPricing.input,
-        paygo_output: livePAYGO?.output || tokenPricing.output,
+        // Guard: never use $0 from live API when we have a known good hardcoded price
+        paygo_input: (livePAYGO?.input > 0) ? livePAYGO.input : tokenPricing.input,
+        paygo_output: (livePAYGO?.output > 0) ? livePAYGO.output : tokenPricing.output,
         ptu_hourly: livePTU?.hourly || officialPTUPricing?.hourly || correctedModel?.ptu?.[selectedDeployment] || 1.00,
         ptu_monthly: ptuMonthly,
         ptu_yearly: ptuYearly,
@@ -711,14 +712,19 @@ Check browser console for detailed error information.`);
         livePricingTimestamp: livePricingData?.timestamp,
         isLoadingLivePricing: isLoadingLivePricing,
         // Pricing discrepancy detection: compare live API vs hardcoded values
+        // Only flag real discrepancies — ignore $0 from API (parsing failure, not real price)
         pricingDiscrepancy: (() => {
           if (!livePAYGO || tokenPricingIsFallback) return null;
-          const inputDiff = Math.abs(livePAYGO.input - tokenPricing.input) / Math.max(tokenPricing.input, 0.01);
-          const outputDiff = Math.abs(livePAYGO.output - tokenPricing.output) / Math.max(tokenPricing.output, 0.01);
+          // Skip discrepancy check if live API returned $0 (parsing failure)
+          if (livePAYGO.input <= 0 && livePAYGO.output <= 0) return { hasDiscrepancy: false };
+          const liveInput = livePAYGO.input > 0 ? livePAYGO.input : tokenPricing.input;
+          const liveOutput = livePAYGO.output > 0 ? livePAYGO.output : tokenPricing.output;
+          const inputDiff = Math.abs(liveInput - tokenPricing.input) / Math.max(tokenPricing.input, 0.01);
+          const outputDiff = Math.abs(liveOutput - tokenPricing.output) / Math.max(tokenPricing.output, 0.01);
           if (inputDiff > 0.1 || outputDiff > 0.1) {
             return {
               hasDiscrepancy: true,
-              live: { input: livePAYGO.input, output: livePAYGO.output },
+              live: { input: liveInput, output: liveOutput },
               hardcoded: { input: tokenPricing.input, output: tokenPricing.output },
               inputDiffPercent: Math.round(inputDiff * 100),
               outputDiffPercent: Math.round(outputDiff * 100)
