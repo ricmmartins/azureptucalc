@@ -34,12 +34,20 @@ export const EnhancedResults = ({ results, onExport }) => {
 
   const monthlySavings = results.monthlySavings || 0;
   const recommendation = results.recommendation || 'PAYGO';
-  const savingsPercent = results.oneYearSavingsPercent || 0;
 
   const getSavingsBadge = () => {
-    if (savingsPercent > 20) return <Badge className="bg-green-100 text-green-800">Significant Savings</Badge>;
-    if (savingsPercent > 5) return <Badge className="bg-yellow-100 text-yellow-800">Moderate Savings</Badge>;
-    return <Badge className="bg-blue-100 text-blue-800">Current Optimal</Badge>;
+    if (recommendation === 'PAYGO') {
+      const paygoAdvantage = Math.abs(monthlySavings);
+      if (paygoAdvantage > 1000) return <Badge className="bg-blue-100 text-blue-800">PAYGO Best Value</Badge>;
+      if (paygoAdvantage > 100) return <Badge className="bg-blue-100 text-blue-800">PAYGO Recommended</Badge>;
+      return <Badge className="bg-yellow-100 text-yellow-800">Near Break-Even</Badge>;
+    }
+    if (recommendation === 'Full PTU Reservation') {
+      if (monthlySavings > 1000) return <Badge className="bg-green-100 text-green-800">Significant PTU Savings</Badge>;
+      if (monthlySavings > 100) return <Badge className="bg-green-100 text-green-800">PTU Cost-Effective</Badge>;
+      return <Badge className="bg-yellow-100 text-yellow-800">Moderate Savings</Badge>;
+    }
+    return <Badge className="bg-yellow-100 text-yellow-800">Hybrid Recommended</Badge>;
   };
 
   return (
