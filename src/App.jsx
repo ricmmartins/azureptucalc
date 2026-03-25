@@ -3220,7 +3220,8 @@ AzureMetrics
                   ptuHourly: calculations.monthlyPtuHourlyCost || 0,
                   ptuMonthly: calculations.monthlyPtuReservationCost || 0,
                   ptuYearly: calculations.yearlyReservationMonthly || 0,
-                  savings: calculations.monthlySavings || 0
+                  savings: calculations.monthlySavings || 0,
+                  priority: calculations.isPrioritySupported ? (calculations.monthlyPriorityCost || 0) : null
                 }}
                 utilizationData={{
                   utilization: calculations.utilizationRate || 0,

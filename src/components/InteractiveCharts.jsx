@@ -34,12 +34,16 @@ const InteractiveCharts = ({
   // Cost comparison bar chart data with per-bar colors
   const costComparisonData = useMemo(() => {
     if (!costData) return [];
-    return [
+    const data = [
       { name: 'PAYGO', cost: costData.paygo || 0, fill: '#3b82f6' },
       { name: 'PTU On-Demand', cost: costData.ptuHourly || 0, fill: '#f59e0b' },
       { name: 'PTU Monthly Res.', cost: costData.ptuMonthly || 0, fill: '#10b981' },
       { name: 'PTU 1-Year Res.', cost: costData.ptuYearly || 0, fill: '#8b5cf6' }
     ];
+    if (costData.priority != null && costData.priority > 0) {
+      data.splice(1, 0, { name: 'Priority', cost: costData.priority, fill: '#d97706' });
+    }
+    return data;
   }, [costData]);
 
   // 24-hour utilization pattern scaled to actual user utilization
@@ -71,16 +75,22 @@ const InteractiveCharts = ({
     const basePaygo = costData?.paygo || 0;
     const ptuMonthly = costData?.ptuMonthly || 0;
     const ptuYearly = costData?.ptuYearly || 0;
+    const priority = costData?.priority;
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
     return months.map((month, i) => {
       const growth = Math.pow(1.01, i); // 1% monthly PAYGO growth
-      return {
+      const entry = {
         month,
         'PAYGO': Number((basePaygo * growth).toFixed(0)),
         'PTU Monthly Res.': ptuMonthly, // fixed commitment
         'PTU 1-Year Res.': ptuYearly    // fixed commitment
       };
+      // Priority Processing scales with usage like PAYGO
+      if (priority != null && priority > 0) {
+        entry['Priority'] = Number((priority * growth).toFixed(0));
+      }
+      return entry;
     });
   }, [costData]);
 
@@ -271,7 +281,7 @@ const InteractiveCharts = ({
             <div>
               <h3 className="text-lg font-semibold mb-1">12-Month Cost Projection</h3>
               <p className="text-sm text-gray-600 mb-4">
-                PAYGO costs grow at 1% monthly as usage scales. PTU reservations remain fixed — this shows when the crossover point may occur.
+                Pay-per-token costs (PAYGO{costData?.priority != null && costData.priority > 0 ? ', Priority Processing' : ''}) grow at 1% monthly as usage scales. PTU reservations remain fixed — this shows when the crossover point may occur.
               </p>
 
               <ResponsiveContainer width="100%" height={300}>
@@ -285,6 +295,9 @@ const InteractiveCharts = ({
                   />
                   <Legend />
                   <Line type="monotone" dataKey="PAYGO" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+                  {costData?.priority != null && costData.priority > 0 && (
+                    <Line type="monotone" dataKey="Priority" stroke="#d97706" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="5 3" />
+                  )}
                   <Line type="monotone" dataKey="PTU Monthly Res." stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
                   <Line type="monotone" dataKey="PTU 1-Year Res." stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
