@@ -882,8 +882,8 @@ Check browser console for detailed error information.`);
   const yearlyReservationDiscount = monthlyPtuCost > 0 ? Math.round(((monthlyPtuCost - yearlyReservationMonthly) / monthlyPtuCost) * 100) : 0;
   const oneYearSavingsPercent = yearlyReservationDiscount;
     
-    // FIXED: Dynamic monthly savings calculation (vs PAYGO)
-    const monthlySavings = Math.max(0, monthlyPaygoCost - yearlyReservationMonthly);
+    // Monthly savings: positive = PTU saves money, negative = PAYGO is cheaper
+    const monthlySavings = monthlyPaygoCost - yearlyReservationMonthly;
     
     // Spillover model calculations
     const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
@@ -2498,10 +2498,12 @@ AzureMetrics
                 <div className="text-lg font-bold text-blue-600">{calculations.recommendation || 'N/A'}</div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 uppercase">Monthly Savings</div>
-                <div className={`text-lg font-bold ${(calculations.monthlySavings || 0) > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                <div className="text-xs text-gray-500 uppercase">
+                  {(calculations.monthlySavings || 0) >= 0 ? 'PTU Savings' : 'PAYGO Advantage'}
+                </div>
+                <div className={`text-lg font-bold ${(calculations.monthlySavings || 0) > 0 ? 'text-green-600' : 'text-blue-600'}`}>
                   ${Math.abs(calculations.monthlySavings || 0).toLocaleString(undefined, {maximumFractionDigits: 0})}
-                  <span className="text-xs ml-1">{(calculations.monthlySavings || 0) >= 0 ? 'saved' : 'more'}</span>
+                  <span className="text-xs ml-1">{(calculations.monthlySavings || 0) >= 0 ? 'saved' : 'cheaper'}</span>
                 </div>
               </div>
               <div>
@@ -2826,8 +2828,13 @@ AzureMetrics
                         <div className="text-2xl font-bold text-orange-600">{((calculations.utilizationRate || 0) * 100).toFixed(1)}%</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm text-gray-600">Monthly Savings</div>
-                        <div className="text-2xl font-bold text-purple-600">${calculations.monthlySavings?.toFixed(2) || '0.00'}</div>
+                        <div className="text-sm text-gray-600">
+                          {(calculations.monthlySavings || 0) >= 0 ? 'PTU Savings' : 'PAYGO Advantage'}
+                        </div>
+                        <div className={`text-2xl font-bold ${(calculations.monthlySavings || 0) >= 0 ? 'text-purple-600' : 'text-blue-600'}`}>
+                          ${Math.abs(calculations.monthlySavings || 0).toFixed(2)}
+                          <span className="text-xs ml-1">{(calculations.monthlySavings || 0) >= 0 ? '/mo' : 'cheaper'}</span>
+                        </div>
                       </div>
                     </div>
                   </CardContent>

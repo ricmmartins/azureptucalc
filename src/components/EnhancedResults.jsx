@@ -58,16 +58,19 @@ export const EnhancedResults = ({ results, onExport }) => {
         {expandedSections.executive && (
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-green-50 p-4 rounded-lg">
+              <div className={`${monthlySavings >= 0 ? 'bg-green-50' : 'bg-blue-50'} p-4 rounded-lg`}>
                 <div className="flex items-center gap-2">
-                  <TrendingDown className="h-5 w-5 text-green-600" />
-                  <span className="font-medium">Monthly Savings</span>
+                  {monthlySavings >= 0 ? 
+                    <TrendingDown className="h-5 w-5 text-green-600" /> :
+                    <DollarSign className="h-5 w-5 text-blue-600" />
+                  }
+                  <span className="font-medium">{monthlySavings >= 0 ? 'PTU Savings' : 'PAYGO Advantage'}</span>
                 </div>
-                <div className="text-2xl font-bold text-green-700">
-                  {formatCurrency(monthlySavings)}
+                <div className={`text-2xl font-bold ${monthlySavings >= 0 ? 'text-green-700' : 'text-blue-700'}`}>
+                  {formatCurrency(Math.abs(monthlySavings))}
                 </div>
-                <div className="text-sm text-green-600">
-                  vs PAYGO spending
+                <div className={`text-sm ${monthlySavings >= 0 ? 'text-green-600' : 'text-blue-600'}`}>
+                  {monthlySavings >= 0 ? 'saved vs PAYGO' : 'cheaper than PTU'}
                 </div>
               </div>
               
@@ -90,10 +93,10 @@ export const EnhancedResults = ({ results, onExport }) => {
                   <span className="font-medium">Annual Impact</span>
                 </div>
                 <div className="text-2xl font-bold text-purple-700">
-                  {formatCurrency(monthlySavings * 12)}
+                  {formatCurrency(Math.abs(monthlySavings) * 12)}
                 </div>
                 <div className="text-sm text-purple-600">
-                  projected savings
+                  {monthlySavings >= 0 ? 'projected savings' : 'PAYGO annual advantage'}
                 </div>
               </div>
             </div>
@@ -152,8 +155,12 @@ export const EnhancedResults = ({ results, onExport }) => {
                 <span className="font-semibold">{formatCurrency(results.monthlyPtuCost)}</span>
               </div>
               <div className="flex justify-between items-center p-2 bg-green-50 rounded">
-                <span className="text-sm font-medium">PTU 1-Year Reserved</span>
+                <span className="text-sm font-medium">PTU Monthly Reserved</span>
                 <span className="font-semibold">{formatCurrency(results.monthlyPtuReservationCost)}</span>
+              </div>
+              <div className="flex justify-between items-center p-2 bg-green-100 rounded">
+                <span className="text-sm font-medium">PTU 1-Year Reserved</span>
+                <span className="font-semibold">{formatCurrency(results.yearlyReservationMonthly)}</span>
               </div>
               {results.hybridTotalCost > 0 && (
                 <div className="flex justify-between items-center p-2 bg-purple-50 rounded">
