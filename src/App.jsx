@@ -845,8 +845,8 @@ Check browser console for detailed error information.`);
   const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 730;
     const monthlyPtuHourlyCost = monthlyPtuCost;
     const monthlyPtuReservationCost = ptuNeeded * currentPricing.ptu_monthly;
-  // Yearly reservation cost: use official value, monthly equivalent = (currentPricing.ptu_yearly * ptuNeeded) / 12
-  const yearlyPtuReservationCost = (currentPricing.ptu_yearly * ptuNeeded) / 12;
+  // Yearly reservation cost: monthly equivalent of 1-year reservation
+  const yearlyReservationMonthly = (currentPricing.ptu_yearly * ptuNeeded) / 12;
     
     // FIXED: Dynamic utilization calculation
     const utilizationRate = formData.avgTPM > 0 && ptuNeeded > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
@@ -876,11 +876,12 @@ Check browser console for detailed error information.`);
     const ptuCostEffectiveness = monthlyPaygoCost > 0 ? monthlyPtuCost / monthlyPaygoCost : 0;
     
   // FIXED: Dynamic reservation savings calculations (align with official pricing)
-  const oneYearSavings = Math.max(0, monthlyPtuCost - yearlyPtuReservationCost);
-  const oneYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - yearlyPtuReservationCost) / monthlyPtuCost) * 100 : 0;
-  // Multi-year logic placeholder (if needed)
-  const threeYearSavings = 0;
-  const threeYearSavingsPercent = 0;
+  const oneYearSavings = Math.max(0, monthlyPtuCost - yearlyReservationMonthly);
+  const oneYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - yearlyReservationMonthly) / monthlyPtuCost) * 100 : 0;
+  // 3-year reservation: 45% off on-demand hourly
+  const threeYearMonthly = monthlyPtuCost * 0.55;
+  const threeYearSavings = Math.max(0, monthlyPtuCost - threeYearMonthly);
+  const threeYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - threeYearMonthly) / monthlyPtuCost) * 100 : 0;
     
     // FIXED: Dynamic monthly savings calculation
     const monthlySavings = Math.max(0, monthlyPaygoCost - monthlyPtuReservationCost);
@@ -954,7 +955,7 @@ Check browser console for detailed error information.`);
       ...(isPrioritySupported ? [{ name: 'Priority', cost: monthlyPriorityCost }] : []),
       { name: 'PTU (On-Demand)', cost: monthlyPtuCost },
       { name: 'PTU (1 Year)', cost: monthlyPtuReservationCost },
-      { name: 'PTU (3 Year)', cost: yearlyPtuReservationCost / 12 },
+      { name: 'PTU (3 Year)', cost: monthlyPtuCost * 0.55 },
       // Use Azure's official terminology: "Spillover" instead of "Hybrid"
       { name: 'Spillover', cost: hybridTotalCost },
       { name: 'Spillover (1Y)', cost: hybridBaseCost * 0.75 + hybridOverflowCost },
@@ -977,7 +978,8 @@ Check browser console for detailed error information.`);
       monthlyPtuCost,
       monthlyPtuHourlyCost,
       monthlyPtuReservationCost,
-      yearlyPtuReservationCost,
+      yearlyReservationMonthly,
+      threeYearMonthly,
       utilizationRate,
       // Task 6: Break-even analysis
       breakEvenAnalysis,
@@ -1093,7 +1095,7 @@ Check browser console for detailed error information.`);
         ptuCostCalculation: {
           hourly: calculations.monthlyPtuHourlyCost / 730,
           monthly: calculations.monthlyPtuCost,
-          yearly: calculations.yearlyPtuReservationCost,
+          yearly: calculations.yearlyReservationMonthly,
           yearlyDiscount: currentPricing.officialPricing?.discount?.yearlyVsHourly || 0
         },
         paygCostCalculation: calculations.paygoBreakdown || {
@@ -1133,7 +1135,7 @@ Check browser console for detailed error information.`);
         ptuCostCalculation: {
           hourly: calculations.monthlyPtuHourlyCost / 730,
           monthly: calculations.monthlyPtuCost,
-          yearly: calculations.yearlyPtuReservationCost,
+          yearly: calculations.yearlyReservationMonthly,
           yearlyDiscount: currentPricing.officialPricing?.discount?.yearlyVsHourly || 0
         },
         paygCostCalculation: calculations.paygoBreakdown || {
@@ -2691,7 +2693,7 @@ AzureMetrics
                   </p>
                   <div className="text-right">
                     <span className="text-xs text-green-700">3-year commitment</span>
-                    <div className="text-2xl font-bold text-green-800">${((calculations.yearlyPtuReservationCost || 0) / 12).toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-green-800">${(calculations.threeYearMonthly?.toFixed(2)) || '0.00'}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -2981,7 +2983,7 @@ AzureMetrics
                       <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings?.toFixed(2) || '0.00'}/mo</p>
                       <div className="text-right">
                         <span className="text-xs text-green-700">{calculations.threeYearSavingsPercent?.toFixed(1) || '0.0'}% savings</span>
-                        <div className="text-2xl font-bold text-green-800">${((calculations.yearlyPtuReservationCost || 0) / 12).toFixed(2)}/mo</div>
+                        <div className="text-2xl font-bold text-green-800">${(calculations.threeYearMonthly?.toFixed(2)) || '0.00'}/mo</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -3272,7 +3274,7 @@ AzureMetrics
                   paygo: calculations.monthlyPaygoCost || 100,
                   ptuHourly: calculations.monthlyPtuHourlyCost || 80,
                   ptuMonthly: calculations.monthlyPtuReservationCost || 60,
-                  ptuYearly: calculations.yearlyPtuReservationCost || 50,
+                  ptuYearly: calculations.yearlyReservationMonthly || 50,
                   savings: calculations.monthlySavings || 20
                 }}
                 utilizationData={{
