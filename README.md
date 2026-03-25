@@ -4,212 +4,77 @@
   <img src="https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react" alt="React" />
   <img src="https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite" alt="Vite" />
   <img src="https://img.shields.io/badge/Tailwind%20CSS-3-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Open%20Source-%E2%9D%A4%EF%B8%8F-red?style=for-the-badge" alt="Open Source" />
 </div>
-
 
 # Azure OpenAI PTU Calculator
 
-**Optimize your Azure OpenAI costs with intelligent PTU sizing, hybrid model analysis, and real-time pricing.**
+**Optimize your Azure OpenAI costs with intelligent PTU sizing, real-time pricing from the Azure Retail Prices API, and comprehensive cost analysis.**
 
-👉 **Read the full [User Guide](./docs/USER_GUIDE.md) for a step-by-step walkthrough, practical tips, and best practices!**
+👉 **Try it live at [ptucalc.com](https://www.ptucalc.com)** | 📖 **[User Guide](./docs/USER_GUIDE.md)**
 
 ---
 
 ## 🚀 Features
-- **Comprehensive cost analysis:** PAYGO, PTU, and hybrid models
-- **Real-time Azure pricing:** Always up-to-date with official rates
-- **KQL integration:** Import usage data from Azure Log Analytics
-- **13+ models supported:** GPT-4o, GPT-5, GPT-3.5, and more
-- **Mobile-ready, accessible UI**
-- **Export to CSV/JSON**
-- **Custom pricing and regional support**
+
+### Pricing & Cost Analysis
+- **Live Azure pricing** — fetches real-time rates from the [Azure Retail Prices API](https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices) with intelligent fallback
+- **5 pricing tiers compared** — PAYGO, PTU On-Demand, PTU Monthly Reserved, PTU 1-Year Reserved, and Spillover (hybrid) model
+- **Priority Processing (GA)** — new pay-per-token tier with SLA-backed latency guarantees
+- **Deployment-aware pricing** — Global, Data Zone, and Regional deployments with correct per-deployment rates
+
+### Models & Usage
+- **17 PTU-supported models** — GPT-5.4, GPT-5.3 Codex, GPT-5.2, GPT-5.2 Codex, GPT-5.1, GPT-5.1 Codex, GPT-5, GPT-5 Mini, GPT-4.1, GPT-4.1 Mini, GPT-4.1 Nano, GPT-4o, GPT-4o Mini, o3, o4-mini, o1, o3-mini
+- **Two input methods** — KQL/TPM data from Azure Log Analytics (Method A) or direct monthly token counts (Method B)
+- **Spillover strategy** — reserve base PTUs for average usage, let burst traffic spill over to PAYGO
+
+### Smart Analysis
+- **Context-aware recommendations** — PAYGO, Full PTU, or Spillover based on utilization rate and cost comparison
+- **Break-even analysis** — shows when PTU becomes cost-effective vs PAYGO
+- **Burst pattern detection** — identifies usage spikes and sizing implications
+- **Interactive cost comparison chart** with all tiers visualized
+
+### User Experience
+- **Guided Quick Tour** — 6-step interactive walkthrough with sample data
+- **Tabbed results** — Cost Analysis, Usage Patterns, and Advanced tabs
+- **Sticky executive summary** — recommendation, savings, PTUs, and utilization always visible
+- **Export** — download analysis as CSV or copy results as JSON
+- **Built-in KQL query** — ready-to-use Log Analytics query for gathering usage data
 
 ---
 
-## 🏁 Quick Start
+## 🏗️ How Pricing Works
 
-### Prerequisites
-- Node.js 18+
-- npm
-- GitHub & Vercel accounts (for deployment)
+The calculator uses a **4-tier pricing priority system**:
 
-### Local Development
-```bash
-git clone https://github.com/ricmmartins/azureptucalc.git
-cd azureptucalc
-npm install
-npm run dev
-# Visit http://localhost:5173
-```
+1. **Custom Override** — user-entered rates (for enterprise/negotiated pricing)
+2. **Live Azure API** — real-time from Azure Retail Prices API via a Vercel serverless proxy (`api/azure-pricing.js`)
+3. **Official Hardcoded** — curated rates from Microsoft documentation
+4. **Fallback** — conservative estimates when all else fails
 
-### Deploy to Vercel (Recommended)
-1. Fork or clone this repo
-2. Push to your GitHub
-3. Go to [vercel.com](https://vercel.com), import your repo, and click **Deploy**
-4. Or use Vercel CLI:
-   ```bash
-   npm install -g vercel
-   vercel --prod
-   ```
+Live pricing is **cached for 3 hours** and includes:
+- PTU hourly on-demand rates per deployment type
+- PTU reservation prices (1-Month and 1-Year terms)
+- PAYGO per-token rates (input/output) per model and deployment
+
+### Azure PTU Reservation Tiers
+
+Azure offers **two** PTU reservation options (there is no 3-year PTU reservation):
+
+| Reservation | Discount vs On-Demand | Commitment |
+|---|---|---|
+| Monthly (1-Month) | ~64% off | No long-term commitment |
+| 1-Year | ~70% off | 1-year commitment |
 
 ---
 
-## 📋 Usage Guide
+## 📊 KQL Query for Usage Data
 
-### 1. Input Your Usage Data
-- **Region:** Select your Azure region
-- **Model:** Choose from all supported OpenAI models
-- **Deployment Type:** Global, Data Zone, or Regional
-- **Usage Data:**
-  - **Average TPM:** Typical tokens per minute
-  - **P99 TPM:** Peak (99th percentile) tokens per minute
-  - **Monthly Minutes:** How many minutes per month you use the service
-  - **Manual PTU Override:** (Optional) Set a specific PTU amount
-
-### 2. Analyze Results
-- **Cost Comparison:** See PAYGO, PTU, and hybrid costs
-- **Break-even Analysis:** When does PTU become cheaper?
-- **Utilization Metrics:** How efficiently you’d use PTUs
-- **Savings Opportunities:** Potential cost reductions
-
-### 3. Advanced Features
-- **Custom Pricing:** Enter your own rates for enterprise scenarios
-- **Export:** Download analysis as CSV or JSON
-- **Regional Pricing:** 30+ Azure regions supported
-
----
-
-## 🛠️ Deployment & Configuration
-
-### Vercel Settings
-The included `vercel.json` is pre-configured for Vite:
-```json
-{
-  "framework": "vite",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "installCommand": "npm install",
-  "devCommand": "npm run dev",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
-```
-
-### Environment Variables (Optional)
-Set in Vercel dashboard for custom API endpoints or branding:
-```
-VITE_AZURE_PRICING_API=https://prices.azure.com/api/retail/prices
-VITE_APP_TITLE=Azure OpenAI PTU Calculator
-VITE_CACHE_DURATION=10800000
-```
-
----
-
-## 🧑‍💻 For Contributors
-
-- **Code:** React 18, Vite, Tailwind CSS
-- **Linting:** ESLint, Prettier
-- **Testing:** Vitest (unit), Playwright (E2E)
-- **Infra as Code:** Bicep, Docker (see `/deployment`)
-
----
-
-## 🆘 Troubleshooting & FAQ
-
-**Build fails?**
-- Clear cache: `rm -rf node_modules package-lock.json && npm install`
-- Ensure Node.js 18+ is installed
-
-**404 on refresh?**
-- Make sure `vercel.json` has the rewrite rule above
-
-**Environment variables not working?**
-- Must start with `VITE_` and be set in Vercel dashboard
-
-**Calculations seem off?**
-- Double-check your TPM input (tokens per minute, not requests)
-- Compare with Azure Portal billing data
-
-**Need help?**
-- [Open an issue](https://github.com/ricmmartins/azureptucalc/issues)
-- [Vercel Docs](https://vercel.com/docs)
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details. By contributing, you agree to the terms of the MIT license.
-
----
-
-## 🤝 Welcome First-Time Contributors!
-
-We encourage new contributors! Look for issues labeled <strong>good first issue</strong>—these are great starting points. If you have questions, open an issue or join the discussion. See the <strong>CONTRIBUTING.md</strong> for more tips.
-
----
-
-## 🙏 Acknowledgements
-
-- Azure OpenAI Service team for official pricing data
-- All contributors and testers
-
----
-
-**Happy cost-optimizing!**
-- **Cost Comparison**: PAYGO vs PTU vs Hybrid pricing
-- **Burst Pattern Analysis**: Understanding your usage patterns
-- **Smart Recommendations**: Data-driven PTU sizing advice
-- **Savings Calculations**: 1-year and 3-year reservation benefits
-
-## 🏗️ Architecture
-
-### Frontend Stack
-- **React 18**: Modern React with hooks and functional components
-- **Vite**: Lightning-fast build tool and development server
-- **Tailwind CSS**: Utility-first CSS framework for rapid styling
-- **Shadcn/UI**: High-quality, accessible component library
-- **Lucide Icons**: Beautiful, consistent icon set
-
-### Pricing System
-- **Dynamic API Integration**: Real-time pricing from Azure Retail Prices API
-- **Intelligent Fallback**: Robust static pricing when API is unavailable
-- **Smart Caching**: 3-hour cache with automatic refresh
-- **Multi-Strategy Queries**: Multiple API query approaches for maximum coverage
-
-### Data Processing
-- **Burst Pattern Detection**: Advanced algorithms for usage pattern analysis
-- **Cost Optimization Logic**: Multi-factor recommendation engine
-- **Real-time Calculations**: Instant updates as parameters change
-- **Validation Systems**: Input validation and error handling
-
-## 🔧 Configuration
-
-### Environment Variables
-```bash
-# Optional: Custom API endpoints
-VITE_AZURE_PRICING_API=https://prices.azure.com/api/retail/prices
-VITE_CACHE_DURATION=10800000  # 3 hours in milliseconds
-```
-
-### Pricing Configuration
-The application includes comprehensive fallback pricing for all 13 PTU models:
-- GPT-5 series (GPT-5, GPT-5 Mini, GPT-5 Nano, GPT-5 Chat)
-- GPT-4 series (GPT-4o, GPT-4o Mini, GPT-4, GPT-4 Turbo)
-- GPT-3.5 Turbo
-- Embedding models (Ada 002, 3 Large, 3 Small)
-- Whisper
-
-## 📊 KQL Query
-
-Use this query in Azure Log Analytics to get your usage data:
+Use this query in Azure Monitor Log Analytics to get your TPM data:
 
 ```kql
-// Burst-Aware Azure OpenAI PTU Sizing Analysis
-// Run this query in Azure Monitor Log Analytics for accurate capacity planning
-
-let window = 1m;           // granularity for burst detection
-let p = 0.99;             // percentile for burst sizing
+let window = 1m;
+let p = 0.99;
 AzureMetrics
 | where ResourceProvider == "MICROSOFT.COGNITIVESERVICES"
 | where MetricName in ("ProcessedPromptTokens", "ProcessedCompletionTokens")
@@ -223,89 +88,85 @@ AzureMetrics
     AvgPTU = ceiling(AvgTPM / 50000.0),
     P99PTU = ceiling(P99TPM / 50000.0),
     MaxPTU = ceiling(MaxTPM / 50000.0)
-| extend RecommendedPTU = max_of(AvgPTU, P99PTU)  // higher value covers bursts
+| extend RecommendedPTU = max_of(AvgPTU, P99PTU)
 | project AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU
 ```
 
-## 🎯 Business Value
+> **Note:** The `50000.0` divisor is a generic placeholder. Refer to the [official TPM-per-PTU table](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models) for the exact value for your model (e.g., GPT-4.1 = 3,000 TPM/PTU, GPT-4o = 2,500 TPM/PTU).
 
-### Cost Optimization
-- **Accurate Sizing**: Use real usage data instead of guesswork
-- **Hybrid Intelligence**: Optimal base PTU + spillover calculations
-- **Reservation Planning**: 1-year vs 3-year commitment analysis
-- **Risk Reduction**: Avoid over-provisioning for bursty workloads
+---
 
-### Decision Support
-- **Data-Driven**: Recommendations based on actual Azure usage patterns
-- **Scenario Analysis**: Compare multiple pricing approaches
-- **Burst Handling**: Understand and plan for traffic spikes
-- **ROI Calculations**: Clear financial impact of different approaches
+## 🏁 Quick Start
 
-### Enterprise Ready
-- **Professional Interface**: Clean, intuitive design for business users
-- **Comprehensive Documentation**: Built-in explanations and guidance
-- **Scalable Architecture**: Handles enterprise-scale usage analysis
-- **Reliable Pricing**: Robust API integration with intelligent fallbacks
+### Prerequisites
+- Node.js 18+
+- npm
 
-## 🚀 Deployment Options
+### Local Development
+```bash
+git clone https://github.com/ricmmartins/azureptucalc.git
+cd azureptucalc
+npm install
+npm run dev
+# Visit http://localhost:5173
+```
 
-### Option 1: Vercel (Recommended)
-
-#### Method 1: GitHub Integration
-1. **Push to GitHub**
+### Deploy to Vercel (Recommended)
+1. Fork or clone this repo
+2. Go to [vercel.com](https://vercel.com), import your repo, and click **Deploy**
+3. Or use Vercel CLI:
    ```bash
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin https://github.com/ricmmartins/azureptucalc.git
-   git push -u origin main
+   npm install -g vercel
+   vercel --prod
    ```
 
-2. **Deploy on Vercel**
-   - Go to [vercel.com](https://vercel.com)
-   - Click "New Project"
-   - Import your GitHub repository
-   - Vercel will automatically detect the Vite configuration
-   - Click "Deploy"
+> The included `vercel.json` is pre-configured. The `api/azure-pricing.js` serverless function handles Azure Retail Prices API proxying to avoid CORS issues.
 
-#### Method 2: Vercel CLI
-```bash
-# Install Vercel CLI
-npm install -g vercel
+---
 
-# Login to Vercel
-vercel login
+## 📁 Project Structure
 
-# Deploy
-vercel --prod
+```
+azureptucalc/
+├── api/
+│   └── azure-pricing.js          # Vercel serverless: Azure Retail Prices API proxy
+├── src/
+│   ├── components/
+│   │   ├── ui/                   # Shadcn/UI components
+│   │   ├── EnhancedResults.jsx   # Executive summary & cost breakdown
+│   │   └── GuidedTour.jsx        # Interactive quick tour
+│   ├── enhanced_pricing_service.js   # Pricing API client with cache & fallback
+│   ├── officialPTUPricing.js         # Official PTU rates & reservation overrides
+│   ├── official_token_pricing.js     # PAYGO & Priority Processing rates
+│   ├── enhanced_model_config.json    # 17 PTU model definitions
+│   ├── ptu_supported_models.json     # Model support matrix
+│   ├── external_pricing_config.json  # Fallback pricing config
+│   ├── ExternalPricingService.js     # Config-based pricing service
+│   ├── App.jsx                       # Main application
+│   └── main.jsx                      # Entry point
+├── deployment/                   # Docker, Bicep, Azure Static Web Apps configs
+├── docs/                         # User guide
+├── vercel.json                   # Vercel deployment config
+└── package.json
 ```
 
-#### Method 3: Manual Upload
-```bash
-# Build the project
-npm run build
+---
 
-# Go to vercel.com and drag/drop the dist folder
+## 🛠️ Configuration
+
+### Environment Variables (Optional)
+Set in Vercel dashboard:
+```
+VITE_AZURE_PRICING_API=https://prices.azure.com/api/retail/prices
+VITE_CACHE_DURATION=10800000
 ```
 
-### Option 2: Static Website Hosting
-Deploy to any static hosting service (Netlify, GitHub Pages):
+---
 
+## 🚀 Alternative Deployment Options
+
+### Azure Static Web Apps
 ```bash
-# Build the application
-npm run build
-
-# Deploy the dist/ folder to your hosting service
-```
-
-### Option 3: Azure Static Web Apps
-Perfect for Azure-native deployment:
-
-```bash
-# Install Azure CLI
-az login
-
-# Create Static Web App
 az staticwebapp create \
   --name azureptucalc \
   --resource-group rg-azureptucalc \
@@ -316,9 +177,7 @@ az staticwebapp create \
   --output-location "dist"
 ```
 
-### Option 3: Azure Container Apps
-For containerized deployment:
-
+### Docker / Azure Container Apps
 ```dockerfile
 FROM node:18-alpine AS builder
 WORKDIR /app
@@ -333,110 +192,61 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-## 📁 Project Structure
-
-```
-azure-openai-ptu-estimator/
-├── public/                 # Static assets
-├── src/
-│   ├── components/         # React components
-│   │   └── ui/            # Shadcn/UI components
-│   ├── enhanced_pricing_service.js  # Pricing API service
-│   ├── ptu_supported_models.json   # PTU model definitions
-│   ├── App.jsx            # Main application component
-│   ├── App.css            # Application styles
-│   └── main.jsx           # Application entry point
-├── deployment/            # Deployment configurations
-│   ├── azure-static-web-apps.yml
-│   ├── dockerfile
-│   └── bicep/            # Infrastructure as Code
-├── docs/                 # Additional documentation
-├── package.json          # Dependencies and scripts
-├── vite.config.js        # Vite configuration
-└── README.md            # This file
-```
+---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details. Here's how you can help:
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-### 🐛 **Bug Reports**
-- Use the issue templates
-- Include screenshots and browser info
-- Provide KQL query examples if relevant
-
-### 💡 **Feature Requests**
-- Check existing issues first
-- Describe the business value
-- Include mockups if possible
-
-### 🔧 **Code Contributions**
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-
-### 📝 **Documentation**
-- Improve README clarity
-- Add more use case examples
-- Enhance KQL query documentation
-
-#### **How to Find the Right throughput_per_ptu (TPM per PTU) for Each Model**
-
-The correct `throughput_per_ptu` (tokens per minute per PTU) for each model is published by Microsoft in their official documentation:
-
-👉 [Latest Azure OpenAI Models – Provisioned Throughput Table](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models)
-
-For example:
-- **GPT-4.1:** 3,000 tokens per minute per PTU (each output token counts as 4 input tokens for quota)
-- **GPT-4.1 Mini:** 37,000 tokens per minute per PTU
-
-The 50,000 value in the KQL step is a generic placeholder. Always refer to the official table for the exact value for your selected model. Adjust the KQL and calculator input accordingly.
-
-**Steps:**
-1. Go to the link above.
-2. Find your model in the “Latest Azure OpenAI models” table.
-3. Use the “Tokens per minute per PTU” column for your calculations.
-
-If you have questions or spot discrepancies, please open an issue or suggestion!
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-### Documentation
-- [Azure OpenAI Documentation](https://docs.microsoft.com/en-us/azure/cognitive-services/openai/)
-- [PTU Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/provisioned-throughput)
-- [KQL Reference](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/)
-
-### Community
-- [GitHub Issues](https://github.com/ricmmartins/azureptucalc/issues)
-- [GitHub Discussions](https://github.com/ricmmartins/azureptucalc/discussions)
-
-## ❓ FAQ
-
-### **Q: How accurate are the pricing calculations?**
-A: The calculator uses official Azure Retail Prices API with intelligent fallbacks. Pricing is updated every 3 hours and includes all current PTU models and regions.
-
-### **Q: Can I use this without KQL data?**
-A: Yes! The calculator includes estimation guides for users without Azure Monitor access. You can input estimated TPM values based on your usage patterns.
-
-### **Q: What's the difference between deployment types?**
-A: Global deployments offer multi-region failover but cost 20-40% more. Regional deployments provide lowest latency. Data Zone deployments ensure compliance within EU/US boundaries.
-
-### **Q: How does the hybrid model work?**
-A: Reserve base PTUs for average usage, let burst traffic "spill over" to PAYGO. Ideal for predictable baselines with occasional spikes (2-5x average).
-
-### **Q: Is my data secure?**
-A: All calculations happen in your browser. No usage data is sent to external servers. The app only fetches public Azure pricing information.
+- 🐛 **Bug Reports** — include screenshots and browser info
+- 💡 **Feature Requests** — describe the business value
+- 🔧 **Code** — fork → branch → PR
+- 📝 **Docs** — improve clarity, add examples
 
 ---
 
-**Made with ❤️ for the Azure community**
+## ❓ FAQ
 
-*Optimize your Azure OpenAI costs with confidence using real data and intelligent analysis.*
+**How accurate are the pricing calculations?**
+The calculator fetches live rates from the Azure Retail Prices API. Fallback data is regularly updated against official documentation. Always verify with the [Azure pricing page](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/) before making purchasing decisions.
 
+**Can I use this without KQL data?**
+Yes! Use Method B (token counts) to enter your monthly input/output token consumption directly, or use Method A with estimated TPM values.
+
+**What deployment types are supported?**
+Global (multi-region, lowest cost), Data Zone (EU/US data residency), and Regional (single-region, lowest latency). Each has different PTU pricing.
+
+**How does the spillover model work?**
+Reserve base PTUs for average usage, let burst traffic spill over to PAYGO. Ideal for predictable baselines with occasional spikes (2–5× average).
+
+**What is Priority Processing?**
+A GA pay-per-token option with SLA-backed low-latency guarantees. Available for select models on Global and Data Zone deployments. Pricing varies by model.
+
+**Is my data secure?**
+All calculations happen in your browser. No usage data is sent to external servers. The app only fetches public Azure pricing information.
+
+---
+
+## 🆘 Support
+
+- [GitHub Issues](https://github.com/ricmmartins/azureptucalc/issues)
+- [Azure OpenAI Documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
+- [PTU Provisioned Throughput Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/provisioned-throughput)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## 🙏 Acknowledgements
+
+- Azure OpenAI Service team for official pricing data
+- All contributors and testers
+- The Azure community ❤️
+
+---
+
+**Made with ❤️ for the Azure community** — [ptucalc.com](https://www.ptucalc.com)
