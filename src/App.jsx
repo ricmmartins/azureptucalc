@@ -875,16 +875,15 @@ Check browser console for detailed error information.`);
     // PTU cost effectiveness
     const ptuCostEffectiveness = monthlyPaygoCost > 0 ? monthlyPtuCost / monthlyPaygoCost : 0;
     
-  // FIXED: Dynamic reservation savings calculations (align with official pricing)
+  // Reservation savings vs on-demand hourly
+  const monthlySavingsVsOnDemand = Math.max(0, monthlyPtuCost - monthlyPtuReservationCost);
+  const monthlyReservationDiscount = monthlyPtuCost > 0 ? Math.round(((monthlyPtuCost - monthlyPtuReservationCost) / monthlyPtuCost) * 100) : 0;
   const oneYearSavings = Math.max(0, monthlyPtuCost - yearlyReservationMonthly);
-  const oneYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - yearlyReservationMonthly) / monthlyPtuCost) * 100 : 0;
-  // 3-year reservation: 45% off on-demand hourly
-  const threeYearMonthly = monthlyPtuCost * 0.55;
-  const threeYearSavings = Math.max(0, monthlyPtuCost - threeYearMonthly);
-  const threeYearSavingsPercent = monthlyPtuCost > 0 ? ((monthlyPtuCost - threeYearMonthly) / monthlyPtuCost) * 100 : 0;
+  const yearlyReservationDiscount = monthlyPtuCost > 0 ? Math.round(((monthlyPtuCost - yearlyReservationMonthly) / monthlyPtuCost) * 100) : 0;
+  const oneYearSavingsPercent = yearlyReservationDiscount;
     
-    // FIXED: Dynamic monthly savings calculation
-    const monthlySavings = Math.max(0, monthlyPaygoCost - monthlyPtuReservationCost);
+    // FIXED: Dynamic monthly savings calculation (vs PAYGO)
+    const monthlySavings = Math.max(0, monthlyPaygoCost - yearlyReservationMonthly);
     
     // Spillover model calculations
     const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
@@ -954,12 +953,10 @@ Check browser console for detailed error information.`);
       { name: 'PAYGO', cost: monthlyPaygoCost },
       ...(isPrioritySupported ? [{ name: 'Priority', cost: monthlyPriorityCost }] : []),
       { name: 'PTU (On-Demand)', cost: monthlyPtuCost },
-      { name: 'PTU (1 Year)', cost: monthlyPtuReservationCost },
-      { name: 'PTU (3 Year)', cost: monthlyPtuCost * 0.55 },
-      // Use Azure's official terminology: "Spillover" instead of "Hybrid"
+      { name: 'PTU (Monthly)', cost: monthlyPtuReservationCost },
+      { name: 'PTU (1-Year)', cost: yearlyReservationMonthly },
       { name: 'Spillover', cost: hybridTotalCost },
-      { name: 'Spillover (1Y)', cost: hybridBaseCost * 0.75 + hybridOverflowCost },
-      { name: 'Spillover (3Y)', cost: hybridBaseCost * 0.6 + hybridOverflowCost }
+      { name: 'Spillover (Res)', cost: hybridBasePTU * (currentPricing.ptu_yearly / 12) + hybridOverflowCost }
     ];
     
     setCalculations({
@@ -979,17 +976,17 @@ Check browser console for detailed error information.`);
       monthlyPtuHourlyCost,
       monthlyPtuReservationCost,
       yearlyReservationMonthly,
-      threeYearMonthly,
+      monthlySavingsVsOnDemand,
+      monthlyReservationDiscount,
+      yearlyReservationDiscount,
       utilizationRate,
       // Task 6: Break-even analysis
       breakEvenAnalysis,
       costPer1MTokens,
       ptuCostEffectiveness,
       oneYearSavings,
-      threeYearSavings,
       oneYearSavingsPercent,
-      threeYearSavingsPercent,
-      monthlySavings, // FIXED: Dynamic monthly savings
+      monthlySavings,
       burstFrequency, // FIXED: Dynamic burst frequency
       peakEfficiency, // FIXED: Dynamic peak efficiency
       recommendation,
@@ -2661,18 +2658,18 @@ AzureMetrics
               <Card className="bg-green-50 border-green-300">
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium text-green-800">PTU (1-Year)</h3>
+                    <h3 className="font-medium text-green-800">PTU (Monthly)</h3>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      25% off
+                      {calculations.monthlyReservationDiscount || '64'}% off
                     </Badge>
                   </div>
                   <p className="text-xs text-green-600 mb-2">
-                    Save ${calculations.oneYearSavings?.toFixed(2) || '0.00'}/mo
+                    Save ${calculations.monthlySavingsVsOnDemand?.toFixed(2) || '0.00'}/mo
                     <span className="block text-xs text-green-700">vs on-demand hourly</span>
                   </p>
                   <div className="text-right">
                     <span className="text-xs text-green-600">
-                      1-year commitment
+                      1-month reservation
                     </span>
                     <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00'}</div>
                   </div>
@@ -2682,18 +2679,18 @@ AzureMetrics
               <Card className="bg-green-100 border-green-300">
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium text-green-800">PTU (3-Year)</h3>
+                    <h3 className="font-medium text-green-800">PTU (1-Year)</h3>
                     <Badge variant="secondary" className="bg-green-200 text-green-900">
-                      45% off
+                      {calculations.yearlyReservationDiscount || '70'}% off
                     </Badge>
                   </div>
                   <p className="text-xs text-green-700 mb-2">
-                    Save ${calculations.threeYearSavings?.toFixed(2) || '0.00'}/mo
+                    Save ${calculations.oneYearSavings?.toFixed(2) || '0.00'}/mo
                     <span className="block text-xs text-green-600">vs on-demand hourly</span>
                   </p>
                   <div className="text-right">
-                    <span className="text-xs text-green-700">3-year commitment</span>
-                    <div className="text-2xl font-bold text-green-800">${(calculations.threeYearMonthly?.toFixed(2)) || '0.00'}</div>
+                    <span className="text-xs text-green-700">1-year commitment</span>
+                    <div className="text-2xl font-bold text-green-800">${calculations.yearlyReservationMonthly?.toFixed(2) || '0.00'}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -2956,19 +2953,19 @@ AzureMetrics
                   <TrendingUp className="h-5 w-5 text-green-600" />
                   <CardTitle className="text-green-800">Reservation Savings Opportunity</CardTitle>
                 </div>
-                <CardDescription className="text-green-700">Potential savings with PTU reservations vs on-demand pricing</CardDescription>
+                <CardDescription className="text-green-700">Potential savings with PTU reservations vs on-demand hourly pricing</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="bg-green-100 border-green-300">
                     <CardContent className="p-4 text-center">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-medium text-green-800">1-Year Reservation</h3>
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">25% off</Badge>
+                        <h3 className="font-medium text-green-800">Monthly Reservation</h3>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">{calculations.monthlyReservationDiscount || '64'}% off</Badge>
                       </div>
-                      <p className="text-xs text-green-600 mb-2">Save ${calculations.oneYearSavings?.toFixed(2) || '0.00'}/mo</p>
+                      <p className="text-xs text-green-600 mb-2">Save ${calculations.monthlySavingsVsOnDemand?.toFixed(2) || '0.00'}/mo</p>
                       <div className="text-right">
-                        <span className="text-xs text-green-600">{calculations.oneYearSavingsPercent?.toFixed(1) || '0.0'}% savings</span>
+                        <span className="text-xs text-green-600">No long-term commitment</span>
                         <div className="text-2xl font-bold text-green-600">${calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00'}/mo</div>
                       </div>
                     </CardContent>
@@ -2977,13 +2974,13 @@ AzureMetrics
                   <Card className="bg-green-100 border-green-300">
                     <CardContent className="p-4 text-center">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-medium text-green-800">3-Year Reservation</h3>
-                        <Badge variant="secondary" className="bg-green-200 text-green-900">45% off</Badge>
+                        <h3 className="font-medium text-green-800">1-Year Reservation</h3>
+                        <Badge variant="secondary" className="bg-green-200 text-green-900">{calculations.yearlyReservationDiscount || '70'}% off</Badge>
                       </div>
-                      <p className="text-xs text-green-700 mb-2">Save ${calculations.threeYearSavings?.toFixed(2) || '0.00'}/mo</p>
+                      <p className="text-xs text-green-700 mb-2">Save ${calculations.oneYearSavings?.toFixed(2) || '0.00'}/mo</p>
                       <div className="text-right">
-                        <span className="text-xs text-green-700">{calculations.threeYearSavingsPercent?.toFixed(1) || '0.0'}% savings</span>
-                        <div className="text-2xl font-bold text-green-800">${(calculations.threeYearMonthly?.toFixed(2)) || '0.00'}/mo</div>
+                        <span className="text-xs text-green-700">{calculations.oneYearSavingsPercent?.toFixed(0) || '0'}% savings vs on-demand</span>
+                        <div className="text-2xl font-bold text-green-800">${calculations.yearlyReservationMonthly?.toFixed(2) || '0.00'}/mo</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -2991,8 +2988,8 @@ AzureMetrics
 
                 <Card className="mt-4 bg-gradient-to-r from-green-100 to-blue-100 border-green-300">
                   <CardContent className="p-4 text-center">
-                    <h3 className="font-medium text-green-800 mb-2">3-Year Total Savings</h3>
-                    <div className="text-3xl font-bold text-green-600">${((calculations.threeYearSavings || 0) * 36).toFixed(2)}</div>
+                    <h3 className="font-medium text-green-800 mb-2">1-Year Total Savings vs On-Demand</h3>
+                    <div className="text-3xl font-bold text-green-600">${((calculations.oneYearSavings || 0) * 12).toFixed(2)}</div>
                     <p className="text-sm text-green-700 mt-1">Over full term</p>
                   </CardContent>
                 </Card>
