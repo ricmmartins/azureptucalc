@@ -36,7 +36,7 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
     {
       id: 'usage-data',
       title: 'Step 2: Input Your Usage Data',
-      description: 'Enter your usage patterns. You can use data from Azure Log Analytics, Portal metrics, or manual estimates.',
+      description: 'Enter your usage patterns. Use KQL data from Azure Log Analytics (Method A) or enter monthly token counts directly (Method B).',
       target: '.usage-inputs-section',
       position: 'bottom',
       icon: <Target className="h-4 w-4" />,

@@ -117,7 +117,7 @@ const WelcomeModal = ({ isOpen, onClose, onStartTour }) => {
                     <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                     <div>
                       <p className="font-medium">Calculates Costs</p>
-                      <p className="text-sm text-gray-600">Compare PAYGO, PTU, and hybrid scenarios</p>
+                      <p className="text-sm text-gray-600">Compare PAYGO, PTU, hybrid, and Priority Processing</p>
                     </div>
                   </div>
                 </div>
@@ -146,7 +146,7 @@ const WelcomeModal = ({ isOpen, onClose, onStartTour }) => {
             <CardHeader>
               <CardTitle className="text-blue-700">Ready to Get Started?</CardTitle>
               <CardDescription>
-                You can input data in three ways: Azure Log Analytics (most accurate), Azure Portal metrics, or manual estimation for planning.
+                You can input data two ways: KQL queries from Azure Log Analytics (most accurate) or direct monthly token counts from your application.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -176,7 +176,7 @@ const WelcomeModal = ({ isOpen, onClose, onStartTour }) => {
               <div>
                 <p className="font-medium text-yellow-800 mb-1">💡 Quick Tips</p>
                 <ul className="text-sm text-yellow-700 space-y-1">
-                  <li>• Use 30+ days of data for most accurate analysis</li>
+                  <li>• Use 7+ days of data for most accurate analysis</li>
                   <li>• Look for the green "savings" indicators in results</li>
                   <li>• Export reports for sharing with stakeholders</li>
                   <li>• Hover over terms for explanations throughout the tool</li>
