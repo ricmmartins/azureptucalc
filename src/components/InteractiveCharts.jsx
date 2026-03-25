@@ -19,65 +19,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
-import { TrendingUp, TrendingDown, DollarSign, Zap, Clock, BarChart3, Activity, Target } from 'lucide-react';
-
-// Memoized chart components for better performance
-const CostBarChart = memo(({ data, onBarClick }) => (
-  <ResponsiveContainer width="100%" height={350}>
-    <BarChart data={data} onClick={onBarClick}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="name" />
-      <YAxis />
-      <Tooltip 
-        formatter={(value) => [`$${value.toLocaleString()}`, 'Cost']}
-        labelStyle={{ color: '#374151' }}
-      />
-      <Bar 
-        dataKey="cost" 
-        radius={[4, 4, 0, 0]}
-        fill="#3b82f6"
-      />
-    </BarChart>
-  </ResponsiveContainer>
-));
-
-const UtilizationLineChart = memo(({ data }) => (
-  <ResponsiveContainer width="100%" height={350}>
-    <LineChart data={data}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="time" />
-      <YAxis />
-      <Tooltip />
-      <Line 
-        type="monotone" 
-        dataKey="utilization" 
-        stroke="#10b981" 
-        strokeWidth={2}
-        dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-      />
-    </LineChart>
-  </ResponsiveContainer>
-));
-
-const ProjectionAreaChart = memo(({ data }) => (
-  <ResponsiveContainer width="100%" height={350}>
-    <AreaChart data={data}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="month" />
-      <YAxis />
-      <Tooltip 
-        formatter={(value) => [`$${value.toLocaleString()}`, 'Cost']}
-      />
-      <Area 
-        type="monotone" 
-        dataKey="cost" 
-        stroke="#8b5cf6" 
-        fill="#8b5cf6" 
-        fillOpacity={0.3}
-      />
-    </AreaChart>
-  </ResponsiveContainer>
-));
+import { TrendingUp, DollarSign, Zap, BarChart3, Activity, Target, Clock } from 'lucide-react';
 
 const InteractiveCharts = ({ 
   costData, 
@@ -88,135 +30,103 @@ const InteractiveCharts = ({
   calculations
 }) => {
   const [selectedTab, setSelectedTab] = useState('costs');
-  // No internal state needed - all data comes from props
 
-  // Enhanced cost comparison data
+  // Cost comparison bar chart data with per-bar colors
   const costComparisonData = useMemo(() => {
     if (!costData) return [];
-    
     return [
-      {
-        name: 'PAYGO',
-        cost: costData.paygo || 0,
-        fill: '#3b82f6'
-      },
-      {
-        name: 'PTU Hourly',
-        cost: costData.ptuHourly || 0,
-        fill: '#f59e0b'
-      },
-      {
-        name: 'PTU Monthly',
-        cost: costData.ptuMonthly || 0,
-        fill: '#10b981'
-      },
-      {
-        name: 'PTU Yearly',
-        cost: costData.ptuYearly || 0,
-        fill: '#8b5cf6'
-      }
+      { name: 'PAYGO', cost: costData.paygo || 0, fill: '#3b82f6' },
+      { name: 'PTU On-Demand', cost: costData.ptuHourly || 0, fill: '#f59e0b' },
+      { name: 'PTU Monthly Res.', cost: costData.ptuMonthly || 0, fill: '#10b981' },
+      { name: 'PTU 1-Year Res.', cost: costData.ptuYearly || 0, fill: '#8b5cf6' }
     ];
   }, [costData]);
 
-  // 24-hour utilization pattern with realistic business hours
+  // 24-hour utilization pattern scaled to actual user utilization
   const utilizationPattern = useMemo(() => {
-    const hours = Array.from({ length: 24 }, (_, i) => {
-      const hour = i;
-      let utilization = 0;
-      
-      // Realistic business hours pattern
-      if (hour >= 6 && hour <= 17) {
-        // Peak business hours 9AM-5PM
-        if (hour >= 9 && hour <= 17) {
-          utilization = 0.08 + Math.random() * 0.02; // 8-10%
-        } else {
-          utilization = 0.04 + Math.random() * 0.01; // 4-5%
-        }
+    const baseUtil = (calculations?.utilizationRate || 0) * 100;
+    const burstRatio = calculations?.burstRatio || 1;
+
+    return Array.from({ length: 24 }, (_, hour) => {
+      let scale;
+      if (hour >= 9 && hour <= 17) {
+        // Peak business hours: full utilization with burst spikes
+        scale = 0.8 + (hour === 12 || hour === 14 ? 0.2 * burstRatio / 2 : 0.1);
+      } else if (hour >= 6 && hour <= 20) {
+        // Shoulder hours: moderate usage
+        scale = 0.3 + 0.1 * Math.sin((hour - 6) * Math.PI / 14);
       } else {
-        utilization = 0.001 + Math.random() * 0.005; // Very low at night
+        // Night: minimal
+        scale = 0.05;
       }
-      
       return {
         hour: `${hour}:00`,
-        utilization: Number((utilization * 100).toFixed(3)),
-        hourNum: hour
+        utilization: Number((baseUtil * Math.min(scale, 1.5)).toFixed(1))
       };
     });
-    
-    return hours;
-  }, []);
+  }, [calculations]);
 
-  // 12-month cost projection with 1% monthly growth
+  // 12-month cost projection: PAYGO grows, PTU reservations are fixed
   const costProjections = useMemo(() => {
     const basePaygo = costData?.paygo || 0;
-    const basePtuMonthly = costData?.ptuMonthly || 0;
-    const basePtuYearly = costData?.ptuYearly || 0;
-    const monthlyGrowthRate = 0.01; // 1% monthly growth
-    
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    
-    return months.map((month, index) => {
-      const growthMultiplier = Math.pow(1 + monthlyGrowthRate, index);
-      
+    const ptuMonthly = costData?.ptuMonthly || 0;
+    const ptuYearly = costData?.ptuYearly || 0;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    return months.map((month, i) => {
+      const growth = Math.pow(1.01, i); // 1% monthly PAYGO growth
       return {
         month,
-        'PAYGO': Number((basePaygo * growthMultiplier).toFixed(0)),
-        'PTU Monthly': Number((basePtuMonthly * growthMultiplier).toFixed(0)),
-        'PTU Yearly': Number((basePtuYearly * growthMultiplier).toFixed(0)),
-        'Projected': Number((basePtuMonthly * growthMultiplier * 1.05).toFixed(0)) // 5% buffer
+        'PAYGO': Number((basePaygo * growth).toFixed(0)),
+        'PTU Monthly Res.': ptuMonthly, // fixed commitment
+        'PTU 1-Year Res.': ptuYearly    // fixed commitment
       };
     });
   }, [costData]);
 
-  // Usage pattern distribution (donut chart)
+  // Usage pattern donut chart
   const usagePatternData = useMemo(() => {
     const burstRatio = calculations?.burstRatio || 1.0;
     const peakRatio = calculations?.peakRatio || 1.0;
-    
-    let steadyUsage, burstPeriods, peakSpikes;
-    
+
+    let steady, burst, peak;
     if (peakRatio >= 5) {
-      // Very spiky pattern
-      steadyUsage = 10;
-      burstPeriods = 10;
-      peakSpikes = 80;
+      steady = 10; burst = 10; peak = 80;
+    } else if (peakRatio >= 3) {
+      steady = 20; burst = 25; peak = 55;
     } else if (peakRatio >= 2) {
-      // Moderately spiky
-      steadyUsage = 30;
-      burstPeriods = 25;
-      peakSpikes = 45;
+      steady = 30; burst = 30; peak = 40;
+    } else if (burstRatio >= 1.5) {
+      steady = 50; burst = 35; peak = 15;
     } else {
-      // Steady pattern
-      steadyUsage = 70;
-      burstPeriods = 20;
-      peakSpikes = 10;
+      steady = 70; burst = 20; peak = 10;
     }
-    
+
     return [
-      { name: 'Steady Usage', value: steadyUsage, fill: '#10b981' },
-      { name: 'Burst Periods', value: burstPeriods, fill: '#f59e0b' },
-      { name: 'Peak Spikes', value: peakSpikes, fill: '#ef4444' }
+      { name: 'Steady Usage', value: steady, fill: '#10b981' },
+      { name: 'Burst Periods', value: burst, fill: '#f59e0b' },
+      { name: 'Peak Spikes', value: peak, fill: '#ef4444' }
     ];
   }, [calculations]);
 
-  // Calculate key metrics
-  const keyMetrics = useMemo(() => {
-    const savingsAmount = (costData?.paygo || 0) - (costData?.ptuYearly || 0);
-    const potentialSavings = Math.abs(savingsAmount);
-    const isSavingsPositive = savingsAmount > 0;
-    const peakEfficiency = (calculations?.utilizationRate || 0) * 100;
-    const burstFrequency = calculations?.burstFrequency || 1.0;
-    
+  // Key metrics
+  const metrics = useMemo(() => {
+    const paygo = costData?.paygo || 0;
+    const bestPtu = costData?.ptuYearly || 0;
+    const diff = paygo - bestPtu;
     return {
-      potentialSavings,
-      isSavingsPositive,
-      peakEfficiency,
-      burstFrequency
+      savings: Math.abs(diff),
+      ptuWins: diff > 0,
+      savingsLabel: diff > 0 ? 'PTU Savings' : 'PAYGO Advantage',
+      utilization: (calculations?.utilizationRate || 0) * 100,
+      burstRatio: calculations?.burstRatio || 1.0,
+      peakRatio: calculations?.peakRatio || 1.0,
+      recommendation: calculations?.recommendation || 'PAYGO',
+      usagePattern: calculations?.usagePattern || 'Steady'
     };
   }, [costData, calculations]);
+
+  const formatCurrency = (v) => `$${v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
   return (
     <Card className="w-full">
@@ -226,7 +136,7 @@ const InteractiveCharts = ({
           <CardTitle>Interactive Analytics Dashboard</CardTitle>
         </div>
         <CardDescription>
-          Explore your Azure OpenAI usage patterns and cost projections with interactive visualizations
+          Visualizations derived from your actual usage data and cost calculations
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -250,209 +160,159 @@ const InteractiveCharts = ({
             </TabsTrigger>
           </TabsList>
 
-          {/* Costs Tab */}
+          {/* ── Costs Tab ── */}
           <TabsContent value="costs" className="space-y-6">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Interactive Cost Comparison</h3>
-                <div className="flex gap-2">
-                  <Badge variant="default" className="bg-blue-100 text-blue-800">
-                    Monthly Costs
-                  </Badge>
-                </div>
-              </div>
+              <h3 className="text-lg font-semibold mb-1">Monthly Cost Comparison</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Real time cost comparison based on your actual TPM inputs. Hover over bars for detailed breakdown and efficiency metrics.
+                Side-by-side monthly cost for each pricing tier based on your current usage.
               </p>
-              
+
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={costComparisonData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis tickFormatter={(value) => `$${value.toLocaleString()}`} />
-                  <Tooltip 
-                    formatter={(value) => [`$${value.toLocaleString()}`, 'Monthly Cost']}
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tickFormatter={(v) => `$${v.toLocaleString()}`} />
+                  <Tooltip
+                    formatter={(v) => [formatCurrency(v), 'Monthly Cost']}
                     labelStyle={{ color: '#374151' }}
                   />
-                  <Bar dataKey="cost" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cost" radius={[4, 4, 0, 0]}>
+                    {costComparisonData.map((entry, i) => (
+                      <Cell key={i} fill={entry.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
 
-              {/* Key insights below chart */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                  <Target className="h-5 w-5 text-green-600" />
-                  <div>
-                    <div className="text-sm font-medium text-green-800">PTU Yearly</div>
-                    <div className="text-xs text-green-600">1-year PTU commitment</div>
-                    <div className="text-sm font-bold text-green-800">
-                      {calculations?.recommendation === 'PTU' ? 'Recommended' : 'High Risk'}
-                    </div>
-                  </div>
-                </div>
                 <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  <Target className="h-5 w-5 text-blue-600" />
                   <div>
-                    <div className="text-sm font-medium text-blue-800">Efficiency: Highest savings</div>
-                    <div className="text-xs text-blue-600">Risk: High</div>
+                    <div className="text-sm font-medium text-blue-800">Recommendation</div>
+                    <div className="text-lg font-bold text-blue-800">{metrics.recommendation}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
-                  <DollarSign className="h-5 w-5 text-orange-600" />
+                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                  <DollarSign className="h-5 w-5 text-green-600" />
                   <div>
-                    <div className="text-sm font-medium text-orange-800">
-                      {keyMetrics.isSavingsPositive ? 'PTU Savings' : 'PAYGO Advantage'}
-                    </div>
-                    <div className="text-lg font-bold text-orange-800">
-                      ${keyMetrics.potentialSavings.toFixed(2)}/month
-                    </div>
+                    <div className="text-sm font-medium text-green-800">{metrics.savingsLabel}</div>
+                    <div className="text-lg font-bold text-green-800">{formatCurrency(metrics.savings)}/mo</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
+                  <Zap className="h-5 w-5 text-purple-600" />
+                  <div>
+                    <div className="text-sm font-medium text-purple-800">PTU Utilization</div>
+                    <div className="text-lg font-bold text-purple-800">{metrics.utilization.toFixed(1)}%</div>
                   </div>
                 </div>
               </div>
             </div>
           </TabsContent>
 
-          {/* Utilization Tab */}
+          {/* ── Utilization Tab ── */}
           <TabsContent value="utilization" className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-2">24-Hour Utilization Pattern</h3>
+              <h3 className="text-lg font-semibold mb-1">24-Hour Utilization Pattern</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Simulated hourly usage based on your utilization rate with realistic business hours patterns (9AM-5PM peaks, 6-8AM/6-10PM moderate, nights low).
+                Estimated hourly PTU utilization based on your {metrics.utilization.toFixed(1)}% average rate with business-hours weighting. Peak hours (9AM–5PM) show higher demand.
               </p>
-              
+
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={utilizationPattern}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="hour" 
-                    interval={2}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis 
-                    tickFormatter={(value) => `${value}%`}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip 
-                    formatter={(value) => [`${value}%`, 'Utilization']}
+                  <XAxis dataKey="hour" interval={2} tick={{ fontSize: 12 }} />
+                  <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    formatter={(v) => [`${v}%`, 'Utilization']}
                     labelStyle={{ color: '#374151' }}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="utilization" 
-                    stroke="#3b82f6" 
-                    fill="#93c5fd" 
+                  <Area
+                    type="monotone"
+                    dataKey="utilization"
+                    stroke="#3b82f6"
+                    fill="#93c5fd"
                     strokeWidth={2}
                   />
                 </AreaChart>
               </ResponsiveContainer>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                  <div>
-                    <div className="text-sm font-medium text-green-800">{keyMetrics.isSavingsPositive ? 'PTU Savings' : 'PAYGO Advantage'}</div>
-                    <div className="text-lg font-bold text-green-800">
-                      ${keyMetrics.potentialSavings.toFixed(2)}/month
-                    </div>
-                  </div>
-                </div>
                 <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
                   <Zap className="h-5 w-5 text-blue-600" />
                   <div>
-                    <div className="text-sm font-medium text-blue-800">Peak Efficiency</div>
-                    <div className="text-lg font-bold text-blue-800">
-                      {(keyMetrics.peakEfficiency).toFixed(1)}%
-                    </div>
+                    <div className="text-sm font-medium text-blue-800">Avg Utilization</div>
+                    <div className="text-lg font-bold text-blue-800">{metrics.utilization.toFixed(1)}%</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
                   <Activity className="h-5 w-5 text-orange-600" />
                   <div>
-                    <div className="text-sm font-medium text-orange-800">Burst Frequency</div>
-                    <div className="text-lg font-bold text-orange-800">
-                      {keyMetrics.burstFrequency.toFixed(1)}x daily
-                    </div>
+                    <div className="text-sm font-medium text-orange-800">Burst Ratio</div>
+                    <div className="text-lg font-bold text-orange-800">{metrics.burstRatio.toFixed(1)}x</div>
+                    <div className="text-xs text-orange-600">P99 / Avg TPM</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-red-600" />
+                  <div>
+                    <div className="text-sm font-medium text-red-800">Peak Ratio</div>
+                    <div className="text-lg font-bold text-red-800">{metrics.peakRatio.toFixed(1)}x</div>
+                    <div className="text-xs text-red-600">Max / Avg TPM</div>
                   </div>
                 </div>
               </div>
             </div>
           </TabsContent>
 
-          {/* Projections Tab */}
+          {/* ── Projections Tab ── */}
           <TabsContent value="projections" className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-2">12-Month Cost Projection</h3>
+              <h3 className="text-lg font-semibold mb-1">12-Month Cost Projection</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Cost projections based on your current usage with 1% monthly growth assumption. Shows how costs might evolve over time.
+                PAYGO costs grow at 1% monthly as usage scales. PTU reservations remain fixed — this shows when the crossover point may occur.
               </p>
-              
+
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={costProjections}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
-                  <YAxis tickFormatter={(value) => `$${value.toLocaleString()}`} />
-                  <Tooltip 
-                    formatter={(value, name) => [`$${value.toLocaleString()}`, name]}
+                  <YAxis tickFormatter={(v) => `$${v.toLocaleString()}`} />
+                  <Tooltip
+                    formatter={(v, name) => [formatCurrency(v), name]}
                     labelStyle={{ color: '#374151' }}
                   />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="PAYGO" 
-                    stroke="#3b82f6" 
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="PTU Monthly" 
-                    stroke="#10b981" 
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="PTU Yearly" 
-                    stroke="#8b5cf6" 
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Projected" 
-                    stroke="#f59e0b" 
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    dot={{ r: 4 }}
-                  />
+                  <Line type="monotone" dataKey="PAYGO" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="PTU Monthly Res." stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="PTU 1-Year Res." stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                  <div>
-                    <div className="text-sm font-medium text-green-800">{keyMetrics.isSavingsPositive ? 'PTU Savings' : 'PAYGO Advantage'}</div>
-                    <div className="text-lg font-bold text-green-800">
-                      ${keyMetrics.potentialSavings.toFixed(2)}/month
-                    </div>
-                  </div>
-                </div>
                 <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                  <Zap className="h-5 w-5 text-blue-600" />
+                  <DollarSign className="h-5 w-5 text-blue-600" />
                   <div>
-                    <div className="text-sm font-medium text-blue-800">Peak Efficiency</div>
-                    <div className="text-lg font-bold text-blue-800">
-                      {(keyMetrics.peakEfficiency).toFixed(1)}%
+                    <div className="text-sm font-medium text-blue-800">Current PAYGO</div>
+                    <div className="text-lg font-bold text-blue-800">{formatCurrency(costData?.paygo || 0)}/mo</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                  <Clock className="h-5 w-5 text-green-600" />
+                  <div>
+                    <div className="text-sm font-medium text-green-800">12-Month PAYGO Total</div>
+                    <div className="text-lg font-bold text-green-800">
+                      {formatCurrency(costProjections.reduce((sum, m) => sum + m['PAYGO'], 0))}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
-                  <Activity className="h-5 w-5 text-orange-600" />
+                <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
+                  <Target className="h-5 w-5 text-purple-600" />
                   <div>
-                    <div className="text-sm font-medium text-orange-800">Burst Frequency</div>
-                    <div className="text-lg font-bold text-orange-800">
-                      {keyMetrics.burstFrequency.toFixed(1)}x daily
+                    <div className="text-sm font-medium text-purple-800">12-Month 1-Year PTU</div>
+                    <div className="text-lg font-bold text-purple-800">
+                      {formatCurrency((costData?.ptuYearly || 0) * 12)}
                     </div>
                   </div>
                 </div>
@@ -460,14 +320,14 @@ const InteractiveCharts = ({
             </div>
           </TabsContent>
 
-          {/* Patterns Tab */}
+          {/* ── Patterns Tab ── */}
           <TabsContent value="patterns" className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-2">Usage Pattern Distribution</h3>
+              <h3 className="text-lg font-semibold mb-1">Usage Pattern Distribution</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Distribution of your workload patterns calculated from TPM ratios. Steady Usage = consistent baseline, Burst Periods = moderate spikes, Peak Spikes = maximum demand periods.
+                Workload distribution derived from your Avg/P99/Max TPM ratios. Burst ratio: {metrics.burstRatio.toFixed(1)}x, Peak ratio: {metrics.peakRatio.toFixed(1)}x.
               </p>
-              
+
               <div className="flex justify-center">
                 <ResponsiveContainer width={500} height={400}>
                   <PieChart>
@@ -479,21 +339,17 @@ const InteractiveCharts = ({
                       outerRadius={140}
                       paddingAngle={5}
                       dataKey="value"
-                      label={({ name, value, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                      label={({ name, value, cx, cy, midAngle, outerRadius }) => {
                         const RADIAN = Math.PI / 180;
                         const radius = outerRadius + 30;
                         const x = cx + radius * Math.cos(-midAngle * RADIAN);
                         const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                        
                         return (
-                          <text 
-                            x={x} 
-                            y={y} 
-                            fill="#374151" 
-                            textAnchor={x > cx ? 'start' : 'end'} 
+                          <text
+                            x={x} y={y} fill="#374151"
+                            textAnchor={x > cx ? 'start' : 'end'}
                             dominantBaseline="central"
-                            fontSize="12"
-                            fontWeight="500"
+                            fontSize="12" fontWeight="500"
                           >
                             {`${name}: ${value}%`}
                           </text>
@@ -501,11 +357,11 @@ const InteractiveCharts = ({
                       }}
                       labelLine={false}
                     >
-                      {usagePatternData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      {usagePatternData.map((entry, i) => (
+                        <Cell key={i} fill={entry.fill} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => `${value}%`} />
+                    <Tooltip formatter={(v) => `${v}%`} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -529,30 +385,26 @@ const InteractiveCharts = ({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <Target className="h-5 w-5 text-green-600" />
                   <div>
-                    <div className="text-sm font-medium text-green-800">{keyMetrics.isSavingsPositive ? 'PTU Savings' : 'PAYGO Advantage'}</div>
-                    <div className="text-lg font-bold text-green-800">
-                      ${keyMetrics.potentialSavings.toFixed(2)}/month
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                  <Zap className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <div className="text-sm font-medium text-blue-800">Peak Efficiency</div>
-                    <div className="text-lg font-bold text-blue-800">
-                      {(keyMetrics.peakEfficiency).toFixed(1)}%
-                    </div>
+                    <div className="text-sm font-medium text-green-800">Usage Pattern</div>
+                    <div className="text-lg font-bold text-green-800">{metrics.usagePattern}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
                   <Activity className="h-5 w-5 text-orange-600" />
                   <div>
-                    <div className="text-sm font-medium text-orange-800">Burst Frequency</div>
-                    <div className="text-lg font-bold text-orange-800">
-                      {keyMetrics.burstFrequency.toFixed(1)}x daily
-                    </div>
+                    <div className="text-sm font-medium text-orange-800">Burst Ratio</div>
+                    <div className="text-lg font-bold text-orange-800">{metrics.burstRatio.toFixed(1)}x</div>
+                    <div className="text-xs text-orange-600">P99 / Avg TPM</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-red-600" />
+                  <div>
+                    <div className="text-sm font-medium text-red-800">Peak Ratio</div>
+                    <div className="text-lg font-bold text-red-800">{metrics.peakRatio.toFixed(1)}x</div>
+                    <div className="text-xs text-red-600">Max / Avg TPM</div>
                   </div>
                 </div>
               </div>

@@ -3216,34 +3216,26 @@ AzureMetrics
               <div className="interactive-charts-section">
                 <InteractiveCharts
                 costData={{
-                  paygo: calculations.monthlyPaygoCost || 100,
-                  ptuHourly: calculations.monthlyPtuHourlyCost || 80,
-                  ptuMonthly: calculations.monthlyPtuReservationCost || 60,
-                  ptuYearly: calculations.yearlyReservationMonthly || 50,
-                  savings: calculations.monthlySavings || 20
+                  paygo: calculations.monthlyPaygoCost || 0,
+                  ptuHourly: calculations.monthlyPtuHourlyCost || 0,
+                  ptuMonthly: calculations.monthlyPtuReservationCost || 0,
+                  ptuYearly: calculations.yearlyReservationMonthly || 0,
+                  savings: calculations.monthlySavings || 0
                 }}
                 utilizationData={{
-                  utilization: calculations.utilizationRate || 75,
-                  burstRatio: calculations.burstRatio || 2.5,
-                  peakRatio: calculations.peakRatio || 4.0
+                  utilization: calculations.utilizationRate || 0,
+                  burstRatio: calculations.burstRatio || 1.0,
+                  peakRatio: calculations.peakRatio || 1.0
                 }}
                 projectionData={{
-                  monthly: calculations.monthlyPaygoCost || 100,
-                  yearly: (calculations.monthlyPaygoCost * 12) || 1200,
-                  burstFrequency: calculations.burstFrequency || 3.2,
-                  peakEfficiency: calculations.peakEfficiency || 85
+                  monthly: calculations.monthlyPaygoCost || 0,
+                  yearly: (calculations.monthlyPaygoCost * 12) || 0
                 }}
                 burstData={{
-                  pattern: calculations.usagePattern || 'Moderate',
-                  efficiency: calculations.utilizationRate || 75
+                  pattern: calculations.usagePattern || 'Steady',
+                  efficiency: calculations.utilizationRate || 0
                 }}
-                calculations={Object.keys(calculations).length ? calculations : {
-                  recommendation: 'PTU',
-                  utilizationRate: 75,
-                  burstRatio: 2.5,
-                  peakRatio: 4.0,
-                  burstFrequency: 3.2
-                }}
+                calculations={calculations}
                 selectedModel={selectedModel}
                 selectedRegion={selectedRegion}
               />
