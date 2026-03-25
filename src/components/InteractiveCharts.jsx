@@ -204,12 +204,15 @@ const InteractiveCharts = ({
 
   // Calculate key metrics
   const keyMetrics = useMemo(() => {
-    const potentialSavings = Math.max(0, (costData?.paygo || 0) - (costData?.ptuYearly || 0));
-    const peakEfficiency = calculations?.utilizationRate || 0;
+    const savingsAmount = (costData?.paygo || 0) - (costData?.ptuYearly || 0);
+    const potentialSavings = Math.abs(savingsAmount);
+    const isSavingsPositive = savingsAmount > 0;
+    const peakEfficiency = (calculations?.utilizationRate || 0) * 100;
     const burstFrequency = calculations?.burstFrequency || 1.0;
     
     return {
       potentialSavings,
+      isSavingsPositive,
       peakEfficiency,
       burstFrequency
     };
@@ -297,7 +300,9 @@ const InteractiveCharts = ({
                 <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
                   <DollarSign className="h-5 w-5 text-orange-600" />
                   <div>
-                    <div className="text-sm font-medium text-orange-800">Potential Savings</div>
+                    <div className="text-sm font-medium text-orange-800">
+                      {keyMetrics.isSavingsPositive ? 'PTU Savings' : 'PAYGO Advantage'}
+                    </div>
                     <div className="text-lg font-bold text-orange-800">
                       ${keyMetrics.potentialSavings.toFixed(2)}/month
                     </div>
@@ -345,7 +350,7 @@ const InteractiveCharts = ({
                 <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-green-600" />
                   <div>
-                    <div className="text-sm font-medium text-green-800">Potential Savings</div>
+                    <div className="text-sm font-medium text-green-800">{keyMetrics.isSavingsPositive ? 'PTU Savings' : 'PAYGO Advantage'}</div>
                     <div className="text-lg font-bold text-green-800">
                       ${keyMetrics.potentialSavings.toFixed(2)}/month
                     </div>
@@ -427,7 +432,7 @@ const InteractiveCharts = ({
                 <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-green-600" />
                   <div>
-                    <div className="text-sm font-medium text-green-800">Potential Savings</div>
+                    <div className="text-sm font-medium text-green-800">{keyMetrics.isSavingsPositive ? 'PTU Savings' : 'PAYGO Advantage'}</div>
                     <div className="text-lg font-bold text-green-800">
                       ${keyMetrics.potentialSavings.toFixed(2)}/month
                     </div>
@@ -526,7 +531,7 @@ const InteractiveCharts = ({
                 <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-green-600" />
                   <div>
-                    <div className="text-sm font-medium text-green-800">Potential Savings</div>
+                    <div className="text-sm font-medium text-green-800">{keyMetrics.isSavingsPositive ? 'PTU Savings' : 'PAYGO Advantage'}</div>
                     <div className="text-lg font-bold text-green-800">
                       ${keyMetrics.potentialSavings.toFixed(2)}/month
                     </div>
