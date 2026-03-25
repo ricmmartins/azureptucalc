@@ -3064,136 +3064,73 @@ AzureMetrics
 
               <TabsContent value="advanced" className="space-y-6">
 
-            {/* Task 9: External Pricing Data Status */}
+            {/* Pricing Data Status */}
             <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-purple-600" />
-                    <CardTitle className="text-purple-800">External Pricing Data</CardTitle>
-                  </div>
-                  {pricingUpdateInfo?.hasUpdate && (
-                    <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                      Update Available
-                    </Badge>
-                  )}
+                <div className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-purple-600" />
+                  <CardTitle className="text-purple-800">Pricing Data Status</CardTitle>
                 </div>
-                <CardDescription>Current pricing data version and status</CardDescription>
+                <CardDescription>How pricing data is sourced for your calculations</CardDescription>
               </CardHeader>
               <CardContent>
-                {externalPricingData ? (
-                  <div className="space-y-4">
-                    {/* Pricing Data Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-1">
-                        <span className="text-sm text-gray-600">Version</span>
-                        <div className="text-sm font-medium">{externalPricingData.version}</div>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-gray-600">Last Updated</span>
-                        <div className="text-sm font-medium">
-                          {new Date(externalPricingData.lastUpdated).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-gray-600">Status</span>
-                        <div className="text-sm font-medium">
-                          {pricingUpdateInfo ? pricingUpdateInfo.message : 'Recently checked'}
-                        </div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <span className="text-sm text-gray-600">Active Source</span>
+                      <div className="text-sm font-medium">
+                        {currentPricing?.pricingSource === 'azure-api-live' ? (
+                          <span className="text-green-700">✅ Azure Retail Prices API</span>
+                        ) : currentPricing?.pricingSource === 'service-fallback' ? (
+                          <span className="text-yellow-700">⚠️ Service Fallback</span>
+                        ) : (
+                          <span className="text-blue-700">📦 Official Hardcoded Rates</span>
+                        )}
                       </div>
                     </div>
-                    
-                    {/* Source Information */}
-                    {externalPricingData.sourceUrl && (
-                      <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
-                        <div className="flex items-center gap-2">
-                          <Globe className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm font-medium text-gray-700">Data Source</span>
-                        </div>
-                        <div className="text-sm text-gray-600 break-all">
-                          <a 
-                            href={externalPricingData.sourceUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 hover:underline"
-                          >
-                            {externalPricingData.sourceUrl}
-                          </a>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Official Microsoft Learn documentation
-                        </div>
+                    <div className="space-y-1">
+                      <span className="text-sm text-gray-600">Last Fetched</span>
+                      <div className="text-sm font-medium">
+                        {currentPricing?.livePricingTimestamp 
+                          ? new Date(currentPricing.livePricingTimestamp).toLocaleString()
+                          : 'Using bundled data'}
                       </div>
-                    )}
-                    
-                    {/* Update Button */}
-                    <div className="flex justify-center">
-                      <Button 
-                        onClick={handleUpdateExternalPricing}
-                        disabled={isLoadingExternalPricing}
-                        className="min-w-[200px]"
-                        variant="outline"
-                      >
-                        {isLoadingExternalPricing ? (
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                        )}
-                        {isLoadingExternalPricing ? 'Updating...' : 'Check for Updates'}
-                      </Button>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-sm text-gray-600">Cache</span>
+                      <div className="text-sm font-medium">3-hour TTL (auto-refresh)</div>
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="text-center py-6">
-                      <RefreshCw className={`h-8 w-8 mx-auto text-gray-400 mb-3 ${isLoadingExternalPricing ? 'animate-spin' : ''}`} />
-                      <p className="text-gray-600">
-                        {isLoadingExternalPricing ? 'Loading external pricing data...' : 'External pricing data unavailable'}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Using fallback pricing configuration
-                      </p>
+                  
+                  <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center gap-2">
+                      <Info className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium text-gray-700">Pricing Priority</span>
                     </div>
-                    
-                    {/* Fallback source information */}
-                    <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
-                      <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-gray-700">Data Source</span>
-                      </div>
-                      <div className="text-sm text-gray-600 break-all">
-                        <a 
-                          href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 hover:underline"
-                        >
-                          https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding
-                        </a>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Official Microsoft Learn documentation
-                      </div>
-                    </div>
-                    
-                    {/* Update Button */}
-                    <div className="flex justify-center">
-                      <Button 
-                        onClick={handleUpdateExternalPricing}
-                        disabled={isLoadingExternalPricing}
-                        className="min-w-[200px]"
-                        variant="outline"
-                      >
-                        {isLoadingExternalPricing ? (
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                        )}
-                        {isLoadingExternalPricing ? 'Loading...' : 'Load External Data'}
-                      </Button>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <div>1. <strong>Custom Override</strong> — your own rates (if configured)</div>
+                      <div>2. <strong>Live Azure API</strong> — real-time from <a href="https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Azure Retail Prices API</a></div>
+                      <div>3. <strong>Official Hardcoded</strong> — curated from Microsoft documentation</div>
+                      <div>4. <strong>Fallback</strong> — conservative estimates</div>
                     </div>
                   </div>
-                )}
+                  
+                  <div className="flex justify-center">
+                    <Button 
+                      onClick={() => refreshPricingData()}
+                      disabled={isLoadingExternalPricing}
+                      className="min-w-[200px]"
+                      variant="outline"
+                    >
+                      {isLoadingExternalPricing ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                      )}
+                      {isLoadingExternalPricing ? 'Refreshing...' : 'Refresh Live Pricing'}
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
