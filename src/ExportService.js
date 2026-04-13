@@ -1,6 +1,9 @@
 // Task 10: Export Functionality Service
 // Provides comprehensive cost breakdown export in CSV and JSON formats
 
+import enhancedModelConfig from './enhanced_model_config.json';
+import { OFFICIAL_PTU_PRICING } from './officialPTUPricing.js';
+
 export class ExportService {
   constructor() {
     this.reportData = null;
@@ -98,17 +101,16 @@ export class ExportService {
       },
       calculations: {
         formulas: {
-          ptuHourly: "Base Rate × Regional Multiplier × Deployment Multiplier × PTU Count",
-          ptuMonthly: "Hourly Rate × 730 hours",
-          ptuYearly: "Monthly Rate × 12 × (1 - Yearly Discount)",
+          ptuHourly: "Base Rate × Deployment Multiplier × PTU Count",
+          ptuMonthly: "Hourly Rate × 730 hours (or reservation override)",
+          ptuYearly: "Yearly reservation override per PTU × PTU Count",
           payg: "Input Tokens × Input Rate + Output Tokens × Output Rate",
           breakEven: "PTU Monthly Cost ÷ (Input Rate + Output Rate)"
         },
         parameters: {
-          baseRate: 1.00,
-          regionalMultiplier: this.getRegionalMultiplier(region),
+          baseRate: OFFICIAL_PTU_PRICING.BASE_HOURLY_RATE,
           deploymentMultiplier: this.getDeploymentMultiplier(deployment),
-          yearlyDiscount: 0.30
+          reservationOverride: OFFICIAL_PTU_PRICING.RESERVATION_OVERRIDES[deployment] || null
         }
       }
     };
@@ -264,37 +266,18 @@ export class ExportService {
   }
 
   calculatePTUThroughput(model, ptuCount) {
-    const throughputPerPTU = {
-      'gpt-4o': 2500,
-      'gpt-4o-mini': 37000,
-      'gpt-4': 2500,
-      'gpt-35-turbo': 37000
-    };
-    
-    return (throughputPerPTU[model] || 2500) * ptuCount;
+    const modelConfig = enhancedModelConfig.models[model];
+    const throughputPerPTU = modelConfig?.throughput_per_ptu || 2500;
+    return throughputPerPTU * ptuCount;
   }
 
-  getRegionalMultiplier(region) {
-    const multipliers = {
-      'eastus': 1.0,
-      'westus': 1.05,
-      'northeurope': 1.05,
-      'westeurope': 1.05,
-      'southeastasia': 1.1,
-      'japaneast': 1.1
-    };
-    
-    return multipliers[region] || 1.0;
+  getModelThroughputPerPTU(model) {
+    const modelConfig = enhancedModelConfig.models[model];
+    return modelConfig?.throughput_per_ptu || 2500;
   }
 
   getDeploymentMultiplier(deployment) {
-    const multipliers = {
-      'regional': 1.0,
-      'dataZone': 1.2,
-      'global': 1.4
-    };
-    
-    return multipliers[deployment] || 1.0;
+    return OFFICIAL_PTU_PRICING.DEPLOYMENT_MULTIPLIERS[deployment] || 1.0;
   }
 
   generateRecommendations(calculationData) {
@@ -309,7 +292,7 @@ export class ExportService {
     }
     
     // Throughput recommendations
-    const throughputPerPTU = model === 'gpt-4o-mini' ? 37000 : 2500;
+    const throughputPerPTU = this.getModelThroughputPerPTU(model);
     const totalThroughput = throughputPerPTU * ptuCount;
     
     if (totalThroughput > 100000) {
@@ -322,8 +305,8 @@ export class ExportService {
     }
     
     // Model-specific recommendations
-    if (model === 'gpt-4o-mini' && ptuCount < 25) {
-      recommendations.push('GPT-4o-mini has high throughput per PTU - consider if lower PTU count meets your needs');
+    if (throughputPerPTU > 10000 && ptuCount < 25) {
+      recommendations.push(`${model} has high throughput per PTU (${throughputPerPTU.toLocaleString()} TPM) - consider if lower PTU count meets your needs`);
     }
     
     return recommendations;

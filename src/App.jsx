@@ -249,7 +249,7 @@ function App() {
   // Helper function to get current model throughput
   const getCurrentModelThroughput = () => {
     const modelConfig = enhancedModelConfig.models[selectedModel];
-    return modelConfig?.throughput_per_ptu || 50000; // fallback for legacy models
+    return modelConfig?.throughput_per_ptu || 2500; // conservative fallback
   };
 
   // Helper: get output token weight for selected model
@@ -366,7 +366,7 @@ function App() {
     ptu_monthly: 260,      // Official monthly reservation (Global)
     ptu_yearly: 2652,      // Official yearly reservation (Global)
     minPTU: 15,
-    tokensPerPTUPerMinute: 50000  // Will be updated dynamically
+    tokensPerPTUPerMinute: 2500  // Conservative default; updated dynamically per model
   });
   
   const [calculations, setCalculations] = useState({});
