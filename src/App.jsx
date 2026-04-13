@@ -129,8 +129,15 @@ function App() {
           setSelectedDeployment(availableDeployments[0]);
         }
       }
+      // If current model is not available in this region, switch to first available
+      if (regionInfo && regionInfo.models) {
+        const availableModels = Object.keys(regionInfo.models);
+        if (availableModels.length > 0 && !availableModels.includes(selectedModel)) {
+          setSelectedModel(availableModels[0]);
+        }
+      }
     }
-  }, [selectedRegion, selectedDeployment]);
+  }, [selectedRegion, selectedDeployment, selectedModel]);
   
   // Task 9: External Pricing Service initialization
   const externalPricingService = useMemo(() => new ExternalPricingService(), []);
@@ -1168,11 +1175,11 @@ Check browser console for detailed error information.`);
         deployment: selectedDeployment,
         ptuCount: calculations.ptuNeeded || formData.manualPTU || 0,
         usageScenario: calculations.usagePattern || 'Unknown',
-        throughputNeeded: formData.avgTPM,
+        throughputNeeded: calculations.normalizedAvgTPM || formData.avgTPM,
         ptuCostCalculation: {
           hourly: calculations.monthlyPtuHourlyCost / 730,
           monthly: calculations.monthlyPtuCost,
-          yearly: calculations.yearlyReservationMonthly,
+          yearly: calculations.yearlyReservationMonthly * 12,
           yearlyDiscount: currentPricing.officialPricing?.discount?.yearlyVsHourly || 0
         },
         paygCostCalculation: calculations.paygoBreakdown || {
@@ -1181,8 +1188,8 @@ Check browser console for detailed error information.`);
           total: calculations.monthlyPaygoCost,
           inputTokens: formData.inputTokensMonthly,
           outputTokens: formData.outputTokensMonthly,
-          inputPricePerK: currentPricing.token?.input || 0,
-          outputPricePerK: currentPricing.token?.output || 0
+          inputPricePerK: currentPricing.paygo_input || 0,
+          outputPricePerK: currentPricing.paygo_output || 0
         },
         breakEvenAnalysis: calculations.breakEvenAnalysis || {},
         customPricing: { enabled: useCustomPricing },
@@ -1192,8 +1199,8 @@ Check browser console for detailed error information.`);
           rawAvgTPM: calculations.rawAvgTPM,
           normalizedAvgTPM: calculations.normalizedAvgTPM,
           tpmSource: calculations.tpmSource,
-          resolvedInputTPM: calculations.resolvedInputTPM,
-          resolvedOutputTPM: calculations.resolvedOutputTPM
+          resolvedInputTPM: calculations.effectiveInputTPM,
+          resolvedOutputTPM: calculations.effectiveOutputTPM
         }
       };
       
@@ -1216,11 +1223,11 @@ Check browser console for detailed error information.`);
         deployment: selectedDeployment,
         ptuCount: calculations.ptuNeeded || formData.manualPTU || 0,
         usageScenario: calculations.usagePattern || 'Unknown',
-        throughputNeeded: formData.avgTPM,
+        throughputNeeded: calculations.normalizedAvgTPM || formData.avgTPM,
         ptuCostCalculation: {
           hourly: calculations.monthlyPtuHourlyCost / 730,
           monthly: calculations.monthlyPtuCost,
-          yearly: calculations.yearlyReservationMonthly,
+          yearly: calculations.yearlyReservationMonthly * 12,
           yearlyDiscount: currentPricing.officialPricing?.discount?.yearlyVsHourly || 0
         },
         paygCostCalculation: calculations.paygoBreakdown || {
@@ -1229,8 +1236,8 @@ Check browser console for detailed error information.`);
           total: calculations.monthlyPaygoCost,
           inputTokens: formData.inputTokensMonthly,
           outputTokens: formData.outputTokensMonthly,
-          inputPricePerK: currentPricing.token?.input || 0,
-          outputPricePerK: currentPricing.token?.output || 0
+          inputPricePerK: currentPricing.paygo_input || 0,
+          outputPricePerK: currentPricing.paygo_output || 0
         },
         breakEvenAnalysis: calculations.breakEvenAnalysis || {},
         customPricing: { enabled: useCustomPricing },
@@ -1240,8 +1247,8 @@ Check browser console for detailed error information.`);
           rawAvgTPM: calculations.rawAvgTPM,
           normalizedAvgTPM: calculations.normalizedAvgTPM,
           tpmSource: calculations.tpmSource,
-          resolvedInputTPM: calculations.resolvedInputTPM,
-          resolvedOutputTPM: calculations.resolvedOutputTPM
+          resolvedInputTPM: calculations.effectiveInputTPM,
+          resolvedOutputTPM: calculations.effectiveOutputTPM
         }
       };
       

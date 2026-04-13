@@ -62,12 +62,12 @@ export class ExportService {
         payg: {
           inputTokens: {
             cost: paygCostCalculation.inputCost,
-            pricePerK: paygCostCalculation.inputPricePerK,
+            pricePer1M: paygCostCalculation.inputPricePerK,
             usage: paygCostCalculation.inputTokens
           },
           outputTokens: {
             cost: paygCostCalculation.outputCost,
-            pricePerK: paygCostCalculation.outputPricePerK,
+            pricePer1M: paygCostCalculation.outputPricePerK,
             usage: paygCostCalculation.outputTokens
           },
           total: paygCostCalculation.total
@@ -164,9 +164,9 @@ export class ExportService {
     csvRows.push('');
     
     csvRows.push('PAY-AS-YOU-GO COSTS');
-    csvRows.push('Token Type,Usage,Price per 1K,Total Cost (USD)');
-    csvRows.push(`Input,${this.reportData.costBreakdown.payg.inputTokens.usage},${this.reportData.costBreakdown.payg.inputTokens.pricePerK},${this.reportData.costBreakdown.payg.inputTokens.cost}`);
-    csvRows.push(`Output,${this.reportData.costBreakdown.payg.outputTokens.usage},${this.reportData.costBreakdown.payg.outputTokens.pricePerK},${this.reportData.costBreakdown.payg.outputTokens.cost}`);
+    csvRows.push('Token Type,Usage,Price per 1M,Total Cost (USD)');
+    csvRows.push(`Input,${this.reportData.costBreakdown.payg.inputTokens.usage},${this.reportData.costBreakdown.payg.inputTokens.pricePer1M},${this.reportData.costBreakdown.payg.inputTokens.cost}`);
+    csvRows.push(`Output,${this.reportData.costBreakdown.payg.outputTokens.usage},${this.reportData.costBreakdown.payg.outputTokens.pricePer1M},${this.reportData.costBreakdown.payg.outputTokens.cost}`);
     csvRows.push(`Total,,,$${this.reportData.costBreakdown.payg.total}`);
     csvRows.push('');
     
