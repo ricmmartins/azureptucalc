@@ -15,7 +15,10 @@ import {
   CheckCircle,
   ExternalLink,
   FileText,
-  BarChart3
+  BarChart3,
+  Clock,
+  MessageSquare,
+  Users
 } from 'lucide-react';
 
 const ShareAnalysis = ({ 

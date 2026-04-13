@@ -22,6 +22,7 @@ export const SmartNumberInput = ({
 
   // Format number for display
   const formatNumber = (num) => {
+    if (num === 0) return '0';
     if (!num) return '';
     const numValue = parseFloat(num);
     if (formatAs === 'tokens') {

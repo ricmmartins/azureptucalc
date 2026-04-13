@@ -422,7 +422,7 @@ function App() {
       // Ctrl/Cmd + E: Export results
       if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
         e.preventDefault();
-        if (calculations.paygo) {
+        if (calculations.monthlyPtuCost || calculations.monthlyPaygoCost) {
           handleExportCSV();
         }
       }
@@ -623,7 +623,7 @@ Check browser console for detailed error information.`);
   };
 
 
-  const hasValidData = formData.avgTPM > 0 || formData.avgInputTPM > 0 || formData.avgOutputTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0 || formData.inputTokensMonthly > 0 || formData.outputTokensMonthly > 0;
+  const hasValidData = formData.avgTPM > 0 || formData.avgInputTPM > 0 || formData.avgOutputTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0 || formData.inputTokensMonthly > 0 || formData.outputTokensMonthly > 0 || formData.avgPTU > 0 || formData.p99PTU > 0 || formData.maxPTU > 0 || formData.maxTPM > 0;
 
   // Load live pricing data when model or deployment changes
   useEffect(() => {
@@ -948,7 +948,7 @@ Check browser console for detailed error information.`);
     const monthlySavings = monthlyPaygoCost - yearlyReservationMonthly;
     
     // Spillover model calculations — use normalized TPM for overflow comparison
-    const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
+    const hybridBasePTU = Math.ceil(formData.basePTUs || formData.avgPTU || 1);
     // Normalize p99TPM for spillover overflow comparison
     const p99InputTPM = (formData.p99TPM || 0) * formData.inputOutputRatio;
     const p99OutputTPM = (formData.p99TPM || 0) * (1 - formData.inputOutputRatio);
@@ -1142,6 +1142,9 @@ Check browser console for detailed error information.`);
     // console.log(`Input: ${field} = ${value}`);
     let parsed = parseFloat(value);
     if (isNaN(parsed) || parsed < 0) parsed = 0;
+    if (field === 'inputOutputRatio') {
+      parsed = Math.min(1, Math.max(0, parsed));
+    }
     setFormData(prev => ({
       ...prev,
       [field]: parsed

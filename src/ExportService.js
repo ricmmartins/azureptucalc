@@ -84,7 +84,7 @@ export class ExportService {
               ptu: ptuCostCalculation.monthly,
               payg: paygCostCalculation.total,
               difference: ptuCostCalculation.monthly - paygCostCalculation.total,
-              percentageDifference: ((ptuCostCalculation.monthly - paygCostCalculation.total) / paygCostCalculation.total * 100).toFixed(1)
+              percentageDifference: paygCostCalculation.total ? ((ptuCostCalculation.monthly - paygCostCalculation.total) / paygCostCalculation.total * 100).toFixed(1) : "N/A"
             }
           }
         },
