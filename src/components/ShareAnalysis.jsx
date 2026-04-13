@@ -49,7 +49,8 @@ const ShareAnalysis = ({
         config: {
           region: analysisData?.region,
           model: analysisData?.model,
-          deploymentType: analysisData?.deploymentType
+          deploymentType: analysisData?.deploymentType,
+          outputWeighting: analysisData?.outputWeighting
         },
         kqlData: analysisData?.kqlData,
         results: shareOptions.includeData ? analysisData?.results : null,

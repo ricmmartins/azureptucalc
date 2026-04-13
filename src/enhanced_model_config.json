@@ -4,6 +4,8 @@
       "name": "GPT-5.4",
       "description": "Latest GPT-5 series model with top-tier capabilities",
       "throughput_per_ptu": 2400,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -16,6 +18,8 @@
       "name": "GPT-5.3 Codex",
       "description": "Code-optimized GPT-5.3 for software engineering tasks",
       "throughput_per_ptu": 3400,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -28,6 +32,8 @@
       "name": "GPT-5.2",
       "description": "Advanced GPT-5 iteration with enhanced agentic capabilities",
       "throughput_per_ptu": 3400,
+      "output_weight": 8,
+      "output_weight_source": "ms_learn",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -40,6 +46,8 @@
       "name": "GPT-5.2 Codex",
       "description": "Code-optimized GPT-5.2 for software engineering tasks",
       "throughput_per_ptu": 3400,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -52,6 +60,8 @@
       "name": "GPT-5.1",
       "description": "Enhanced GPT-5 with improved reasoning and problem-solving",
       "throughput_per_ptu": 4750,
+      "output_weight": 8,
+      "output_weight_source": "ms_learn",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -64,6 +74,8 @@
       "name": "GPT-5.1 Codex",
       "description": "Code-optimized GPT-5.1 for software engineering tasks",
       "throughput_per_ptu": 4750,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -76,6 +88,8 @@
       "name": "GPT-5",
       "description": "GPT-5 base model with advanced capabilities",
       "throughput_per_ptu": 4750,
+      "output_weight": 8,
+      "output_weight_source": "ms_learn",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -88,6 +102,8 @@
       "name": "GPT-5 Mini",
       "description": "Compact GPT-5 for cost-efficient high-throughput applications",
       "throughput_per_ptu": 23750,
+      "output_weight": 8,
+      "output_weight_source": "price_ratio",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -100,6 +116,8 @@
       "name": "GPT-4.1",
       "description": "Latest GPT-4 series with improved performance and capabilities",
       "throughput_per_ptu": 3000,
+      "output_weight": 4,
+      "output_weight_source": "ms_learn",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -112,6 +130,8 @@
       "name": "GPT-4.1 Mini",
       "description": "Smaller, faster version of GPT-4.1 with optimized performance",
       "throughput_per_ptu": 14900,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -124,6 +144,8 @@
       "name": "GPT-4.1 Nano",
       "description": "Ultra-efficient version of GPT-4.1 for high-throughput applications",
       "throughput_per_ptu": 59400,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -136,6 +158,8 @@
       "name": "GPT-4o",
       "description": "Multimodal model with text and image capabilities (previous generation)",
       "throughput_per_ptu": 2500,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio_estimated",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -148,6 +172,8 @@
       "name": "GPT-4o Mini",
       "description": "Smaller, faster version of GPT-4o with cost optimization (previous generation)",
       "throughput_per_ptu": 37000,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio_estimated",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -160,6 +186,8 @@
       "name": "o3",
       "description": "Advanced reasoning model with enhanced problem-solving capabilities",
       "throughput_per_ptu": 3000,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -172,6 +200,8 @@
       "name": "o4 Mini",
       "description": "Compact reasoning model optimized for efficient problem solving",
       "throughput_per_ptu": 5400,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -184,6 +214,8 @@
       "name": "o1",
       "description": "Reasoning-focused model for complex problem solving (previous generation)",
       "throughput_per_ptu": 230,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio_estimated",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
@@ -196,6 +228,8 @@
       "name": "o3 Mini",
       "description": "Compact reasoning model for efficient problem solving (previous generation)",
       "throughput_per_ptu": 2500,
+      "output_weight": 4,
+      "output_weight_source": "price_ratio_estimated",
       "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },

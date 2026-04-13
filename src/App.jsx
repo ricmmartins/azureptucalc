@@ -69,10 +69,13 @@ function App() {
     recommendedPTU: 0,
     monthlyMinutes: 43800,
     basePTUs: 0,
+    // Separate input/output TPM for accurate output-weighted PTU sizing
+    avgInputTPM: 0,
+    avgOutputTPM: 0,
     // Task 3: Input/Output token fields for PAYG calculation
     inputTokensMonthly: 0,
     outputTokensMonthly: 0,
-    inputOutputRatio: 0.5  // Default 50/50 split
+    inputOutputRatio: 0.5  // Default 50/50 split (fallback when separate TPM not provided)
   });
   
   // Custom pricing data - aligned with official PTU reservation pricing
@@ -247,6 +250,52 @@ function App() {
   const getCurrentModelThroughput = () => {
     const modelConfig = enhancedModelConfig.models[selectedModel];
     return modelConfig?.throughput_per_ptu || 50000; // fallback for legacy models
+  };
+
+  // Helper: get output token weight for selected model
+  const getModelOutputWeight = () => {
+    const modelConfig = enhancedModelConfig.models[selectedModel];
+    return modelConfig?.output_weight || 1;
+  };
+
+  // Helper: compute normalized TPM (input-token-equivalent) using output weighting
+  // Azure PTU utilization counts output tokens at a model-specific multiple of input tokens
+  const normalizeTPM = (inputTPM, outputTPM, outputWeight) => {
+    return inputTPM + (outputWeight * outputTPM);
+  };
+
+  // Helper: resolve effective input/output TPM from available data sources
+  const resolveInputOutputTPM = () => {
+    if (formData.avgInputTPM > 0 || formData.avgOutputTPM > 0) {
+      // Separate input/output TPM provided (preferred — most accurate)
+      return { inputTPM: formData.avgInputTPM, outputTPM: formData.avgOutputTPM, source: 'separate_tpm' };
+    }
+    if (formData.avgTPM > 0) {
+      // Combined TPM — split using ratio (legacy fallback)
+      return {
+        inputTPM: formData.avgTPM * formData.inputOutputRatio,
+        outputTPM: formData.avgTPM * (1 - formData.inputOutputRatio),
+        source: 'combined_tpm_ratio'
+      };
+    }
+    if (formData.inputTokensMonthly > 0 || formData.outputTokensMonthly > 0) {
+      // Derive TPM from Method B monthly token counts
+      return {
+        inputTPM: formData.monthlyMinutes > 0 ? formData.inputTokensMonthly / formData.monthlyMinutes : 0,
+        outputTPM: formData.monthlyMinutes > 0 ? formData.outputTokensMonthly / formData.monthlyMinutes : 0,
+        source: 'monthly_tokens'
+      };
+    }
+    return { inputTPM: 0, outputTPM: 0, source: 'none' };
+  };
+
+  // Helper: label for how TPM source was determined (for UI display)
+  const tpmSourceLabel = () => {
+    const { source } = resolveInputOutputTPM();
+    if (source === 'separate_tpm') return ' Using separate input/output TPM (most accurate).';
+    if (source === 'combined_tpm_ratio') return ' Combined TPM split by I/O ratio (estimated).';
+    if (source === 'monthly_tokens') return ' Derived from monthly token counts.';
+    return '';
   };
 
   // Task 4: PTU validation function
@@ -574,7 +623,7 @@ Check browser console for detailed error information.`);
   };
 
 
-  const hasValidData = formData.avgTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0 || formData.inputTokensMonthly > 0 || formData.outputTokensMonthly > 0;
+  const hasValidData = formData.avgTPM > 0 || formData.avgInputTPM > 0 || formData.avgOutputTPM > 0 || formData.recommendedPTU > 0 || formData.p99TPM > 0 || formData.inputTokensMonthly > 0 || formData.outputTokensMonthly > 0;
 
   // Load live pricing data when model or deployment changes
   useEffect(() => {
@@ -780,9 +829,15 @@ Check browser console for detailed error information.`);
         const peakRatio = formData.maxTPM && formData.avgTPM ? formData.maxTPM / formData.avgTPM : 1;
         const ptuVariance = formData.p99PTU && formData.avgPTU ? Math.abs(formData.p99PTU - formData.avgPTU) : 0;
     
-    // FIXED: PTU calculation logic with Task 4 manual PTU support
-    // Use enhanced PTU calculation
-    const enhancedPTUData = calculateEnhancedPTU(formData.avgTPM, selectedModel, selectedDeployment);
+    // FIXED: PTU calculation logic with output token weighting
+    // Resolve input/output TPM and apply model-specific output weight
+    const outputWeight = getModelOutputWeight();
+    const { inputTPM: effectiveInputTPM, outputTPM: effectiveOutputTPM, source: tpmSource } = resolveInputOutputTPM();
+    const rawAvgTPM = effectiveInputTPM + effectiveOutputTPM;
+    const normalizedAvgTPM = normalizeTPM(effectiveInputTPM, effectiveOutputTPM, outputWeight);
+
+    // Use normalized (output-weighted) TPM for PTU sizing
+    const enhancedPTUData = calculateEnhancedPTU(normalizedAvgTPM, selectedModel, selectedDeployment);
     
     // Task 4: Determine which PTU value to use (priority order)
     let manualPTU = 0;
@@ -833,11 +888,13 @@ Check browser console for detailed error information.`);
       paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions);
       monthlyPaygoCost = paygoBreakdown.totalCost;
       monthlyTokens = (formData.inputTokensMonthly + formData.outputTokensMonthly) / 1000000;
-    } else if (formData.avgTPM > 0) {
-      // Calculate from TPM using input/output ratio
-      monthlyTokens = (formData.avgTPM * formData.monthlyMinutes) / 1000000;
-      const inputTokensInMillions = monthlyTokens * formData.inputOutputRatio;
-      const outputTokensInMillions = monthlyTokens * (1 - formData.inputOutputRatio);
+    } else if (effectiveInputTPM > 0 || effectiveOutputTPM > 0) {
+      // Derive from resolved input/output TPM (separate or ratio-split)
+      const inputTokensMonthly = effectiveInputTPM * formData.monthlyMinutes;
+      const outputTokensMonthly = effectiveOutputTPM * formData.monthlyMinutes;
+      monthlyTokens = (inputTokensMonthly + outputTokensMonthly) / 1000000;
+      const inputTokensInMillions = inputTokensMonthly / 1000000;
+      const outputTokensInMillions = outputTokensMonthly / 1000000;
       paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions);
       monthlyPaygoCost = paygoBreakdown.totalCost;
     } else {
@@ -853,7 +910,8 @@ Check browser console for detailed error information.`);
   const yearlyReservationMonthly = (currentPricing.ptu_yearly * ptuNeeded) / 12;
     
     // FIXED: Dynamic utilization calculation
-    const utilizationRate = formData.avgTPM > 0 && ptuNeeded > 0 ? formData.avgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
+    // Utilization: normalized TPM vs provisioned capacity (in input-token-equivalent units)
+    const utilizationRate = normalizedAvgTPM > 0 && ptuNeeded > 0 ? normalizedAvgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
     
     // Task 6: Break-even analysis calculations
     const breakEvenAnalysis = (() => {
@@ -867,8 +925,8 @@ Check browser console for detailed error information.`);
       // Break-even TPM: TPM needed to justify PTU reservation
       const breakEvenTPM = breakEvenPTUs * enhancedPTUData.throughput;
       
-      // Utilization at break-even point
-      const utilizationAtBreakEven = breakEvenTPM > 0 ? formData.avgTPM / breakEvenTPM : 0;
+      // Utilization at break-even point (use normalized TPM for consistency)
+      const utilizationAtBreakEven = breakEvenTPM > 0 ? normalizedAvgTPM / breakEvenTPM : 0;
       
       return { breakEvenPTUs, breakEvenTPM, utilizationAtBreakEven };
     })();
@@ -889,10 +947,16 @@ Check browser console for detailed error information.`);
     // Monthly savings: positive = PTU saves money, negative = PAYGO is cheaper
     const monthlySavings = monthlyPaygoCost - yearlyReservationMonthly;
     
-    // Spillover model calculations
+    // Spillover model calculations — use normalized TPM for overflow comparison
     const hybridBasePTU = Math.ceil(formData.avgPTU || 1);
-    const hybridOverflowTPM = Math.max(0, formData.p99TPM - (hybridBasePTU * currentPricing.tokensPerPTUPerMinute));
-    const hybridOverflowTokensMonthly = (hybridOverflowTPM * formData.monthlyMinutes) / 1000000;
+    // Normalize p99TPM for spillover overflow comparison
+    const p99InputTPM = (formData.p99TPM || 0) * formData.inputOutputRatio;
+    const p99OutputTPM = (formData.p99TPM || 0) * (1 - formData.inputOutputRatio);
+    const normalizedP99TPM = normalizeTPM(p99InputTPM, p99OutputTPM, outputWeight);
+    const hybridOverflowTPM = Math.max(0, normalizedP99TPM - (hybridBasePTU * currentPricing.tokensPerPTUPerMinute));
+    // Convert overflow back to raw tokens for PAYGO cost (split by ratio)
+    const overflowRawTPM = outputWeight > 0 ? hybridOverflowTPM / (formData.inputOutputRatio + outputWeight * (1 - formData.inputOutputRatio)) : hybridOverflowTPM;
+    const hybridOverflowTokensMonthly = (overflowRawTPM * formData.monthlyMinutes) / 1000000;
     const hybridOverflowCost = (hybridOverflowTokensMonthly * formData.inputOutputRatio * currentPricing.paygo_input) + (hybridOverflowTokensMonthly * (1 - formData.inputOutputRatio) * currentPricing.paygo_output);
     const hybridBaseCost = hybridBasePTU * currentPricing.ptu_monthly;
     const hybridTotalCost = hybridBaseCost + hybridOverflowCost;
@@ -903,8 +967,10 @@ Check browser console for detailed error information.`);
     let monthlyPriorityCost = 0;
     let priorityBreakdown = null;
     if (isPrioritySupported && monthlyTokens > 0) {
-      const inputTokensM = monthlyTokens * formData.inputOutputRatio;
-      const outputTokensM = monthlyTokens * (1 - formData.inputOutputRatio);
+      // Use resolved input/output split for priority cost (more accurate than ratio alone)
+      const inputFraction = (effectiveInputTPM + effectiveOutputTPM) > 0 ? effectiveInputTPM / (effectiveInputTPM + effectiveOutputTPM) : formData.inputOutputRatio;
+      const inputTokensM = monthlyTokens * inputFraction;
+      const outputTokensM = monthlyTokens * (1 - inputFraction);
       const inputCost = inputTokensM * priorityPricing.input;
       const outputCost = outputTokensM * priorityPricing.output;
       monthlyPriorityCost = inputCost + outputCost;
@@ -1007,7 +1073,14 @@ Check browser console for detailed error information.`);
       monthlyPriorityCost,
       priorityBreakdown,
       // Task 3: PAYG breakdown for detailed cost display
-      paygoBreakdown
+      paygoBreakdown,
+      // Output token weighting metadata
+      outputWeight,
+      rawAvgTPM,
+      normalizedAvgTPM,
+      effectiveInputTPM,
+      effectiveOutputTPM,
+      tpmSource
     });
 
     // Add to input history after successful calculation (Enhancement #3)
@@ -1110,7 +1183,15 @@ Check browser console for detailed error information.`);
         },
         breakEvenAnalysis: calculations.breakEvenAnalysis || {},
         customPricing: { enabled: useCustomPricing },
-        validationWarnings: calculations.validationWarnings || []
+        validationWarnings: calculations.validationWarnings || [],
+        outputWeighting: {
+          outputWeight: calculations.outputWeight || 1,
+          rawAvgTPM: calculations.rawAvgTPM,
+          normalizedAvgTPM: calculations.normalizedAvgTPM,
+          tpmSource: calculations.tpmSource,
+          resolvedInputTPM: calculations.resolvedInputTPM,
+          resolvedOutputTPM: calculations.resolvedOutputTPM
+        }
       };
       
       exportService.generateReport(reportData);
@@ -1150,7 +1231,15 @@ Check browser console for detailed error information.`);
         },
         breakEvenAnalysis: calculations.breakEvenAnalysis || {},
         customPricing: { enabled: useCustomPricing },
-        validationWarnings: calculations.validationWarnings || []
+        validationWarnings: calculations.validationWarnings || [],
+        outputWeighting: {
+          outputWeight: calculations.outputWeight || 1,
+          rawAvgTPM: calculations.rawAvgTPM,
+          normalizedAvgTPM: calculations.normalizedAvgTPM,
+          tpmSource: calculations.tpmSource,
+          resolvedInputTPM: calculations.resolvedInputTPM,
+          resolvedOutputTPM: calculations.resolvedOutputTPM
+        }
       };
       
       exportService.generateReport(reportData);
@@ -1308,28 +1397,38 @@ Check browser console for detailed error information.`);
     }
   };
 
-  // KQL Query code - Dynamic based on selected model
-  const kqlQuery = `// Burst-Aware Azure OpenAI PTU Sizing Analysis
+  // KQL Query code - Dynamic based on selected model (with separate input/output TPM for output weighting)
+  const kqlQuery = `// Output-Weighted Azure OpenAI PTU Sizing Analysis
 // Run this query in Azure Monitor Log Analytics for accurate capacity planning
-// PTU calculator for model: ${selectedModel}
+// Model: ${selectedModel} | Output Weight: ${getModelOutputWeight()}x (1 output token = ${getModelOutputWeight()} input tokens toward utilization)
 
 let window = 1m;              // granularity for burst detection
 let p = 0.99;                 // percentile for burst sizing
+let outputWeight = ${getModelOutputWeight()};          // model-specific output token weight
+let throughputPerPTU = ${getCurrentModelThroughput()};  // input TPM per PTU for ${selectedModel}
 AzureMetrics
 | where ResourceProvider == "MICROSOFT.COGNITIVESERVICES"
-| where MetricName in ("ProcessedPromptTokens", "ProcessedCompletionTokens")
 | where TimeGenerated >= ago(7d)
-| summarize Tokens = sum(Total) by bin(TimeGenerated, window)
+| extend IsInput = MetricName == "ProcessedPromptTokens"
+| extend IsOutput = MetricName == "GeneratedCompletionTokens" or MetricName == "ProcessedCompletionTokens"
+| where IsInput or IsOutput
 | summarize
-    AvgTPM = avg(Tokens),
-    P99TPM = percentile(Tokens, p),
-    MaxTPM = max(Tokens)
+    InputTokens = sumif(Total, IsInput),
+    OutputTokens = sumif(Total, IsOutput)
+    by bin(TimeGenerated, window)
+| extend NormalizedTPM = InputTokens + (outputWeight * OutputTokens)
+| summarize
+    AvgInputTPM = avg(InputTokens),
+    AvgOutputTPM = avg(OutputTokens),
+    AvgTPM = avg(NormalizedTPM),
+    P99TPM = percentile(NormalizedTPM, p),
+    MaxTPM = max(NormalizedTPM)
 | extend
-    AvgPTU = ceiling(AvgTPM / ${getCurrentModelThroughput()}.0),
-    P99PTU = ceiling(P99TPM / ${getCurrentModelThroughput()}.0),
-    MaxPTU = ceiling(MaxTPM / ${getCurrentModelThroughput()}.0)
-| extend RecommendedPTU = max_of(AvgPTU, P99PTU)  // higher value covers bursts
-| project AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`;
+    AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)),
+    P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)),
+    MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))
+| extend RecommendedPTU = max_of(AvgPTU, P99PTU)
+| project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`;
 
   // Copy KQL query to clipboard
   const copyKQLQuery = () => {
@@ -1561,7 +1660,7 @@ AzureMetrics
                 Copy
               </Button>
               <pre className="text-sm overflow-x-auto pr-20">
-                <code>{`// Burst-Aware Azure OpenAI PTU Sizing Analysis\n// Run this query in Azure Monitor Log Analytics for accurate capacity planning\nlet window = 1m;              // granularity for burst detection\nlet p = 0.99;                 // percentile for burst sizing\nAzureMetrics\n| where ResourceProvider == \"MICROSOFT.COGNITIVESERVICES\"\n| where MetricName in (\"ProcessedPromptTokens\", \"ProcessedCompletionTokens\")\n| where TimeGenerated >= ago(7d)\n| summarize Tokens = sum(Total) by bin(TimeGenerated, window)\n| summarize\n    AvgTPM = avg(Tokens),\n    P99TPM = percentile(Tokens, p),\n    MaxTPM = max(Tokens)\n| extend\n    AvgPTU = ceiling(AvgTPM / 37000.0),    // <-- Adjust divisor for your model\n    P99PTU = ceiling(P99TPM / 37000.0),    // <-- Adjust divisor for your model\n    MaxPTU = ceiling(MaxTPM / 37000.0)     // <-- Adjust divisor for your model\n| extend RecommendedPTU = max_of(AvgPTU, P99PTU)  // higher value covers bursts\n| project AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</code>
+                <code>{`// Output-Weighted Azure OpenAI PTU Sizing Analysis\n// Run this in Azure Monitor Log Analytics. Adjust outputWeight for your model.\n// Tip: Use the dynamic KQL query in the calculator for model-specific values.\nlet window = 1m;\nlet p = 0.99;\nlet outputWeight = 4;  // Model-specific: GPT-4.1=4, GPT-5=8 (see docs)\nlet throughputPerPTU = 3000;  // Input TPM per PTU for your model\nAzureMetrics\n| where ResourceProvider == \"MICROSOFT.COGNITIVESERVICES\"\n| where TimeGenerated >= ago(7d)\n| extend IsInput = MetricName == \"ProcessedPromptTokens\"\n| extend IsOutput = MetricName == \"GeneratedCompletionTokens\" or MetricName == \"ProcessedCompletionTokens\"\n| where IsInput or IsOutput\n| summarize InputTokens = sumif(Total, IsInput), OutputTokens = sumif(Total, IsOutput) by bin(TimeGenerated, window)\n| extend NormalizedTPM = InputTokens + (outputWeight * OutputTokens)\n| summarize AvgInputTPM = avg(InputTokens), AvgOutputTPM = avg(OutputTokens), AvgTPM = avg(NormalizedTPM), P99TPM = percentile(NormalizedTPM, p), MaxTPM = max(NormalizedTPM)\n| extend AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)), P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)), MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))\n| extend RecommendedPTU = max_of(AvgPTU, P99PTU)\n| project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</code>
               </pre>
             </div>
             
@@ -1639,7 +1738,7 @@ AzureMetrics
           <p>If you have questions or spot discrepancies, please open an issue or suggestion!</p>
           <hr className="my-4" />
           <h3 className="font-semibold text-base mb-2">KQL Query Example</h3>
-          <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>{`// Burst-Aware Azure OpenAI PTU Sizing Analysis\n// Run this query in Azure Monitor Log Analytics for accurate capacity planning\nlet window = 1m;           // granularity for burst detection\nlet p = 0.99;             // percentile for burst sizing\nAzureMetrics\n| where ResourceProvider == \"MICROSOFT.COGNITIVESERVICES\"\n| where MetricName in (\"ProcessedPromptTokens\", \"ProcessedCompletionTokens\")\n| where TimeGenerated >= ago(7d)\n| summarize Tokens = sum(Total) by bin(TimeGenerated, window)\n| summarize\n    AvgTPM = avg(Tokens),\n    P99TPM = percentile(Tokens, p),\n    MaxTPM = max(Tokens)\n| extend\n    AvgPTU = ceiling(AvgTPM / 50000.0),\n    P99PTU = ceiling(P99TPM / 50000.0),\n    MaxPTU = ceiling(MaxTPM / 50000.0)\n| extend RecommendedPTU = max_of(AvgPTU, P99PTU)  // higher value covers bursts\n| project AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</code></pre>
+          <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>{`// Output-Weighted Azure OpenAI PTU Sizing Analysis\n// Adjust outputWeight and throughputPerPTU for your model.\nlet window = 1m;\nlet p = 0.99;\nlet outputWeight = 4;  // Model-specific: GPT-4.1=4, GPT-5=8\nlet throughputPerPTU = 3000;  // Input TPM per PTU\nAzureMetrics\n| where ResourceProvider == \"MICROSOFT.COGNITIVESERVICES\"\n| where TimeGenerated >= ago(7d)\n| extend IsInput = MetricName == \"ProcessedPromptTokens\"\n| extend IsOutput = MetricName == \"GeneratedCompletionTokens\" or MetricName == \"ProcessedCompletionTokens\"\n| where IsInput or IsOutput\n| summarize InputTokens = sumif(Total, IsInput), OutputTokens = sumif(Total, IsOutput) by bin(TimeGenerated, window)\n| extend NormalizedTPM = InputTokens + (outputWeight * OutputTokens)\n| summarize AvgInputTPM = avg(InputTokens), AvgOutputTPM = avg(OutputTokens), AvgTPM = avg(NormalizedTPM), P99TPM = percentile(NormalizedTPM, p), MaxTPM = max(NormalizedTPM)\n| extend AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)), P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)), MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))\n| extend RecommendedPTU = max_of(AvgPTU, P99PTU)\n| project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</code></pre>
         </div>
       </Modal>
               </div>
@@ -2200,6 +2299,54 @@ AzureMetrics
                 />
                 <p className="text-sm text-gray-600 mt-1">MaxTPM - absolute peak usage</p>
               </div>
+              </div>
+
+              {/* Output Token Weighting Info + Separate Input/Output TPM */}
+              <div className="mt-4 p-4 border border-indigo-200 bg-indigo-50 rounded-lg">
+                <div className="flex items-start gap-2 mb-3">
+                  <Info className="h-5 w-5 mt-0.5 text-indigo-600 flex-shrink-0" />
+                  <div className="text-indigo-800">
+                    <div className="font-medium mb-1">⚖️ Output Token Weighting: {enhancedModelConfig.models[selectedModel]?.name || selectedModel} = {getModelOutputWeight()}× output weight</div>
+                    <div className="text-sm">
+                      For this model, <strong>1 output token counts as {getModelOutputWeight()} input tokens</strong> toward PTU utilization.
+                      {tpmSourceLabel()}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                  <div>
+                    <Label htmlFor="avgInputTPM" className="text-indigo-700">Avg Input (Prompt) TPM</Label>
+                    <Input
+                      id="avgInputTPM"
+                      type="number"
+                      value={formData.avgInputTPM}
+                      onChange={(e) => handleInputChange('avgInputTPM', e.target.value)}
+                      placeholder="0"
+                      className="border-indigo-300"
+                    />
+                    <p className="text-sm text-gray-600 mt-1">AvgInputTPM from updated KQL query</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="avgOutputTPM" className="text-indigo-700">Avg Output (Completion) TPM</Label>
+                    <Input
+                      id="avgOutputTPM"
+                      type="number"
+                      value={formData.avgOutputTPM}
+                      onChange={(e) => handleInputChange('avgOutputTPM', e.target.value)}
+                      placeholder="0"
+                      className="border-indigo-300"
+                    />
+                    <p className="text-sm text-gray-600 mt-1">AvgOutputTPM from updated KQL query</p>
+                  </div>
+                </div>
+                {formData.avgTPM > 0 && formData.avgInputTPM === 0 && formData.avgOutputTPM === 0 && (
+                  <div className="mt-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                    <strong>⚠️ Using estimated split:</strong> Combined TPM is split using the I/O ratio ({Math.round(formData.inputOutputRatio * 100)}% input / {Math.round((1 - formData.inputOutputRatio) * 100)}% output). For more accurate PTU sizing, provide separate input/output TPM above or adjust the ratio in Method B.
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <div>
                 <Label htmlFor="avgPTU">Average PTU (from KQL)</Label>
                 <Input

@@ -219,24 +219,35 @@ const WizardMode = ({
           </CardHeader>
           <CardContent>
             <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto">
-              <pre>{`// Burst-Aware Azure OpenAI PTU Sizing Analysis
+              <pre>{`// Output-Weighted Azure OpenAI PTU Sizing Analysis
+// Adjust outputWeight and throughputPerPTU for your model
 let window = 1m;
 let p = 0.99;
+let outputWeight = 4;          // GPT-4.1=4, GPT-5=8 (see MS Learn)
+let throughputPerPTU = 3000;   // Input TPM per PTU for your model
 AzureMetrics
 | where ResourceProvider == "MICROSOFT.COGNITIVESERVICES"
-| where MetricName in ("ProcessedPromptTokens", "ProcessedCompletionTokens")
 | where TimeGenerated >= ago(7d)
-| summarize Tokens = sum(Total) by bin(TimeGenerated, window)
+| extend IsInput = MetricName == "ProcessedPromptTokens"
+| extend IsOutput = MetricName == "GeneratedCompletionTokens" or MetricName == "ProcessedCompletionTokens"
+| where IsInput or IsOutput
 | summarize
-    AvgTPM = avg(Tokens),
-    P99TPM = percentile(Tokens, p),
-    MaxTPM = max(Tokens)
+    InputTokens = sumif(Total, IsInput),
+    OutputTokens = sumif(Total, IsOutput)
+    by bin(TimeGenerated, window)
+| extend NormalizedTPM = InputTokens + (outputWeight * OutputTokens)
+| summarize
+    AvgInputTPM = avg(InputTokens),
+    AvgOutputTPM = avg(OutputTokens),
+    AvgTPM = avg(NormalizedTPM),
+    P99TPM = percentile(NormalizedTPM, p),
+    MaxTPM = max(NormalizedTPM)
 | extend
-    AvgPTU = ceiling(AvgTPM / 50000.0),
-    P99PTU = ceiling(P99TPM / 50000.0),
-    MaxPTU = ceiling(MaxTPM / 50000.0)
+    AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)),
+    P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)),
+    MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))
 | extend RecommendedPTU = max_of(AvgPTU, P99PTU)
-| project AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</pre>
+| project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</pre>
             </div>
             <Button className="mt-2" variant="outline" size="sm">
               Copy Query

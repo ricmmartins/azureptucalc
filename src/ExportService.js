@@ -19,7 +19,8 @@ export class ExportService {
       paygCostCalculation,
       breakEvenAnalysis,
       customPricing,
-      validationWarnings
+      validationWarnings,
+      outputWeighting
     } = calculationData;
 
     const reportTimestamp = new Date().toISOString();
@@ -38,7 +39,15 @@ export class ExportService {
         ptuCount: ptuCount,
         usageScenario: usageScenario,
         requiredThroughput: throughputNeeded,
-        customPricing: customPricing?.enabled || false
+        customPricing: customPricing?.enabled || false,
+        outputWeighting: outputWeighting ? {
+          outputWeight: outputWeighting.outputWeight,
+          rawAvgTPM: outputWeighting.rawAvgTPM,
+          normalizedAvgTPM: outputWeighting.normalizedAvgTPM,
+          tpmSource: outputWeighting.tpmSource,
+          resolvedInputTPM: outputWeighting.resolvedInputTPM,
+          resolvedOutputTPM: outputWeighting.resolvedOutputTPM
+        } : undefined
       },
       costBreakdown: {
         ptu: {
@@ -129,6 +138,20 @@ export class ExportService {
     csvRows.push(`PTU Count,${this.reportData.configuration.ptuCount}`);
     csvRows.push(`Usage Scenario,${this.reportData.configuration.usageScenario}`);
     csvRows.push('');
+    
+    // Output Token Weighting
+    if (this.reportData.configuration.outputWeighting) {
+      const ow = this.reportData.configuration.outputWeighting;
+      csvRows.push('OUTPUT TOKEN WEIGHTING');
+      csvRows.push('Field,Value');
+      csvRows.push(`Output Weight,${ow.outputWeight}x`);
+      csvRows.push(`TPM Source,${ow.tpmSource || 'N/A'}`);
+      csvRows.push(`Raw Avg TPM,${ow.rawAvgTPM || 'N/A'}`);
+      csvRows.push(`Normalized Avg TPM,${ow.normalizedAvgTPM || 'N/A'}`);
+      csvRows.push(`Input TPM,${ow.resolvedInputTPM || 'N/A'}`);
+      csvRows.push(`Output TPM,${ow.resolvedOutputTPM || 'N/A'}`);
+      csvRows.push('');
+    }
     
     // Cost Breakdown
     csvRows.push('PTU COSTS');
