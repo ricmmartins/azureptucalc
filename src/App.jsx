@@ -1756,26 +1756,60 @@ AzureMetrics
         title="Throughput per PTU & KQL Analysis"
       >
         <div className="space-y-4 text-sm text-gray-800 max-h-[60vh] overflow-y-auto">
-          <h3 className="font-semibold text-base mb-2">How to Find the Right throughput_per_ptu (TPM per PTU) for Each Model</h3>
+          <h3 className="font-semibold text-base mb-2">Understanding Throughput per PTU & Output Weighting</h3>
           <p>
-            The correct <code>throughput_per_ptu</code> (tokens per minute per PTU) for each model is published by Microsoft in their official documentation:
+            Each model has a different <strong>throughput capacity per PTU</strong> (input tokens per minute per PTU) and an <strong>output token weight</strong> that reflects how much more capacity output tokens consume compared to input tokens. These values are published by Microsoft:
             <br />
-            <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Latest Azure OpenAI Models – Provisioned Throughput Table</a>
+            <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Latest Azure OpenAI Models \u2013 Provisioned Throughput Table</a>
           </p>
-          <ul className="list-disc ml-6">
-            <li><b>GPT-4.1:</b> 3,000 tokens per minute per PTU (each output token counts as 4 input tokens for quota)</li>
-            <li><b>GPT-4.1 Mini:</b> 14,900 tokens per minute per PTU</li>
-            <li><b>GPT-4.1 Nano:</b> 59,400 tokens per minute per PTU</li>
-            <li>The 50,000 value in the KQL step is a generic placeholder. Always refer to the official table for the exact value for your selected model. Adjust the KQL and calculator input accordingly.</li>
-          </ul>
-          <ol className="list-decimal ml-6">
-            <li>Go to the link above.</li>
-            <li>Find your model in the “Latest Azure OpenAI models” table.</li>
-            <li>Use the “Tokens per minute per PTU” column for your calculations.</li>
-          </ol>
-          <p>If you have questions or spot discrepancies, please open an issue or suggestion!</p>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <h4 className="font-semibold text-blue-800 mb-1">How Output Weighting Works</h4>
+            <p className="text-blue-700">
+              PTU capacity is measured in <em>input</em> tokens per minute. Output tokens consume more capacity, so they are weighted:
+            </p>
+            <p className="text-blue-900 font-mono mt-1 text-center">
+              Normalized TPM = Input Tokens + (Output Weight \u00d7 Output Tokens)
+            </p>
+            <p className="text-blue-700 mt-1">
+              For example, with GPT-4.1 (weight 4\u00d7), producing 100 output tokens uses the same PTU capacity as 400 input tokens.
+            </p>
+          </div>
+
+          <h4 className="font-semibold text-base mt-4 mb-2">All PTU-Supported Models</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 px-2 py-1 text-left">Model</th>
+                  <th className="border border-gray-300 px-2 py-1 text-right">Input TPM / PTU</th>
+                  <th className="border border-gray-300 px-2 py-1 text-right">Output Weight</th>
+                  <th className="border border-gray-300 px-2 py-1 text-left">Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(enhancedModelConfig.models).map(([id, m]) => (
+                  <tr key={id} className={id === selectedModel ? 'bg-blue-50 font-semibold' : ''}>
+                    <td className="border border-gray-300 px-2 py-1">{m.name || id}{id === selectedModel ? ' \u2713' : ''}</td>
+                    <td className="border border-gray-300 px-2 py-1 text-right">{m.throughput_per_ptu?.toLocaleString()}</td>
+                    <td className="border border-gray-300 px-2 py-1 text-right">{m.output_weight}\u00d7</td>
+                    <td className="border border-gray-300 px-2 py-1 text-xs text-gray-500">{m.output_weight_source || 'MS Learn'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Your selected model (<strong>{selectedModel}</strong>) is highlighted. Values sourced from{' '}
+            <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Microsoft Learn</a>.
+            {' '}If you spot discrepancies, please <a href="https://github.com/ricmmartins/azureptucalc/issues" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">open an issue</a>.
+          </p>
+
           <hr className="my-4" />
-          <h3 className="font-semibold text-base mb-2">KQL Query Example (for {selectedModel})</h3>
+          <h3 className="font-semibold text-base mb-2">KQL Query for {selectedModel}</h3>
+          <p className="mb-2 text-gray-600">
+            Auto-configured with <strong>outputWeight = {getModelOutputWeight()}</strong> and <strong>throughputPerPTU = {getCurrentModelThroughput().toLocaleString()}</strong>. Copy and run \u2014 no manual adjustments needed.
+          </p>
           <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>{kqlQuery}</code></pre>
         </div>
       </Modal>
