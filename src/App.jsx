@@ -1760,7 +1760,7 @@ AzureMetrics
           <p>
             Each model has a different <strong>throughput capacity per PTU</strong> (input tokens per minute per PTU) and an <strong>output token weight</strong> that reflects how much more capacity output tokens consume compared to input tokens. These values are published by Microsoft:
             <br />
-            <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Latest Azure OpenAI Models \u2013 Provisioned Throughput Table</a>
+            <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Latest Azure OpenAI Models – Provisioned Throughput Table</a>
           </p>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -1769,10 +1769,10 @@ AzureMetrics
               PTU capacity is measured in <em>input</em> tokens per minute. Output tokens consume more capacity, so they are weighted:
             </p>
             <p className="text-blue-900 font-mono mt-1 text-center">
-              Normalized TPM = Input Tokens + (Output Weight \u00d7 Output Tokens)
+              Normalized TPM = Input Tokens + (Output Weight × Output Tokens)
             </p>
             <p className="text-blue-700 mt-1">
-              For example, with GPT-4.1 (weight 4\u00d7), producing 100 output tokens uses the same PTU capacity as 400 input tokens.
+              For example, with GPT-4.1 (weight 4×), producing 100 output tokens uses the same PTU capacity as 400 input tokens.
             </p>
           </div>
 
@@ -1790,9 +1790,9 @@ AzureMetrics
               <tbody>
                 {Object.entries(enhancedModelConfig.models).map(([id, m]) => (
                   <tr key={id} className={id === selectedModel ? 'bg-blue-50 font-semibold' : ''}>
-                    <td className="border border-gray-300 px-2 py-1">{m.name || id}{id === selectedModel ? ' \u2713' : ''}</td>
+                    <td className="border border-gray-300 px-2 py-1">{m.name || id}{id === selectedModel ? ' ✓' : ''}</td>
                     <td className="border border-gray-300 px-2 py-1 text-right">{m.throughput_per_ptu?.toLocaleString()}</td>
-                    <td className="border border-gray-300 px-2 py-1 text-right">{m.output_weight}\u00d7</td>
+                    <td className="border border-gray-300 px-2 py-1 text-right">{m.output_weight}×</td>
                     <td className="border border-gray-300 px-2 py-1 text-xs text-gray-500">{m.output_weight_source || 'MS Learn'}</td>
                   </tr>
                 ))}
@@ -1808,7 +1808,7 @@ AzureMetrics
           <hr className="my-4" />
           <h3 className="font-semibold text-base mb-2">KQL Query for {selectedModel}</h3>
           <p className="mb-2 text-gray-600">
-            Auto-configured with <strong>outputWeight = {getModelOutputWeight()}</strong> and <strong>throughputPerPTU = {getCurrentModelThroughput().toLocaleString()}</strong>. Copy and run \u2014 no manual adjustments needed.
+            Auto-configured with <strong>outputWeight = {getModelOutputWeight()}</strong> and <strong>throughputPerPTU = {getCurrentModelThroughput().toLocaleString()}</strong>. Copy and run — no manual adjustments needed.
           </p>
           <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>{kqlQuery}</code></pre>
         </div>
