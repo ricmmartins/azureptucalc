@@ -1661,7 +1661,7 @@ AzureMetrics
             </CardDescription>
           </CardHeader>
           {!collapsed.kqlQuery && <CardContent>
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div id="model-selector" className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <Label htmlFor="kql-model" className="text-sm font-semibold text-blue-900 mb-2 block">
                 Select your model to generate the KQL query
               </Label>
@@ -2007,26 +2007,19 @@ AzureMetrics
                   </div>
 
                   <div>
-                    <Label htmlFor="model">OpenAI Model (PTU Supported Only)</Label>
-                    <Select 
-                      value={selectedModel} 
-                      onValueChange={setSelectedModel}
-                      aria-label="Select OpenAI model for calculations"
-                      aria-describedby="model-help"
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a model" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getAvailableModels().map(model => (
-                          <SelectItem key={model.id} value={model.id}>
-                            {model.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p id="model-help" className="text-sm text-gray-600 mt-1">
-                      Only models that support Provisioned Throughput Units (PTU) are shown. Models like DALL-E and TTS do not support PTU reservations.
+                    <Label>OpenAI Model</Label>
+                    <div className="flex items-center gap-2 mt-1 p-2 bg-gray-50 border border-gray-200 rounded-md">
+                      <Badge className="bg-blue-100 text-blue-800">{enhancedModelConfig.models[selectedModel]?.name || selectedModel}</Badge>
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('model-selector')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline ml-auto"
+                      >
+                        Change in Step 1 ↑
+                      </button>
+                    </div>
+                    <p id="model-help" className="text-xs text-gray-500 mt-1">
+                      Model is selected in Step 1 above. Output Weight: {getModelOutputWeight()}× | TPM/PTU: {getCurrentModelThroughput().toLocaleString()}
                     </p>
                   </div>
 
