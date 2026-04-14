@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -20,6 +20,7 @@ import {
   Target,
   Zap
 } from 'lucide-react';
+import enhancedModelConfig from '../enhanced_model_config.json';
 
 const WizardMode = ({ 
   initialData = {}, 
@@ -69,12 +70,31 @@ const WizardMode = ({
 
   const [copiedQuery, setCopiedQuery] = useState(false);
 
-  const copyKqlQuery = useCallback(async () => {
-    const query = `// Output-Weighted Azure OpenAI PTU Sizing Analysis
+  const modelKqlParams = useMemo(() => {
+    if (wizardData.model) {
+      const cfg = enhancedModelConfig.models?.[wizardData.model];
+      if (cfg) {
+        return {
+          outputWeight: cfg.output_weight || 4,
+          throughputPerPTU: cfg.throughput_per_ptu || 2500,
+          modelName: wizardData.model
+        };
+      }
+    }
+    return { outputWeight: 4, throughputPerPTU: 2500, modelName: null };
+  }, [wizardData.model]);
+
+  const wizardKqlQuery = useMemo(() => {
+    const { outputWeight, throughputPerPTU, modelName } = modelKqlParams;
+    const modelComment = modelName
+      ? `// Pre-configured for ${modelName} (outputWeight=${outputWeight}, throughputPerPTU=${throughputPerPTU})`
+      : '// Select a model in Step 3 to auto-populate these values';
+    return `// Output-Weighted Azure OpenAI PTU Sizing Analysis
+${modelComment}
 let window = 1m;
 let p = 0.99;
-let outputWeight = 4;
-let throughputPerPTU = 3000;
+let outputWeight = ${outputWeight};
+let throughputPerPTU = ${throughputPerPTU};
 AzureMetrics
 | where ResourceProvider == "MICROSOFT.COGNITIVESERVICES"
 | where TimeGenerated >= ago(7d)
@@ -87,14 +107,17 @@ AzureMetrics
 | extend AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)), P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)), MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))
 | extend RecommendedPTU = max_of(AvgPTU, P99PTU)
 | project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`;
+  }, [modelKqlParams]);
+
+  const copyKqlQuery = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(query);
+      await navigator.clipboard.writeText(wizardKqlQuery);
       setCopiedQuery(true);
       setTimeout(() => setCopiedQuery(false), 2000);
     } catch (err) {
       console.error('Failed to copy KQL query:', err);
     }
-  }, []);
+  }, [wizardKqlQuery]);
 
   const shareAnalysis = useCallback(() => {
     const text = `Azure OpenAI PTU Analysis: ${wizardData.model} in ${wizardData.region} (${wizardData.deploymentType})`;
@@ -274,38 +297,21 @@ AzureMetrics
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">KQL Query for Usage Analysis</CardTitle>
+            {modelKqlParams.modelName ? (
+              <CardDescription className="text-green-600 flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                Auto-configured for {modelKqlParams.modelName} (outputWeight={modelKqlParams.outputWeight}, throughputPerPTU={modelKqlParams.throughputPerPTU})
+              </CardDescription>
+            ) : (
+              <CardDescription className="text-amber-600 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                Using defaults — select your model in Step 3 and come back to get exact values
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent>
             <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto">
-              <pre>{`// Output-Weighted Azure OpenAI PTU Sizing Analysis
-// Adjust outputWeight and throughputPerPTU for your model
-let window = 1m;
-let p = 0.99;
-let outputWeight = 4;          // GPT-4.1=4, GPT-5=8 (see MS Learn)
-let throughputPerPTU = 3000;   // Input TPM per PTU for your model
-AzureMetrics
-| where ResourceProvider == "MICROSOFT.COGNITIVESERVICES"
-| where TimeGenerated >= ago(7d)
-| extend IsInput = MetricName == "ProcessedPromptTokens"
-| extend IsOutput = MetricName == "GeneratedCompletionTokens" or MetricName == "ProcessedCompletionTokens"
-| where IsInput or IsOutput
-| summarize
-    InputTokens = sumif(Total, IsInput),
-    OutputTokens = sumif(Total, IsOutput)
-    by bin(TimeGenerated, window)
-| extend NormalizedTPM = InputTokens + (outputWeight * OutputTokens)
-| summarize
-    AvgInputTPM = avg(InputTokens),
-    AvgOutputTPM = avg(OutputTokens),
-    AvgTPM = avg(NormalizedTPM),
-    P99TPM = percentile(NormalizedTPM, p),
-    MaxTPM = max(NormalizedTPM)
-| extend
-    AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)),
-    P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)),
-    MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))
-| extend RecommendedPTU = max_of(AvgPTU, P99PTU)
-| project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</pre>
+              <pre>{wizardKqlQuery}</pre>
             </div>
             <Button className="mt-2" variant="outline" size="sm" onClick={copyKqlQuery}>
               <Copy className="h-3 w-3 mr-1" />
