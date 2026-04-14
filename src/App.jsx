@@ -1672,7 +1672,7 @@ AzureMetrics
                 Copy
               </Button>
               <pre className="text-sm overflow-x-auto pr-20">
-                <code>{`// Output-Weighted Azure OpenAI PTU Sizing Analysis\n// Run this in Azure Monitor Log Analytics. Adjust outputWeight for your model.\n// Tip: Use the dynamic KQL query in the calculator for model-specific values.\nlet window = 1m;\nlet p = 0.99;\nlet outputWeight = 4;  // Model-specific: GPT-4.1=4, GPT-5=8 (see docs)\nlet throughputPerPTU = 3000;  // Input TPM per PTU for your model\nAzureMetrics\n| where ResourceProvider == \"MICROSOFT.COGNITIVESERVICES\"\n| where TimeGenerated >= ago(7d)\n| extend IsInput = MetricName == \"ProcessedPromptTokens\"\n| extend IsOutput = MetricName == \"GeneratedCompletionTokens\" or MetricName == \"ProcessedCompletionTokens\"\n| where IsInput or IsOutput\n| summarize InputTokens = sumif(Total, IsInput), OutputTokens = sumif(Total, IsOutput) by bin(TimeGenerated, window)\n| extend NormalizedTPM = InputTokens + (outputWeight * OutputTokens)\n| summarize AvgInputTPM = avg(InputTokens), AvgOutputTPM = avg(OutputTokens), AvgTPM = avg(NormalizedTPM), P99TPM = percentile(NormalizedTPM, p), MaxTPM = max(NormalizedTPM)\n| extend AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)), P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)), MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))\n| extend RecommendedPTU = max_of(AvgPTU, P99PTU)\n| project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</code>
+                <code>{kqlQuery}</code>
               </pre>
             </div>
             
@@ -1749,8 +1749,8 @@ AzureMetrics
           </ol>
           <p>If you have questions or spot discrepancies, please open an issue or suggestion!</p>
           <hr className="my-4" />
-          <h3 className="font-semibold text-base mb-2">KQL Query Example</h3>
-          <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>{`// Output-Weighted Azure OpenAI PTU Sizing Analysis\n// Adjust outputWeight and throughputPerPTU for your model.\nlet window = 1m;\nlet p = 0.99;\nlet outputWeight = 4;  // Model-specific: GPT-4.1=4, GPT-5=8\nlet throughputPerPTU = 3000;  // Input TPM per PTU\nAzureMetrics\n| where ResourceProvider == \"MICROSOFT.COGNITIVESERVICES\"\n| where TimeGenerated >= ago(7d)\n| extend IsInput = MetricName == \"ProcessedPromptTokens\"\n| extend IsOutput = MetricName == \"GeneratedCompletionTokens\" or MetricName == \"ProcessedCompletionTokens\"\n| where IsInput or IsOutput\n| summarize InputTokens = sumif(Total, IsInput), OutputTokens = sumif(Total, IsOutput) by bin(TimeGenerated, window)\n| extend NormalizedTPM = InputTokens + (outputWeight * OutputTokens)\n| summarize AvgInputTPM = avg(InputTokens), AvgOutputTPM = avg(OutputTokens), AvgTPM = avg(NormalizedTPM), P99TPM = percentile(NormalizedTPM, p), MaxTPM = max(NormalizedTPM)\n| extend AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)), P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)), MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))\n| extend RecommendedPTU = max_of(AvgPTU, P99PTU)\n| project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</code></pre>
+          <h3 className="font-semibold text-base mb-2">KQL Query Example (for {selectedModel})</h3>
+          <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>{kqlQuery}</code></pre>
         </div>
       </Modal>
               </div>
