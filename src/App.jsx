@@ -1805,13 +1805,7 @@ AzureMetrics
             {' '}If you spot discrepancies, please <a href="https://github.com/ricmmartins/azureptucalc/issues" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">open an issue</a>.
           </p>
 
-          <hr className="my-4" />
-          <h3 className="font-semibold text-base mb-2">KQL Query for {selectedModel}</h3>
-          <p className="mb-2 text-gray-600">
-            Auto-configured with <strong>outputWeight = {getModelOutputWeight()}</strong> and <strong>throughputPerPTU = {getCurrentModelThroughput().toLocaleString()}</strong>. Copy and run — no manual adjustments needed.
-          </p>
-          <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>{kqlQuery}</code></pre>
-        </div>
+          </div>
       </Modal>
               </div>
             </div>
