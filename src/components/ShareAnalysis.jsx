@@ -58,6 +58,7 @@ const ShareAnalysis = ({
         },
         kqlData: analysisData?.kqlData,
         results: shareOptions.includeData ? analysisData?.results : null,
+        charts: shareOptions.includeCharts ? analysisData?.charts : null,
         recommendations: shareOptions.includeRecommendations ? analysisData?.recommendations : null,
         options: shareOptions
       };

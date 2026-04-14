@@ -59,11 +59,11 @@ const InputHistory = ({ onLoadHistory }) => {
 
   const getUsagePattern = (item) => {
     const { formData } = item;
-    const totalTokens = (formData.inputTokens || 0) + (formData.outputTokens || 0);
-    const rpm = formData.requestsPerMinute || 0;
+    const totalTokens = (formData.inputTokensMonthly || 0) + (formData.outputTokensMonthly || 0);
+    const tpm = formData.avgTPM || formData.avgInputTPM || 0;
     
     if (totalTokens > 1000000) return { label: 'High Volume', color: 'bg-red-100 text-red-800' };
-    if (rpm > 100) return { label: 'High Frequency', color: 'bg-orange-100 text-orange-800' };
+    if (tpm > 100000) return { label: 'High Throughput', color: 'bg-orange-100 text-orange-800' };
     if (totalTokens > 100000) return { label: 'Medium Volume', color: 'bg-yellow-100 text-yellow-800' };
     return { label: 'Low Volume', color: 'bg-green-100 text-green-800' };
   };
@@ -164,16 +164,16 @@ const InputHistory = ({ onLoadHistory }) => {
                 <div className="mt-3 pt-3 border-t">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <div>
-                      <div className="font-medium text-gray-600">Input Tokens</div>
-                      <div>{(item.formData.inputTokens || 0).toLocaleString()}</div>
+                      <div className="font-medium text-gray-600">Avg TPM</div>
+                      <div>{(item.formData.avgTPM || 0).toLocaleString()}</div>
                     </div>
                     <div>
-                      <div className="font-medium text-gray-600">Output Tokens</div>
-                      <div>{(item.formData.outputTokens || 0).toLocaleString()}</div>
+                      <div className="font-medium text-gray-600">Input Tokens/Mo</div>
+                      <div>{(item.formData.inputTokensMonthly || 0).toLocaleString()}</div>
                     </div>
                     <div>
-                      <div className="font-medium text-gray-600">Requests/Min</div>
-                      <div>{(item.formData.requestsPerMinute || 0).toLocaleString()}</div>
+                      <div className="font-medium text-gray-600">Output Tokens/Mo</div>
+                      <div>{(item.formData.outputTokensMonthly || 0).toLocaleString()}</div>
                     </div>
                     <div>
                       <div className="font-medium text-gray-600">Deployment</div>

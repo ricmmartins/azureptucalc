@@ -38,6 +38,12 @@ const MobileOptimizations = ({
   const [orientation, setOrientation] = useState('portrait');
   const [zoomLevel, setZoomLevel] = useState(100);
   const [hiddenSections, setHiddenSections] = useState(new Set());
+  const isManualMode = React.useRef(false);
+
+  const setViewModeManual = (mode) => {
+    isManualMode.current = (mode !== 'auto');
+    setViewMode(mode);
+  };
 
   // Detect device type and orientation
   useEffect(() => {
@@ -45,7 +51,7 @@ const MobileOptimizations = ({
       const width = window.innerWidth;
       const height = window.innerHeight;
       
-      if (viewMode === 'auto') {
+      if (!isManualMode.current) {
         if (width < 768) {
           setViewMode('mobile');
         } else if (width < 1024) {
@@ -242,21 +248,21 @@ const MobileOptimizations = ({
           {/* View mode toggle */}
           <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
             <button
-              onClick={() => setViewMode('mobile')}
+              onClick={() => setViewModeManual('mobile')}
               className={`p-1 rounded ${viewMode === 'mobile' ? 'bg-white shadow-sm' : ''}`}
               aria-label="Mobile view"
             >
               <Smartphone className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setViewMode('tablet')}
+              onClick={() => setViewModeManual('tablet')}
               className={`p-1 rounded ${viewMode === 'tablet' ? 'bg-white shadow-sm' : ''}`}
               aria-label="Tablet view"
             >
               <Tablet className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setViewMode('desktop')}
+              onClick={() => setViewModeManual('desktop')}
               className={`p-1 rounded ${viewMode === 'desktop' ? 'bg-white shadow-sm' : ''}`}
               aria-label="Desktop view"
             >
@@ -327,7 +333,7 @@ const MobileOptimizations = ({
                   onClick={() => {
                     setZoomLevel(100);
                     setHiddenSections(new Set());
-                    setViewMode('auto');
+                    setViewModeManual('auto');
                   }}
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
