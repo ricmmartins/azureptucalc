@@ -413,10 +413,8 @@ function App() {
 
   // Keyboard shortcuts (Enhancement #2)
   // Use refs to avoid stale closures without re-registering on every render
-  const refreshPricingDataRef = React.useRef(refreshPricingData);
-  const handleExportCSVRef = React.useRef(handleExportCSV);
-  React.useEffect(() => { refreshPricingDataRef.current = refreshPricingData; });
-  React.useEffect(() => { handleExportCSVRef.current = handleExportCSV; });
+  const refreshPricingDataRef = React.useRef(null);
+  const handleExportCSVRef = React.useRef(null);
 
   useEffect(() => {
     if (!keyboardShortcuts) return;
@@ -430,13 +428,13 @@ function App() {
       // Ctrl/Cmd + R: Refresh pricing data
       if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
         e.preventDefault();
-        refreshPricingDataRef.current();
+        refreshPricingDataRef.current?.();
       }
       // Ctrl/Cmd + E: Export results
       if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
         e.preventDefault();
         if (calculations.monthlyPtuCost || calculations.monthlyPaygoCost) {
-          handleExportCSVRef.current();
+          handleExportCSVRef.current?.();
         }
       }
     };
@@ -1225,6 +1223,10 @@ Check browser console for detailed error information.`);
       }));
     }
   };
+
+  // Sync refs for keyboard shortcuts (refs declared earlier, functions defined above)
+  React.useEffect(() => { refreshPricingDataRef.current = refreshPricingData; });
+  React.useEffect(() => { handleExportCSVRef.current = handleExportCSV; });
 
   const handleExportJSON = () => {
     try {
