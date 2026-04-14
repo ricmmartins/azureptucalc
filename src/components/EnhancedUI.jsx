@@ -92,10 +92,18 @@ export const AnimatedButton = ({ children, onClick, className = '', ...props }) 
 export const PulsingIndicator = ({ active = false, color = 'green' }) => {
   if (!active) return null;
 
+  const colorMap = {
+    green: { bg: 'bg-green-500', ping: 'bg-green-400' },
+    red: { bg: 'bg-red-500', ping: 'bg-red-400' },
+    yellow: { bg: 'bg-yellow-500', ping: 'bg-yellow-400' },
+    blue: { bg: 'bg-blue-500', ping: 'bg-blue-400' },
+  };
+  const c = colorMap[color] || colorMap.green;
+
   return (
-    <div className={`relative inline-flex`}>
-      <div className={`h-3 w-3 bg-${color}-500 rounded-full`}></div>
-      <div className={`absolute inset-0 h-3 w-3 bg-${color}-400 rounded-full animate-ping opacity-75`}></div>
+    <div className="relative inline-flex">
+      <div className={`h-3 w-3 ${c.bg} rounded-full`}></div>
+      <div className={`absolute inset-0 h-3 w-3 ${c.ping} rounded-full animate-ping opacity-75`}></div>
     </div>
   );
 };

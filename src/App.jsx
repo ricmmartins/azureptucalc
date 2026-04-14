@@ -393,7 +393,7 @@ function App() {
   const [inputValidation, setInputValidation] = useState({});
   const [smartSuggestions, setSmartSuggestions] = useState([]);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-  const [inputHistory, setInputHistory] = useState([]);
+  // inputHistory removed — localStorage is used directly in addToInputHistory
   const [keyboardShortcuts, setKeyboardShortcuts] = useState(true);
   const [autoSave, setAutoSave] = useState(true);
   const [enhancedResults, setEnhancedResults] = useState(null);
@@ -412,6 +412,12 @@ function App() {
   // Check if user has entered valid data
 
   // Keyboard shortcuts (Enhancement #2)
+  // Use refs to avoid stale closures without re-registering on every render
+  const refreshPricingDataRef = React.useRef(refreshPricingData);
+  const handleExportCSVRef = React.useRef(handleExportCSV);
+  React.useEffect(() => { refreshPricingDataRef.current = refreshPricingData; });
+  React.useEffect(() => { handleExportCSVRef.current = handleExportCSV; });
+
   useEffect(() => {
     if (!keyboardShortcuts) return;
 
@@ -424,13 +430,13 @@ function App() {
       // Ctrl/Cmd + R: Refresh pricing data
       if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
         e.preventDefault();
-        refreshPricingData();
+        refreshPricingDataRef.current();
       }
       // Ctrl/Cmd + E: Export results
       if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
         e.preventDefault();
         if (calculations.monthlyPtuCost || calculations.monthlyPaygoCost) {
-          handleExportCSV();
+          handleExportCSVRef.current();
         }
       }
     };
@@ -490,7 +496,6 @@ function App() {
 
   // Function to add calculation to history
   const addToInputHistory = () => {
-    if (!inputHistory) return;
 
     const historyEntry = {
       formData,
@@ -1093,10 +1098,9 @@ Check browser console for detailed error information.`);
     // Add to input history after successful calculation (Enhancement #3)
     addToInputHistory();
     
-    // Show success animation if enabled (Enhancement #5)
-    if (showSuccessAnimation) {
-      setTimeout(() => setShowSuccessAnimation(true), 200);
-    }
+    // Show success animation after calculation (Enhancement #5)
+    setShowSuccessAnimation(true);
+    setTimeout(() => setShowSuccessAnimation(false), 1500);
     
     // Announce completion to screen reader if accessibility enabled (Enhancement #10)
     if (accessibilityMode) {
@@ -1173,7 +1177,7 @@ Check browser console for detailed error information.`);
         model: selectedModel,
         region: selectedRegion,
         deployment: selectedDeployment,
-        ptuCount: calculations.ptuNeeded || formData.manualPTU || 0,
+        ptuCount: calculations.ptuNeeded || 0,
         usageScenario: calculations.usagePattern || 'Unknown',
         throughputNeeded: calculations.normalizedAvgTPM || formData.avgTPM,
         ptuCostCalculation: {
@@ -1182,15 +1186,22 @@ Check browser console for detailed error information.`);
           yearly: calculations.yearlyReservationMonthly * 12,
           yearlyDiscount: currentPricing.officialPricing?.discount?.yearlyVsHourly || 0
         },
-        paygCostCalculation: calculations.paygoBreakdown || {
-          inputCost: 0,
-          outputCost: 0,
-          total: calculations.monthlyPaygoCost,
-          inputTokens: formData.inputTokensMonthly,
-          outputTokens: formData.outputTokensMonthly,
-          inputPricePerK: currentPricing.paygo_input || 0,
-          outputPricePerK: currentPricing.paygo_output || 0
-        },
+        paygCostCalculation: (() => {
+          const bd = calculations.paygoBreakdown;
+          return bd ? {
+            inputCost: bd.inputCost,
+            outputCost: bd.outputCost,
+            total: bd.totalCost,
+            inputTokens: bd.breakdown?.inputTokens ?? formData.inputTokensMonthly,
+            outputTokens: bd.breakdown?.outputTokens ?? formData.outputTokensMonthly,
+            inputPricePerK: bd.breakdown?.inputRate ?? 0,
+            outputPricePerK: bd.breakdown?.outputRate ?? 0
+          } : {
+            inputCost: 0, outputCost: 0, total: calculations.monthlyPaygoCost,
+            inputTokens: formData.inputTokensMonthly, outputTokens: formData.outputTokensMonthly,
+            inputPricePerK: 0, outputPricePerK: 0
+          };
+        })(),
         breakEvenAnalysis: calculations.breakEvenAnalysis || {},
         customPricing: { enabled: useCustomPricing },
         validationWarnings: calculations.validationWarnings || [],
@@ -1221,7 +1232,7 @@ Check browser console for detailed error information.`);
         model: selectedModel,
         region: selectedRegion,
         deployment: selectedDeployment,
-        ptuCount: calculations.ptuNeeded || formData.manualPTU || 0,
+        ptuCount: calculations.ptuNeeded || 0,
         usageScenario: calculations.usagePattern || 'Unknown',
         throughputNeeded: calculations.normalizedAvgTPM || formData.avgTPM,
         ptuCostCalculation: {
@@ -1230,15 +1241,22 @@ Check browser console for detailed error information.`);
           yearly: calculations.yearlyReservationMonthly * 12,
           yearlyDiscount: currentPricing.officialPricing?.discount?.yearlyVsHourly || 0
         },
-        paygCostCalculation: calculations.paygoBreakdown || {
-          inputCost: 0,
-          outputCost: 0,
-          total: calculations.monthlyPaygoCost,
-          inputTokens: formData.inputTokensMonthly,
-          outputTokens: formData.outputTokensMonthly,
-          inputPricePerK: currentPricing.paygo_input || 0,
-          outputPricePerK: currentPricing.paygo_output || 0
-        },
+        paygCostCalculation: (() => {
+          const bd = calculations.paygoBreakdown;
+          return bd ? {
+            inputCost: bd.inputCost,
+            outputCost: bd.outputCost,
+            total: bd.totalCost,
+            inputTokens: bd.breakdown?.inputTokens ?? formData.inputTokensMonthly,
+            outputTokens: bd.breakdown?.outputTokens ?? formData.outputTokensMonthly,
+            inputPricePerK: bd.breakdown?.inputRate ?? 0,
+            outputPricePerK: bd.breakdown?.outputRate ?? 0
+          } : {
+            inputCost: 0, outputCost: 0, total: calculations.monthlyPaygoCost,
+            inputTokens: formData.inputTokensMonthly, outputTokens: formData.outputTokensMonthly,
+            inputPricePerK: 0, outputPricePerK: 0
+          };
+        })(),
         breakEvenAnalysis: calculations.breakEvenAnalysis || {},
         customPricing: { enabled: useCustomPricing },
         validationWarnings: calculations.validationWarnings || [],
@@ -1344,8 +1362,8 @@ Check browser console for detailed error information.`);
         
         return [
           { id: 'gpt-4o', name: 'GPT-4o', minPTU: 15 },
-          { id: 'gpt-4o-mini', name: 'GPT-4o Mini', minPTU: 10 },
-          { id: 'gpt-35-turbo', name: 'GPT-3.5 Turbo', minPTU: 5 }
+          { id: 'gpt-4o-mini', name: 'GPT-4o Mini', minPTU: 15 },
+          { id: 'gpt-4.1', name: 'GPT-4.1', minPTU: 25 }
         ];
       }
       
@@ -1366,7 +1384,7 @@ Check browser console for detailed error information.`);
       console.error('Error in getAvailableModels:', error);
       return [
         { id: 'gpt-4o', name: 'GPT-4o', minPTU: 15 },
-        { id: 'gpt-4o-mini', name: 'GPT-4o Mini', minPTU: 10 }
+        { id: 'gpt-4o-mini', name: 'GPT-4o Mini', minPTU: 15 }
       ];
     }
   };
@@ -1918,7 +1936,7 @@ AzureMetrics
               <CardTitle><Badge className="bg-blue-100 text-blue-800 mr-2">Step 2</Badge>Configure Your Deployment</CardTitle>
             </div>
             <CardDescription>
-              Select your Azure region, OpenAI model, and deployment type for accurate pricing
+              Select your Azure region and deployment type for accurate pricing
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1979,7 +1997,7 @@ AzureMetrics
                       aria-label="Select Azure region for deployment"
                       aria-describedby="region-help"
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="region">
                         <SelectValue placeholder="Select a region" />
                       </SelectTrigger>
                       <SelectContent>
@@ -2026,7 +2044,7 @@ AzureMetrics
                   <div>
                     <Label htmlFor="deployment">Deployment Type</Label>
                     <Select value={selectedDeployment} onValueChange={setSelectedDeployment}>
-                      <SelectTrigger>
+                      <SelectTrigger id="deployment">
                         <SelectValue placeholder="Select deployment type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -3450,7 +3468,7 @@ AzureMetrics
             )}
 
             {/* Official Pricing Transparency */}
-            {formData.avgTPM > 0 && currentPricing?.officialPricing && (
+            {hasValidData && currentPricing?.officialPricing && (
               <Card className="border-indigo-200 bg-indigo-50 mb-6">
                 <CardHeader>
                   <div className="flex items-center gap-2">

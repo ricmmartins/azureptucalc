@@ -73,11 +73,9 @@ export class ExportService {
           total: paygCostCalculation.total
         },
         breakEven: {
-          monthlyTokensNeeded: breakEvenAnalysis.monthlyTokensNeeded,
-          dailyTokensNeeded: breakEvenAnalysis.dailyTokensNeeded,
-          hourlyTokensNeeded: breakEvenAnalysis.hourlyTokensNeeded,
-          recommendation: breakEvenAnalysis.recommendation,
-          savingsWithPTU: breakEvenAnalysis.savingsWithPTU
+          breakEvenPTUs: breakEvenAnalysis.breakEvenPTUs,
+          breakEvenTPM: breakEvenAnalysis.breakEvenTPM,
+          utilizationAtBreakEven: breakEvenAnalysis.utilizationAtBreakEven
         }
       },
       analysis: {
@@ -173,10 +171,9 @@ export class ExportService {
     // Break-even Analysis
     csvRows.push('BREAK-EVEN ANALYSIS');
     csvRows.push('Metric,Value');
-    csvRows.push(`Monthly Tokens Needed,${this.reportData.costBreakdown.breakEven.monthlyTokensNeeded}`);
-    csvRows.push(`Daily Tokens Needed,${this.reportData.costBreakdown.breakEven.dailyTokensNeeded}`);
-    csvRows.push(`Hourly Tokens Needed,${this.reportData.costBreakdown.breakEven.hourlyTokensNeeded}`);
-    csvRows.push(`Recommendation,${this.reportData.costBreakdown.breakEven.recommendation}`);
+    csvRows.push(`Break-Even PTUs,${this.reportData.costBreakdown.breakEven.breakEvenPTUs || 'N/A'}`);
+    csvRows.push(`Break-Even TPM,${this.reportData.costBreakdown.breakEven.breakEvenTPM || 'N/A'}`);
+    csvRows.push(`Utilization at Break-Even,${this.reportData.costBreakdown.breakEven.utilizationAtBreakEven ? (this.reportData.costBreakdown.breakEven.utilizationAtBreakEven * 100).toFixed(1) + '%' : 'N/A'}`);
     csvRows.push('');
     
     // Analysis

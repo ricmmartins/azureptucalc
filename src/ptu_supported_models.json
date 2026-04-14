@@ -6,7 +6,12 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 2400,
-      "regions": ["eastus2", "polandcentral", "southcentralus", "swedencentral"]
+      "regions": [
+        "eastus2",
+        "polandcentral",
+        "southcentralus",
+        "swedencentral"
+      ]
     },
     "gpt-5.3-codex": {
       "name": "GPT-5.3 Codex",
@@ -14,7 +19,15 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 3400,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral"
+      ]
     },
     "gpt-5.2": {
       "name": "GPT-5.2",
@@ -22,7 +35,23 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 3400,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope", "uksouth", "francecentral", "germanywestcentral", "swedencentral", "australiaeast", "japaneast", "koreacentral"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope",
+        "uksouth",
+        "francecentral",
+        "germanywestcentral",
+        "swedencentral",
+        "australiaeast",
+        "japaneast",
+        "koreacentral"
+      ]
     },
     "gpt-5.2-codex": {
       "name": "GPT-5.2 Codex",
@@ -30,7 +59,15 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 3400,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral"
+      ]
     },
     "gpt-5.1": {
       "name": "GPT-5.1",
@@ -38,7 +75,22 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 4750,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope", "uksouth", "francecentral", "swedencentral", "australiaeast", "japaneast", "koreacentral"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope",
+        "uksouth",
+        "francecentral",
+        "swedencentral",
+        "australiaeast",
+        "japaneast",
+        "koreacentral"
+      ]
     },
     "gpt-5.1-codex": {
       "name": "GPT-5.1 Codex",
@@ -46,7 +98,15 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 4750,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral"
+      ]
     },
     "gpt-5": {
       "name": "GPT-5",
@@ -54,7 +114,30 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 4750,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope", "uksouth", "francecentral", "germanywestcentral", "swedencentral", "australiaeast", "japaneast", "koreacentral", "canadacentral", "brazilsouth", "uaenorth", "southafricanorth", "southindia", "southeastasia", "eastasia"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope",
+        "uksouth",
+        "francecentral",
+        "germanywestcentral",
+        "swedencentral",
+        "australiaeast",
+        "japaneast",
+        "koreacentral",
+        "canadacentral",
+        "brazilsouth",
+        "uaenorth",
+        "southafricanorth",
+        "southindia",
+        "southeastasia",
+        "eastasia"
+      ]
     },
     "gpt-5-mini": {
       "name": "GPT-5 Mini",
@@ -62,7 +145,30 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 23750,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope", "uksouth", "francecentral", "germanywestcentral", "swedencentral", "australiaeast", "japaneast", "koreacentral", "canadacentral", "brazilsouth", "uaenorth", "southafricanorth", "southindia", "southeastasia", "eastasia"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope",
+        "uksouth",
+        "francecentral",
+        "germanywestcentral",
+        "swedencentral",
+        "australiaeast",
+        "japaneast",
+        "koreacentral",
+        "canadacentral",
+        "brazilsouth",
+        "uaenorth",
+        "southafricanorth",
+        "southindia",
+        "southeastasia",
+        "eastasia"
+      ]
     },
     "gpt-4.1": {
       "name": "GPT-4.1",
@@ -70,7 +176,16 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 3000,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope"
+      ]
     },
     "gpt-4.1-mini": {
       "name": "GPT-4.1 Mini",
@@ -78,7 +193,16 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 14900,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope"
+      ]
     },
     "gpt-4.1-nano": {
       "name": "GPT-4.1 Nano",
@@ -86,7 +210,16 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 59400,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope"
+      ]
     },
     "gpt-4o": {
       "name": "GPT-4o",
@@ -94,7 +227,30 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 2500,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope", "uksouth", "francecentral", "germanywestcentral", "swedencentral", "australiaeast", "japaneast", "koreacentral", "canadacentral", "brazilsouth", "uaenorth", "southafricanorth", "southindia", "southeastasia", "eastasia"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope",
+        "uksouth",
+        "francecentral",
+        "germanywestcentral",
+        "swedencentral",
+        "australiaeast",
+        "japaneast",
+        "koreacentral",
+        "canadacentral",
+        "brazilsouth",
+        "uaenorth",
+        "southafricanorth",
+        "southindia",
+        "southeastasia",
+        "eastasia"
+      ]
     },
     "gpt-4o-mini": {
       "name": "GPT-4o Mini",
@@ -102,7 +258,30 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 37000,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope", "uksouth", "francecentral", "germanywestcentral", "swedencentral", "australiaeast", "japaneast", "koreacentral", "canadacentral", "brazilsouth", "uaenorth", "southafricanorth", "southindia", "southeastasia", "eastasia"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope",
+        "uksouth",
+        "francecentral",
+        "germanywestcentral",
+        "swedencentral",
+        "australiaeast",
+        "japaneast",
+        "koreacentral",
+        "canadacentral",
+        "brazilsouth",
+        "uaenorth",
+        "southafricanorth",
+        "southindia",
+        "southeastasia",
+        "eastasia"
+      ]
     },
     "o3": {
       "name": "o3",
@@ -110,7 +289,16 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 3000,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope"
+      ]
     },
     "o4-mini": {
       "name": "o4 Mini",
@@ -118,7 +306,16 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 5400,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope"
+      ]
     },
     "o1": {
       "name": "o1",
@@ -126,7 +323,16 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 230,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope"
+      ]
     },
     "o3-mini": {
       "name": "o3 Mini",
@@ -134,16 +340,46 @@
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 2500,
-      "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
+      "regions": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus3",
+        "northcentralus",
+        "southcentralus",
+        "swedencentral",
+        "westeurope"
+      ]
     }
   },
   "non_ptu_models": {
-    "text-embedding-ada-002": { "name": "Ada Embedding v2", "ptu_support": false },
-    "text-embedding-3-large": { "name": "Embedding 3 Large", "ptu_support": false },
-    "text-embedding-3-small": { "name": "Embedding 3 Small", "ptu_support": false },
-    "whisper": { "name": "Whisper", "ptu_support": false },
-    "dall-e-3": { "name": "DALL-E 3", "ptu_support": false },
-    "dall-e-2": { "name": "DALL-E 2", "ptu_support": false },
-    "tts": { "name": "Text-to-Speech", "ptu_support": false }
+    "text-embedding-ada-002": {
+      "name": "Ada Embedding v2",
+      "ptu_support": false
+    },
+    "text-embedding-3-large": {
+      "name": "Embedding 3 Large",
+      "ptu_support": false
+    },
+    "text-embedding-3-small": {
+      "name": "Embedding 3 Small",
+      "ptu_support": false
+    },
+    "whisper": {
+      "name": "Whisper",
+      "ptu_support": false
+    },
+    "dall-e-3": {
+      "name": "DALL-E 3",
+      "ptu_support": false
+    },
+    "dall-e-2": {
+      "name": "DALL-E 2",
+      "ptu_support": false
+    },
+    "tts": {
+      "name": "Text-to-Speech",
+      "ptu_support": false
+    }
   }
 }

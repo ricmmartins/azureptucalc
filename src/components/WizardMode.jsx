@@ -305,7 +305,7 @@ AzureMetrics
             ) : (
               <CardDescription className="text-amber-600 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                Using defaults — select your model in Step 3 and come back to get exact values
+                Using defaults — select your model in Configuration step to get exact values
               </CardDescription>
             )}
           </CardHeader>

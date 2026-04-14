@@ -172,15 +172,3 @@ export function calculatePAYGCost(modelName, inputTokensInMillions, outputTokens
   };
 }
 
-// Function to auto-calculate input/output tokens from total TPM (assumes 50/50 split by default)
-export function calculateTokenSplit(totalTPM, monthlyMinutes, inputRatio = 0.5) {
-  const totalMonthlyTokens = (totalTPM * monthlyMinutes) / 1000000; // Convert to millions
-  const inputTokens = totalMonthlyTokens * inputRatio;
-  const outputTokens = totalMonthlyTokens * (1 - inputRatio);
-  
-  return {
-    totalMonthlyTokens,
-    inputTokens,
-    outputTokens
-  };
-}
