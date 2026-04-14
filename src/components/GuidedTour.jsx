@@ -25,26 +25,35 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
   
   const [tourSteps] = useState([
     {
-      id: 'region-model',
-      title: 'Step 1: Choose Your Configuration',
-      description: 'Start by selecting your Azure region and OpenAI model. These choices affect pricing and availability.',
+      id: 'model-kql',
+      title: 'Step 1: Select Your Model & Get KQL',
+      description: 'Pick your Azure OpenAI model here. The KQL query below auto-populates with the correct output weight and TPM per PTU — no manual adjustments needed. Copy and run it in Azure Log Analytics.',
+      target: '.kql-model-section',
+      position: 'bottom',
+      icon: <Zap className="h-4 w-4" />,
+      highlight: 'Model selection drives the entire calculator'
+    },
+    {
+      id: 'region-deployment',
+      title: 'Step 2: Configure Your Deployment',
+      description: 'Choose your Azure region and deployment type (Global, Data Zone, or Regional). Your model is already selected from Step 1 and shown here as a badge.',
       target: '.region-model-section',
       position: 'bottom',
       icon: <MapPin className="h-4 w-4" />,
-      highlight: 'Select region and model that match your deployment'
+      highlight: 'Region and deployment type affect pricing'
     },
     {
       id: 'usage-data',
-      title: 'Step 2: Input Your Usage Data',
-      description: 'Enter your usage patterns. Use KQL data from Azure Log Analytics (Method A) or enter monthly token counts directly (Method B).',
+      title: 'Step 3: Input Your Usage Data',
+      description: 'Enter your token usage. Paste KQL results for separate input/output TPM (Method A) or enter monthly totals (Method B). Output tokens are automatically weighted for accurate PTU sizing.',
       target: '.usage-inputs-section',
       position: 'bottom',
       icon: <Target className="h-4 w-4" />,
-      highlight: 'Most important: Average Tokens Per Minute (TPM)'
+      highlight: 'Separate input/output TPM gives the best accuracy'
     },
     {
       id: 'cost-cards',
-      title: 'Step 3: Compare Pricing Options',
+      title: 'Step 4: Compare Pricing Options',
       description: 'See all pricing tiers side by side — PAYGO, PTU On-Demand, Monthly and 1-Year reservations, Spillover, and Priority Processing when available.',
       target: '.cost-cards-section',
       fallbackTarget: '.usage-inputs-section',
@@ -54,7 +63,7 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
     },
     {
       id: 'recommendation',
-      title: 'Step 4: Review Recommendation',
+      title: 'Step 5: Review Recommendation',
       description: 'The calculator analyzes your usage pattern and recommends the most cost-effective strategy with projected savings.',
       target: '.recommendation-section',
       fallbackTarget: '.cost-cards-section',
@@ -64,7 +73,7 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
     },
     {
       id: 'export',
-      title: 'Step 5: Export & Share',
+      title: 'Step 6: Export & Share',
       description: 'Generate reports in CSV or JSON format to share with stakeholders and support decision-making.',
       target: '.export-section',
       fallbackTarget: '.recommendation-section',
@@ -74,7 +83,7 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
     },
     {
       id: 'advanced',
-      title: 'Step 6: Advanced Features',
+      title: 'Step 7: Advanced Features',
       description: 'Explore the Usage Patterns and Advanced tabs for burst analysis, interactive charts, and custom pricing options.',
       target: '.custom-pricing-section',
       position: 'bottom',

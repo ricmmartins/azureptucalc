@@ -1647,7 +1647,7 @@ AzureMetrics
         </Card>
 
         {/* Step 1: KQL Query */}
-        <Card>
+        <Card className="kql-model-section">
           <CardHeader className="cursor-pointer" onClick={() => setCollapsed(prev => ({...prev, kqlQuery: !prev.kqlQuery}))}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
