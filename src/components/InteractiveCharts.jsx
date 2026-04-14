@@ -122,7 +122,9 @@ const InteractiveCharts = ({
   // Key metrics
   const metrics = useMemo(() => {
     const paygo = costData?.paygo || 0;
-    const bestPtu = costData?.ptuYearly || 0;
+    const ptuMonthly = costData?.ptuMonthly || Infinity;
+    const ptuYearly = costData?.ptuYearly || Infinity;
+    const bestPtu = Math.min(ptuMonthly, ptuYearly);
     const diff = paygo - bestPtu;
     return {
       savings: Math.abs(diff),

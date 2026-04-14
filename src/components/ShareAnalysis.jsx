@@ -25,6 +25,7 @@ const ShareAnalysis = ({
   analysisData, 
   onGenerateShareLink, 
   onExportData,
+  onLoadSharedData,
 }) => {
   const [shareUrl, setShareUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -69,11 +70,6 @@ const ShareAnalysis = ({
       
       setShareUrl(newShareUrl);
       
-      // Simulate API call to save share data
-      const shareId = Math.random().toString(36).substr(2, 9);
-      const shortUrl = `${baseUrl}?s=${shareId}`;
-      setShareUrl(shortUrl);
-      
       // Update stats
       setShareStats(prev => ({
         ...prev,
@@ -81,7 +77,7 @@ const ShareAnalysis = ({
         lastAccessed: new Date().toISOString()
       }));
 
-      onGenerateShareLink?.(shortUrl, shareData);
+      onGenerateShareLink?.(newShareUrl, shareData);
     } catch (error) {
       console.error('Error generating share URL:', error);
     } finally {
@@ -113,7 +109,7 @@ const ShareAnalysis = ({
     };
 
     if (urls[platform]) {
-      window.open(urls[platform], '_blank');
+      window.open(urls[platform], '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -180,13 +176,12 @@ const ShareAnalysis = ({
     if (sharedData) {
       try {
         const decodedData = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
-        // Load shared analysis data
         setShareStats(prev => ({ ...prev, views: prev.views + 1 }));
+        onLoadSharedData?.(decodedData);
       } catch (error) {
         console.error('Error loading shared analysis:', error);
       }
     } else if (shortId) {
-      // In a real implementation, this would fetch data from an API
       setShareStats(prev => ({ ...prev, views: prev.views + 1 }));
     }
   }, []);

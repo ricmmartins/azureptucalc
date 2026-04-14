@@ -20,6 +20,13 @@ export const SmartNumberInput = ({
   const [localValue, setLocalValue] = useState(value?.toString() || '');
   const [isValid, setIsValid] = useState(true);
 
+  // Sync local state when external value changes (while not focused)
+  useEffect(() => {
+    if (!focused) {
+      setLocalValue(value?.toString() || '');
+    }
+  }, [value, focused]);
+
   // Format number for display
   const formatNumber = (num) => {
     if (num === 0) return '0';

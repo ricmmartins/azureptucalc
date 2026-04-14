@@ -56,7 +56,6 @@ const MobileOptimizations = ({
       }
       
       setOrientation(width > height ? 'landscape' : 'portrait');
-      onViewportChange?.({ width, height, viewMode, orientation });
     };
 
     checkViewport();
@@ -67,7 +66,12 @@ const MobileOptimizations = ({
       window.removeEventListener('resize', checkViewport);
       window.removeEventListener('orientationchange', checkViewport);
     };
-  }, [viewMode, onViewportChange, orientation]);
+  }, []);
+
+  // Notify parent of viewport changes in a separate effect to avoid stale values
+  useEffect(() => {
+    onViewportChange?.({ width: window.innerWidth, height: window.innerHeight, viewMode, orientation });
+  }, [viewMode, orientation, onViewportChange]);
 
   // Mobile navigation items
   const navigationItems = [
@@ -240,18 +244,21 @@ const MobileOptimizations = ({
             <button
               onClick={() => setViewMode('mobile')}
               className={`p-1 rounded ${viewMode === 'mobile' ? 'bg-white shadow-sm' : ''}`}
+              aria-label="Mobile view"
             >
               <Smartphone className="h-4 w-4" />
             </button>
             <button
               onClick={() => setViewMode('tablet')}
               className={`p-1 rounded ${viewMode === 'tablet' ? 'bg-white shadow-sm' : ''}`}
+              aria-label="Tablet view"
             >
               <Tablet className="h-4 w-4" />
             </button>
             <button
               onClick={() => setViewMode('desktop')}
               className={`p-1 rounded ${viewMode === 'desktop' ? 'bg-white shadow-sm' : ''}`}
+              aria-label="Desktop view"
             >
               <Monitor className="h-4 w-4" />
             </button>
@@ -260,7 +267,7 @@ const MobileOptimizations = ({
           {/* Settings menu */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" aria-label="Settings">
                 <Settings className="h-4 w-4" />
               </Button>
             </SheetTrigger>

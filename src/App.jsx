@@ -951,11 +951,11 @@ Check browser console for detailed error information.`);
   const yearlyReservationDiscount = monthlyPtuCost > 0 ? Math.round(((monthlyPtuCost - yearlyReservationMonthly) / monthlyPtuCost) * 100) : 0;
   const oneYearSavingsPercent = yearlyReservationDiscount;
     
-    // Monthly savings: positive = PTU saves money, negative = PAYGO is cheaper
+    // Monthly savings vs yearly reservation: positive = PTU saves money, negative = PAYGO is cheaper
     const monthlySavings = monthlyPaygoCost - yearlyReservationMonthly;
     
     // Spillover model calculations — use normalized TPM for overflow comparison
-    const hybridBasePTU = Math.ceil(formData.basePTUs || formData.avgPTU || 1);
+    const hybridBasePTU = Math.ceil(formData.basePTUs || formData.avgPTU || ptuNeeded || 1);
     // Normalize p99TPM for spillover overflow comparison
     const p99InputTPM = (formData.p99TPM || 0) * formData.inputOutputRatio;
     const p99OutputTPM = (formData.p99TPM || 0) * (1 - formData.inputOutputRatio);
@@ -1387,7 +1387,7 @@ Check browser console for detailed error information.`);
           id: region.code,
           name: region.displayName,
           modelCount: Object.keys(region.available_models).length,
-          capacity: region.available_models['gpt-4o']?.capacity || 'medium'
+          capacity: region.available_models[selectedModel]?.capacity || region.available_models['gpt-4o']?.capacity || 'medium'
         }))
       }));
     } catch (error) {
@@ -1442,7 +1442,9 @@ AzureMetrics
 
   // Copy KQL query to clipboard
   const copyKQLQuery = () => {
-    navigator.clipboard.writeText(kqlQuery);
+    navigator.clipboard.writeText(kqlQuery).catch(err => {
+      console.error('Failed to copy KQL query:', err);
+    });
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -13,6 +13,7 @@ import {
   Database, 
   Settings, 
   BarChart3, 
+  Copy, 
   Share,
   Lightbulb,
   AlertCircle,
@@ -39,14 +40,71 @@ const WizardMode = ({
       avgPTU: '',
       p99PTU: '',
       maxPTU: '',
-      recommendedPTU: ''
+      recommendedPTU: '',
+      ...(initialData?.kqlData || {})
     },
     usage: {
       monthlyMinutes: '',
-      basePTUs: ''
+      basePTUs: '',
+      ...(initialData?.usage || {})
     },
-    ...initialData
+    ...initialData,
+    // Re-apply nested objects after spread to prevent overwrite
+    kqlData: {
+      avgTPM: '',
+      p99TPM: '',
+      maxTPM: '',
+      avgPTU: '',
+      p99PTU: '',
+      maxPTU: '',
+      recommendedPTU: '',
+      ...(initialData?.kqlData || {})
+    },
+    usage: {
+      monthlyMinutes: '',
+      basePTUs: '',
+      ...(initialData?.usage || {})
+    }
   });
+
+  const [copiedQuery, setCopiedQuery] = useState(false);
+
+  const copyKqlQuery = useCallback(async () => {
+    const query = `// Output-Weighted Azure OpenAI PTU Sizing Analysis
+let window = 1m;
+let p = 0.99;
+let outputWeight = 4;
+let throughputPerPTU = 3000;
+AzureMetrics
+| where ResourceProvider == "MICROSOFT.COGNITIVESERVICES"
+| where TimeGenerated >= ago(7d)
+| extend IsInput = MetricName == "ProcessedPromptTokens"
+| extend IsOutput = MetricName == "GeneratedCompletionTokens" or MetricName == "ProcessedCompletionTokens"
+| where IsInput or IsOutput
+| summarize InputTokens = sumif(Total, IsInput), OutputTokens = sumif(Total, IsOutput) by bin(TimeGenerated, window)
+| extend NormalizedTPM = InputTokens + (outputWeight * OutputTokens)
+| summarize AvgInputTPM = avg(InputTokens), AvgOutputTPM = avg(OutputTokens), AvgTPM = avg(NormalizedTPM), P99TPM = percentile(NormalizedTPM, p), MaxTPM = max(NormalizedTPM)
+| extend AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)), P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)), MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))
+| extend RecommendedPTU = max_of(AvgPTU, P99PTU)
+| project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`;
+    try {
+      await navigator.clipboard.writeText(query);
+      setCopiedQuery(true);
+      setTimeout(() => setCopiedQuery(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy KQL query:', err);
+    }
+  }, []);
+
+  const shareAnalysis = useCallback(() => {
+    const text = `Azure OpenAI PTU Analysis: ${wizardData.model} in ${wizardData.region} (${wizardData.deploymentType})`;
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: 'PTU Analysis', text, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
+    }
+  }, [wizardData.model, wizardData.region, wizardData.deploymentType]);
 
   const wizardSteps = [
     {
@@ -249,8 +307,9 @@ AzureMetrics
 | extend RecommendedPTU = max_of(AvgPTU, P99PTU)
 | project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`}</pre>
             </div>
-            <Button className="mt-2" variant="outline" size="sm">
-              Copy Query
+            <Button className="mt-2" variant="outline" size="sm" onClick={copyKqlQuery}>
+              <Copy className="h-3 w-3 mr-1" />
+              {copiedQuery ? 'Copied!' : 'Copy Query'}
             </Button>
           </CardContent>
         </Card>
@@ -654,7 +713,7 @@ AzureMetrics
             <BarChart3 className="h-4 w-4" />
             View Full Dashboard
           </Button>
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2" onClick={shareAnalysis}>
             <Share className="h-4 w-4" />
             Share Analysis
           </Button>
