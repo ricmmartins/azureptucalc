@@ -1657,10 +1657,36 @@ AzureMetrics
               <ChevronDown className={`h-5 w-5 transition-transform ${collapsed.kqlQuery ? '' : 'rotate-180'}`} />
             </div>
             <CardDescription>
-              Run this KQL query in your Azure Log Analytics workspace to calculate PTU requirements for <strong>{selectedModel}</strong>
+              Select your model below and get a ready-to-run KQL query with the correct parameters
             </CardDescription>
           </CardHeader>
           {!collapsed.kqlQuery && <CardContent>
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <Label htmlFor="kql-model" className="text-sm font-semibold text-blue-900 mb-2 block">
+                Select your model to generate the KQL query
+              </Label>
+              <Select 
+                value={selectedModel} 
+                onValueChange={setSelectedModel}
+                aria-label="Select model for KQL query"
+              >
+                <SelectTrigger id="kql-model" className="bg-white">
+                  <SelectValue placeholder="Select a model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableModels().map(model => (
+                    <SelectItem key={model.id} value={model.id}>
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="mt-2 flex items-center gap-4 text-xs text-blue-800">
+                <span>Output Weight: <strong>{getModelOutputWeight()}×</strong></span>
+                <span>TPM per PTU: <strong>{getCurrentModelThroughput().toLocaleString()}</strong></span>
+              </div>
+            </div>
+
             <div className="bg-gray-900 text-gray-100 p-4 rounded-lg relative">
               <Button
                 variant="outline"
