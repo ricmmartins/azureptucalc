@@ -188,6 +188,7 @@ AzureMetrics
 - [Provisioned Throughput Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/provisioned-throughput)
 - [TPM-per-PTU Table](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models)
 - [Azure Retail Prices API](https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices)
+- [Monitor Model Deployments in Microsoft Foundry Models](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/monitor-models) — configure diagnostic settings to send metrics and logs to Log Analytics for new Foundry deployments
 
 ---
 

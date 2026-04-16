@@ -1727,6 +1727,14 @@ AzureMetrics
                 <Target className="h-5 w-5 text-blue-600" />
                 How to use this query:
               </h4>
+
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-800">
+                  <strong>📋 New Foundry deployment?</strong> You must first configure diagnostic settings on your Foundry resource to send logs to a Log Analytics workspace.
+                  {' '}<a href="https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/monitor-models#configure-diagnostic-settings" target="_blank" rel="noopener noreferrer" className="text-amber-700 underline font-medium">Follow the setup instructions on Microsoft Learn →</a>
+                </p>
+              </div>
+
               <ol className="space-y-3">
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-semibold rounded-full flex items-center justify-center">1</span>
