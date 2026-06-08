@@ -48,7 +48,7 @@
       "throughput_per_ptu": 3400,
       "output_weight": 8,
       "output_weight_source": "ms_learn",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -62,7 +62,7 @@
       "throughput_per_ptu": 3400,
       "output_weight": 8,
       "output_weight_source": "ms_learn",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -76,7 +76,7 @@
       "throughput_per_ptu": 3400,
       "output_weight": 8,
       "output_weight_source": "ms_learn",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -90,7 +90,7 @@
       "throughput_per_ptu": 4750,
       "output_weight": 8,
       "output_weight_source": "ms_learn",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -104,7 +104,7 @@
       "throughput_per_ptu": 4750,
       "output_weight": 8,
       "output_weight_source": "ms_learn",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -118,7 +118,7 @@
       "throughput_per_ptu": 4750,
       "output_weight": 8,
       "output_weight_source": "ms_learn",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -132,7 +132,7 @@
       "throughput_per_ptu": 23750,
       "output_weight": 8,
       "output_weight_source": "price_ratio",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -146,7 +146,7 @@
       "throughput_per_ptu": 3000,
       "output_weight": 4,
       "output_weight_source": "ms_learn",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -160,7 +160,7 @@
       "throughput_per_ptu": 14900,
       "output_weight": 4,
       "output_weight_source": "price_ratio",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -174,7 +174,7 @@
       "throughput_per_ptu": 59400,
       "output_weight": 4,
       "output_weight_source": "price_ratio",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -188,7 +188,7 @@
       "throughput_per_ptu": 2500,
       "output_weight": 4,
       "output_weight_source": "price_ratio_estimated",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -202,7 +202,7 @@
       "throughput_per_ptu": 37000,
       "output_weight": 4,
       "output_weight_source": "price_ratio_estimated",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -216,7 +216,7 @@
       "throughput_per_ptu": 3000,
       "output_weight": 4,
       "output_weight_source": "price_ratio",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -230,7 +230,7 @@
       "throughput_per_ptu": 5400,
       "output_weight": 4,
       "output_weight_source": "price_ratio",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -244,7 +244,7 @@
       "throughput_per_ptu": 230,
       "output_weight": 4,
       "output_weight_source": "price_ratio_estimated",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
@@ -258,7 +258,7 @@
       "throughput_per_ptu": 2500,
       "output_weight": 4,
       "output_weight_source": "price_ratio_estimated",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },

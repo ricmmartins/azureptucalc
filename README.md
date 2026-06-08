@@ -94,7 +94,7 @@ AzureMetrics
 | project AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU
 ```
 
-> **Note:** The `50000.0` divisor is a generic placeholder. Refer to the [official TPM-per-PTU table](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models) for the exact value for your model (e.g., GPT-4.1 = 3,000 TPM/PTU, GPT-4o = 2,500 TPM/PTU).
+> **Note:** The `50000.0` divisor is a generic placeholder. Refer to the [official TPM-per-PTU table](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing#latest-azure-openai-models) for the exact value for your model (e.g., GPT-4.1 = 3,000 TPM/PTU, GPT-4o = 2,500 TPM/PTU).
 
 ---
 
@@ -233,7 +233,7 @@ All calculations happen in your browser. No usage data is sent to external serve
 
 - [GitHub Issues](https://github.com/ricmmartins/azureptucalc/issues)
 - [Azure OpenAI Documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
-- [PTU Provisioned Throughput Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/provisioned-throughput)
+- [PTU Provisioned Throughput Guide](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/provisioned-throughput)
 
 ---
 

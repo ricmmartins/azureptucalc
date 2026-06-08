@@ -167,7 +167,7 @@ AzureMetrics
 | project AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU
 ```
 
-> **Note:** The 50000.0 divisor is a generic placeholder. Check the [official TPM-per-PTU table](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models) for your specific model.
+> **Note:** The 50000.0 divisor is a generic placeholder. Check the [official TPM-per-PTU table](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing#latest-azure-openai-models) for your specific model.
 
 ---
 
@@ -193,8 +193,8 @@ AzureMetrics
 ## References
 
 - [Azure OpenAI Pricing](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/)
-- [Provisioned Throughput Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/provisioned-throughput)
-- [TPM-per-PTU Table](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models)
+- [Provisioned Throughput Guide](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/provisioned-throughput)
+- [TPM-per-PTU Table](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing#latest-azure-openai-models)
 - [Azure Retail Prices API](https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices)
 - [Monitor Model Deployments in Microsoft Foundry Models](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/monitor-models) — configure diagnostic settings to send metrics and logs to Log Analytics for new Foundry deployments
 

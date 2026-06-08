@@ -1744,7 +1744,7 @@ AzureMetrics
           <p>
             Each model has a different <strong>throughput capacity per PTU</strong> (input tokens per minute per PTU) and an <strong>output token weight</strong> that reflects how much more capacity output tokens consume compared to input tokens. These values are published by Microsoft:
             <br />
-            <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding#latest-azure-openai-models" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Latest Azure OpenAI Models – Provisioned Throughput Table</a>
+            <a href="https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing#latest-azure-openai-models" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Latest Azure OpenAI Models – Provisioned Throughput Table</a>
           </p>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -1785,7 +1785,7 @@ AzureMetrics
           </div>
           <p className="text-xs text-gray-500 mt-1">
             Your selected model (<strong>{selectedModel}</strong>) is highlighted. Values sourced from{' '}
-            <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Microsoft Learn</a>.
+            <a href="https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Microsoft Learn</a>.
             {' '}If you spot discrepancies, please <a href="https://github.com/ricmmartins/azureptucalc/issues" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">open an issue</a>.
           </p>
 

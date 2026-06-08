@@ -2,7 +2,7 @@
   "version": "2026.03.25",
   "lastUpdated": "2026-03-25T00:00:00Z",
   "source": "Microsoft Learn",
-  "sourceUrl": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+  "sourceUrl": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
   "dataExpiry": "2026-12-31T23:59:59Z",
   "ptuPricing": {
     "baseHourlyRate": 1.00,

@@ -55,7 +55,7 @@ export class ExternalPricingService {
       version: "fallback-2026.03",
       lastUpdated: new Date().toISOString(),
       source: "Internal Fallback",
-      sourceUrl: "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+      sourceUrl: "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       dataExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       ptuPricing: {
         baseHourlyRate: 1.00,
