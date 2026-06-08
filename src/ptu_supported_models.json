@@ -1,11 +1,36 @@
 {
   "ptu_supported_models": {
+    "gpt-5.5": {
+      "name": "GPT-5.5",
+      "description": "Most advanced GPT-5 series model with frontier reasoning capabilities",
+      "ptu_support": true,
+      "min_ptu": 15,
+      "throughput_per_ptu": 1200,
+      "regions": [
+        "eastus2",
+        "southcentralus",
+        "swedencentral"
+      ]
+    },
     "gpt-5.4": {
       "name": "GPT-5.4",
       "description": "Latest GPT-5 series model with top-tier capabilities",
       "ptu_support": true,
       "min_ptu": 15,
       "throughput_per_ptu": 2400,
+      "regions": [
+        "eastus2",
+        "polandcentral",
+        "southcentralus",
+        "swedencentral"
+      ]
+    },
+    "gpt-5.4-mini": {
+      "name": "GPT-5.4 Mini",
+      "description": "Compact, cost-efficient GPT-5.4 for low-latency production workloads",
+      "ptu_support": true,
+      "min_ptu": 15,
+      "throughput_per_ptu": 7900,
       "regions": [
         "eastus2",
         "polandcentral",

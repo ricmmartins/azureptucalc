@@ -1,0 +1,529 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - img
+                - generic: Azure OpenAI PTU Calculator
+              - generic:
+                - button:
+                  - img
+                  - text: Accessibility
+            - generic: Optimize your Azure OpenAI costs by analyzing real usage patterns and comparing PAYGO, PTU, and hybrid pricing models
+            - generic:
+              - button:
+                - img
+                - text: Quick Tour
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - img
+                - generic: Pricing Data Status
+              - generic:
+                - generic:
+                  - generic: Live Azure Pricing
+                - button:
+                  - img
+                  - text: Refresh Data
+                - img
+            - generic: Real-time pricing data from Azure API (prices.azure.com/api/retail/prices)
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - img
+                - generic:
+                  - generic: Step 1
+                  - text: Get Your Token Data
+              - img
+            - generic: Select your model below and get a ready-to-run KQL query with the correct parameters
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - img
+                - generic: "Alternative: Don't Have Log Analytics?"
+              - img
+            - generic: You can still use this calculator! Here's how to estimate your usage without KQL data.
+        - generic:
+          - generic:
+            - generic:
+              - img
+              - generic:
+                - generic: Step 2
+                - text: Configure Your Deployment
+            - generic: Select your Azure region and deployment type for accurate pricing
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - img
+                    - heading [level=3]: Global Deployment
+                  - paragraph: Multi-region deployment with automatic failover and load balancing.
+                  - paragraph: Best for high availability and global reach.
+                  - paragraph: Traffic is routed to the best available region automatically.
+              - generic:
+                - generic:
+                  - generic:
+                    - img
+                    - heading [level=3]: Data Zone Deployment
+                  - paragraph: Geographic-based deployment (EU or US) for data residency.
+                  - paragraph: Ideal for compliance requirements.
+                  - paragraph: Data stays within EU or US boundaries for regulatory compliance.
+              - generic:
+                - generic:
+                  - generic:
+                    - img
+                    - heading [level=3]: Regional Deployment
+                  - paragraph: Local region deployment (up to 27 regions) for lowest latency.
+                  - paragraph: Optimal for latency-sensitive applications.
+                  - paragraph: Processing occurs in a single region for fastest response times.
+            - generic:
+              - generic:
+                - generic:
+                  - img
+                  - generic: Official PTU Pricing Loaded
+              - generic:
+                - generic:
+                  - generic:
+                    - generic: Azure Region
+                    - combobox:
+                      - generic:
+                        - generic:
+                          - generic: East US
+                      - img
+                    - paragraph: Choose the Azure region for deployment and pricing
+                  - generic:
+                    - generic: OpenAI Model
+                    - generic:
+                      - generic: GPT-4o Mini
+                      - button: Change in Step 1 ↑
+                    - paragraph: "Model is selected in Step 1 above. Output Weight: 4× | TPM/PTU: 37,000"
+                  - generic:
+                    - generic: Deployment Type
+                    - combobox:
+                      - generic:
+                        - generic:
+                          - img
+                          - text: Global Deployment
+                      - img
+                - generic:
+                  - generic:
+                    - generic:
+                      - heading [level=3]: GPT-4O MINI - Official Pricing Available
+                      - generic: Official
+                    - generic:
+                      - generic:
+                        - strong: "Deployment Type:"
+                        - text: Global
+                      - generic:
+                        - strong: "PAYGO:"
+                        - text: $0.15/1M input tokens
+                      - generic:
+                        - strong: "PTU Hourly:"
+                        - text: $1/hour per PTU
+                      - generic:
+                        - strong: "Output tokens:"
+                        - text: $0.6/1M (Global deployment)
+                    - generic:
+                      - heading [level=4]:
+                        - img
+                        - text: Official PTU Pricing Structure (US$1/PTU-hour base)
+                      - generic:
+                        - generic:
+                          - strong: "Monthly Reservation:"
+                          - text: $260/PTU/mo
+                          - generic: 64.4% off on-demand ($730/mo)
+                        - generic:
+                          - strong: "1-Year Reservation:"
+                          - text: $2652/PTU/year
+                          - generic: 69.7% off on-demand ($221/mo)
+                        - generic:
+                          - strong: "Deployment Multiplier:"
+                          - text: 1x
+                          - generic: EASTUS / global
+                      - generic:
+                        - text: 💡
+                        - strong: "Discount Transparency:"
+                        - text: 1-Year reservations provide 69.7% savings vs on-demand hourly, and 15% savings vs monthly reservation
+                    - paragraph: Click "Load Official Pricing" to automatically populate the input fields below
+                - generic:
+                  - button:
+                    - img
+                    - text: Load Official Pricing
+                - alert:
+                  - img
+                  - generic:
+                    - strong: "Minimum PTU Requirements:"
+                    - text: Minimum purchase per model. Azure uses minimums to ensure efficient capacity allocation and cost-effective service delivery. If your RecommendedPTU from KQL is below the minimum, you'll still pay the minimum but benefit from extra burst headroom.
+                - generic:
+                  - checkbox
+                  - generic:
+                    - text: Use Custom Pricing
+                    - button:
+                      - img
+                - alert:
+                  - img
+                  - generic:
+                    - strong: "Custom Pricing:"
+                    - text: Use this section only if you have negotiated rates with Microsoft or special enterprise agreements. Default values shown are official Microsoft pricing. Custom pricing will override all calculations below.
+            - alert:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic: "?"
+                  - generic:
+                    - generic: "📊 Choose Your Input Method:"
+                    - generic:
+                      - generic:
+                        - generic: "🔍 Method A: Azure Log Analytics"
+                        - generic: Use the indigo fields below (from KQL queries)
+                      - generic:
+                        - generic: "🎯 Method B: Direct Token Counts"
+                        - generic: Skip to the orange section below
+            - generic:
+              - heading [level=4]:
+                - img
+                - text: "Method A: KQL / TPM Input Fields"
+              - generic:
+                - generic:
+                  - generic:
+                    - text: Average TPM (from KQL)
+                    - button:
+                      - img
+                  - generic:
+                    - generic:
+                      - textbox:
+                        - /placeholder: "0"
+                        - text: "0"
+                      - generic:
+                        - img
+                    - generic: AvgTPM from your KQL query results
+                  - paragraph: AvgTPM from your KQL query results
+                - generic:
+                  - generic:
+                    - text: P99 TPM (from KQL)
+                    - button:
+                      - img
+                  - generic:
+                    - generic:
+                      - textbox:
+                        - /placeholder: "0"
+                        - text: "0"
+                      - generic:
+                        - img
+                    - generic: P99TPM - shows burst patterns
+                  - paragraph: P99TPM - shows burst patterns
+                - generic:
+                  - generic: Max TPM (from KQL)
+                  - spinbutton: "0"
+                  - paragraph: MaxTPM - absolute peak usage
+              - generic:
+                - generic:
+                  - img
+                  - generic:
+                    - generic: "⚖️ Output Token Weighting: GPT-4o Mini = 4× output weight"
+                    - generic:
+                      - text: For this model,
+                      - strong: 1 output token counts as 4 input tokens
+                      - text: toward PTU utilization.
+                - generic:
+                  - generic:
+                    - generic: Avg Input (Prompt) TPM
+                    - spinbutton: "0"
+                    - paragraph: AvgInputTPM from updated KQL query
+                  - generic:
+                    - generic: Avg Output (Completion) TPM
+                    - spinbutton: "0"
+                    - paragraph: AvgOutputTPM from updated KQL query
+              - generic:
+                - generic:
+                  - generic: Average PTU (from KQL)
+                  - spinbutton: "0"
+                  - paragraph: AvgPTU - average PTU needs
+                - generic:
+                  - generic: P99 PTU (from KQL)
+                  - spinbutton: "0"
+                  - paragraph: P99PTU - PTU needs for bursts
+                - generic:
+                  - generic: Max PTU (from KQL)
+                  - spinbutton: "0"
+                  - paragraph: MaxPTU - maximum PTU needs
+                - generic:
+                  - generic:
+                    - text: Recommended PTU (from KQL)
+                    - button:
+                      - img
+                  - spinbutton: "0"
+                  - paragraph: RecommendedPTU - KQL's sizing recommendation
+                - generic:
+                  - generic: Monthly Active Minutes
+                  - spinbutton: "43800"
+                  - paragraph: Total minutes of usage per month
+                - generic:
+                  - generic: Base PTUs (for Spillover)
+                  - spinbutton: "0"
+                  - paragraph: Base PTU reservation for spillover approach
+            - generic:
+              - generic:
+                - generic:
+                  - img
+                  - text: "Method B: PAYG Token Usage (Alternative to TPM)"
+                - generic:
+                  - generic:
+                    - generic:
+                      - strong: "💡 Use this section when:"
+                    - list:
+                      - listitem: You don't have Azure Log Analytics data available
+                      - listitem: You know exact input/output token consumption from your app
+                      - listitem: You want precise PAYG cost calculations instead of TPM estimates
+                    - generic:
+                      - strong: "How it works:"
+                      - text: Enter your monthly token counts below OR use TPM values above. Token counts take priority when both are provided.
+              - generic:
+                - generic:
+                  - generic:
+                    - generic: Monthly Input Tokens
+                    - spinbutton: "0"
+                    - paragraph: Total input tokens per month
+                  - generic:
+                    - generic: Monthly Output Tokens
+                    - spinbutton: "0"
+                    - paragraph: Total output tokens per month
+                  - generic:
+                    - generic:
+                      - text: Input/Output Ratio
+                      - button:
+                        - img
+                    - spinbutton: "0.5"
+                    - generic:
+                      - generic: Ratio of input to total tokens
+                      - generic:
+                        - generic:
+                          - strong: "0.5"
+                          - text: = 50/50 split (balanced chat)
+                        - generic:
+                          - strong: "0.7"
+                          - text: = 70% input (data analysis)
+                        - generic:
+                          - strong: "0.3"
+                          - text: = 30% input (content generation)
+                - generic:
+                  - generic:
+                    - img
+                    - generic:
+                      - generic: "🎯 Usage Priority & Input/Output Ratio:"
+                      - list:
+                        - listitem:
+                          - strong: "Monthly Token Counts:"
+                          - text: If you enter input/output tokens above, these exact values will be used for PAYG calculation
+                        - listitem:
+                          - strong: "TPM + Ratio:"
+                          - text: If tokens are blank but you have TPM values, the calculator will estimate tokens using the input/output ratio
+                        - listitem:
+                          - strong: "No Data:"
+                          - text: If neither is provided, PAYG cost will be $0
+                      - generic:
+                        - generic: "📊 Understanding Input/Output Ratio:"
+                        - generic:
+                          - generic:
+                            - strong: "What it is:"
+                            - text: Percentage of input tokens vs total tokens consumed
+                          - generic:
+                            - generic:
+                              - generic: "High Input Ratio (0.7-0.9):"
+                              - generic: • Document analysis
+                              - generic: • Data classification
+                              - generic: • Content summarization
+                            - generic:
+                              - generic: "Low Input Ratio (0.2-0.4):"
+                              - generic: • Content generation
+                              - generic: • Creative writing
+                              - generic: • Code generation
+                          - generic:
+                            - strong: "💰 Why it matters:"
+                            - text: Input tokens cost ~$0.15/1M, output tokens cost ~$0.60/1M
+                      - generic:
+                        - strong: "💡 Pro tip:"
+                        - text: Token counts provide the most accurate PAYG estimates, especially for applications with uneven input/output patterns.
+            - alert:
+              - generic:
+                - generic:
+                  - generic:
+                    - heading [level=4]: "Pro Tip: Spillover Strategy"
+                    - paragraph:
+                      - strong: "Spillover Model (Base + PAYGO overflow):"
+                      - text: Reserve base PTUs for average usage, let burst traffic "spill over" to PAYGO. Best for predictable baselines with occasional bursts (≈2–5×).
+                  - generic:
+                    - heading [level=5]: "📊 Implementation Guide:"
+                    - list:
+                      - listitem: • Set base to your AvgPTU or P99PTU from KQL
+                      - listitem: • Overflow traffic is automatically billed at PAYGO rates
+                      - listitem: • Ideal for workloads with predictable baseline + occasional spikes
+                  - generic:
+                    - heading [level=5]: "🎯 Example Scenario:"
+                    - paragraph:
+                      - strong: "Need:"
+                      - text: 2 PTU average, 8 PTU peaks
+                      - strong: "Strategy:"
+                      - text: Reserve 2–3 PTUs, let extra 5–6 PTUs use PAYGO
+                      - strong: "Benefit:"
+                      - text: Cost control + automatic scaling
+        - generic:
+          - generic:
+            - generic:
+              - img
+              - generic: Priority Processing (GA)
+            - generic: A new pay-per-token option with SLA-backed low-latency guarantees
+          - generic:
+            - generic:
+              - generic:
+                - heading [level=4]: What is it?
+                - paragraph: Priority Processing provides guaranteed throughput and SLA-backed latency for Azure OpenAI requests. It's a pay-per-token model (like PAYGO) with a ~70% premium, but with performance guarantees.
+              - generic:
+                - heading [level=4]: When to consider?
+                - list:
+                  - listitem: • Latency-sensitive production apps
+                  - listitem: • Need SLA guarantees without PTU commitment
+                  - listitem: • Variable workloads that need consistent performance
+                  - listitem: • Can combine with PTU (baseline + priority overflow)
+              - generic:
+                - heading [level=4]: Availability
+                - list:
+                  - listitem:
+                    - text: •
+                    - strong: "Models:"
+                    - text: GPT-5.4, 5.2, 5.1, 4.1, 4.1-mini, o4-mini
+                  - listitem:
+                    - text: •
+                    - strong: "Deployments:"
+                    - text: Global Standard, Data Zone Standard
+                  - listitem:
+                    - text: •
+                    - strong: "Pricing:"
+                    - text: ~70% premium over standard PAYGO rates
+                - link:
+                  - /url: https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing
+                  - text: Learn more →
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - img
+              - heading [level=3]: 📊 Ready for Analysis
+              - paragraph: "Enter your KQL query results above to see:"
+              - generic:
+                - generic:
+                  - img
+                  - generic: Cost comparisons
+                - generic:
+                  - img
+                  - generic: PTU recommendations
+                - generic:
+                  - img
+                  - generic: Usage pattern analysis
+                - generic:
+                  - img
+                  - generic: Interactive charts
+        - contentinfo:
+          - generic:
+            - paragraph: Made with ❤️ for the Azure community
+            - generic:
+              - link:
+                - /url: https://github.com/ricmmartins/azureptucalc
+                - img
+                - text: Open Source on GitHub
+              - generic: "|"
+              - link:
+                - /url: https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
+                - text: Official Azure Pricing
+            - paragraph:
+              - text: Pricing estimates are based on publicly available Azure pricing data and may not reflect negotiated rates, regional variations, or the latest pricing changes. Always verify with the
+              - link:
+                - /url: https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
+                - text: official Azure pricing page
+              - text: before making purchasing decisions.
+  - dialog "Welcome to Azure PTU Calculator" [ref=e2]:
+    - heading "Welcome to Azure PTU Calculator" [level=2] [ref=e4]:
+      - img [ref=e6]
+      - text: Welcome to Azure PTU Calculator
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - paragraph [ref=e10]: Make smart financial decisions about your Azure OpenAI capacity planning
+        - paragraph [ref=e11]: This tool analyzes your usage patterns and recommends the most cost-effective pricing model
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]:
+            - generic [ref=e15]:
+              - img [ref=e16]
+              - text: PAYGO
+            - generic [ref=e18]: Pay-as-you-go
+          - generic [ref=e19]:
+            - generic [ref=e20]: Flexible
+            - paragraph [ref=e21]: Pay per token used. Great for variable workloads but costs more per token.
+            - generic [ref=e22]: ✓ No commitment • ✓ Variable usage • ✗ Higher cost
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - generic [ref=e25]:
+              - img [ref=e26]
+              - text: PTU
+            - generic [ref=e28]: Provisioned Throughput Units
+          - generic [ref=e29]:
+            - generic [ref=e30]: Provisioned
+            - paragraph [ref=e31]: Reserve dedicated capacity. Best for consistent, high-volume usage with reservation discounts.
+            - generic [ref=e32]: ✓ Lower cost • ✓ Guaranteed capacity • ✓ Monthly or yearly reservations
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]:
+              - img [ref=e36]
+              - text: Spillover
+            - generic [ref=e39]: PTU base + PAYGO overflow
+          - generic [ref=e40]:
+            - generic [ref=e41]: Best of Both
+            - paragraph [ref=e42]: Reserve base capacity as PTU, overflow to PAYGO for spikes.
+            - generic [ref=e43]: ✓ Cost optimized • ✓ Handles spikes • ✓ Balanced approach
+      - generic [ref=e44]:
+        - generic [ref=e46]:
+          - img [ref=e47]
+          - text: What This Calculator Does for You
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - generic [ref=e55]:
+              - paragraph [ref=e56]: Analyzes Your Usage
+              - paragraph [ref=e57]: Input your actual Azure OpenAI usage data
+            - generic [ref=e60]:
+              - paragraph [ref=e61]: Calculates Costs
+              - paragraph [ref=e62]: Compare PAYGO, PTU, spillover, and Priority Processing
+          - generic [ref=e63]:
+            - generic [ref=e66]:
+              - paragraph [ref=e67]: Smart Recommendations
+              - paragraph [ref=e68]: Get data-driven pricing strategy advice
+            - generic [ref=e71]:
+              - paragraph [ref=e72]: Shows Savings
+              - paragraph [ref=e73]: Identify potential cost optimization opportunities
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e76]: Ready to Get Started?
+          - generic [ref=e77]: "You can input data two ways: KQL queries from Azure Log Analytics (most accurate) or direct monthly token counts from your application."
+        - generic [ref=e79]:
+          - button "Take the Guided Tour" [active] [ref=e80] [cursor=pointer]:
+            - img
+            - text: Take the Guided Tour
+          - button "Start Using Calculator" [ref=e81] [cursor=pointer]
+      - generic [ref=e83]:
+        - img [ref=e84]
+        - generic [ref=e86]:
+          - paragraph [ref=e87]: 💡 Quick Tips
+          - list [ref=e88]:
+            - listitem [ref=e89]: • Use 7+ days of data for most accurate analysis
+            - listitem [ref=e90]: • Look for the green "savings" indicators in results
+            - listitem [ref=e91]: • Export reports for sharing with stakeholders
+            - listitem [ref=e92]: • Hover over terms for explanations throughout the tool
+    - button "Close" [ref=e93] [cursor=pointer]:
+      - img
+      - generic [ref=e94]: Close

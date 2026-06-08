@@ -2,6 +2,35 @@
   "last_updated": "2025-08-14T06:18:52.543418",
   "source": "Azure Retail Prices API + Fallback Pricing",
   "pricing_data": {
+    "gpt-5.5": {
+      "gpt-5.5 Data Zone": {
+        "paygo_input": 5.50,
+        "paygo_output": 33.00,
+        "ptu_hourly": 110.0
+      },
+      "gpt-5.5 Global": {
+        "paygo_input": 5.00,
+        "paygo_output": 30.00,
+        "ptu_hourly": 100.0
+      }
+    },
+    "gpt-5.4-mini": {
+      "gpt-5.4-mini Data Zone": {
+        "paygo_input": 0.82,
+        "paygo_output": 4.95,
+        "ptu_hourly": 110.0
+      },
+      "gpt-5.4-mini Global": {
+        "paygo_input": 0.75,
+        "paygo_output": 4.50,
+        "ptu_hourly": 100.0
+      },
+      "gpt-5.4-mini Regional": {
+        "paygo_input": 0.82,
+        "paygo_output": 4.95,
+        "ptu_hourly": 200.0
+      }
+    },
     "gpt-4": {
       "gpt-4 Data Zone": {
         "paygo_input": 0.0022,

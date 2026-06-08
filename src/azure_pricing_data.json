@@ -236,6 +236,8 @@
     {"value": "west-us-3", "label": "West US 3", "models": 11}
   ],
   "models": [
+    {"value": "gpt-5.5", "label": "GPT-5.5", "category": "high-performance"},
+    {"value": "gpt-5.4-mini", "label": "GPT-5.4 Mini", "category": "efficient"},
     {"value": "o3", "label": "o3", "category": "high-performance"},
     {"value": "o4-mini", "label": "o4-mini", "category": "efficient"},
     {"value": "gpt-5", "label": "GPT-5", "category": "high-performance"},

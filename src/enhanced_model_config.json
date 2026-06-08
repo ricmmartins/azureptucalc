@@ -1,16 +1,44 @@
 {
   "models": {
-    "gpt-5.4": {
-      "name": "GPT-5.4",
-      "description": "Latest GPT-5 series model with top-tier capabilities",
-      "throughput_per_ptu": 2400,
-      "output_weight": 4,
-      "output_weight_source": "price_ratio",
-      "official_source": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/provisioned-throughput-onboarding",
+    "gpt-5.5": {
+      "name": "GPT-5.5",
+      "description": "Most advanced GPT-5 series model with frontier reasoning capabilities",
+      "throughput_per_ptu": 1200,
+      "output_weight": 6,
+      "output_weight_source": "ms_learn",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
         "regional": { "min_ptu": 50, "increment": 50, "available": true }
+      },
+      "regions": ["eastus2", "southcentralus", "swedencentral"]
+    },
+    "gpt-5.4": {
+      "name": "GPT-5.4",
+      "description": "Latest GPT-5 series model with top-tier capabilities",
+      "throughput_per_ptu": 2400,
+      "output_weight": 6,
+      "output_weight_source": "ms_learn",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
+      },
+      "regions": ["eastus2", "polandcentral", "southcentralus", "swedencentral"]
+    },
+    "gpt-5.4-mini": {
+      "name": "GPT-5.4 Mini",
+      "description": "Compact, cost-efficient GPT-5.4 for low-latency production workloads",
+      "throughput_per_ptu": 7900,
+      "output_weight": 6,
+      "output_weight_source": "ms_learn",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 25, "increment": 25, "available": true }
       },
       "regions": ["eastus2", "polandcentral", "southcentralus", "swedencentral"]
     },

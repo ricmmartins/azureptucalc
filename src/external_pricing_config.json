@@ -53,7 +53,9 @@
     }
   },
   "tokenPricing": {
+    "gpt-5.5": { "input": 5.00, "output": 30.00 },
     "gpt-5.4": { "input": 2.50, "output": 10.00 },
+    "gpt-5.4-mini": { "input": 0.75, "output": 4.50 },
     "gpt-5.3-codex": { "input": 2.50, "output": 10.00 },
     "gpt-5.2": { "input": 1.75, "output": 14.00 },
     "gpt-5.2-codex": { "input": 2.50, "output": 10.00 },
@@ -72,6 +74,14 @@
     "o1": { "input": 15.00, "output": 60.00 }
   },
   "modelConfigurations": {
+    "gpt-5.5": {
+      "throughput_per_ptu": 1200,
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5 },
+        "dataZone": { "min_ptu": 15, "increment": 5 },
+        "regional": { "min_ptu": 50, "increment": 50 }
+      }
+    },
     "gpt-5.4": {
       "throughput_per_ptu": 2400,
       "deployments": {
@@ -130,6 +140,14 @@
     },
     "gpt-5-mini": {
       "throughput_per_ptu": 23750,
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5 },
+        "dataZone": { "min_ptu": 15, "increment": 5 },
+        "regional": { "min_ptu": 25, "increment": 25 }
+      }
+    },
+    "gpt-5.4-mini": {
+      "throughput_per_ptu": 7900,
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5 },
         "dataZone": { "min_ptu": 15, "increment": 5 },
