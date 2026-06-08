@@ -14,8 +14,16 @@ class AzureOpenAIPricingService {
   loadFallbackPricing() {
     return {
       // GPT-5 series
+      'gpt-5.5': {
+        paygo: { input: 5.00, output: 30.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
+      },
       'gpt-5.4': {
         paygo: { input: 2.50, output: 10.00 },
+        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
+      },
+      'gpt-5.4-mini': {
+        paygo: { input: 0.75, output: 4.50 },
         ptu: { global: 1.00, dataZone: 1.10, regional: 2.00 }
       },
       'gpt-5.3-codex': {

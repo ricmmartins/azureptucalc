@@ -75,7 +75,8 @@ function App() {
     // Task 3: Input/Output token fields for PAYG calculation
     inputTokensMonthly: 0,
     outputTokensMonthly: 0,
-    inputOutputRatio: 0.5  // Default 50/50 split (fallback when separate TPM not provided)
+    inputOutputRatio: 0.5,  // Default 50/50 split (fallback when separate TPM not provided)
+    cacheRate: 0  // Prompt cache hit rate (0-1). Reduces effective input tokens in PTU sizing.
   });
   
   // Custom pricing data - aligned with official PTU reservation pricing
@@ -130,8 +131,8 @@ function App() {
         }
       }
       // If current model is not available in this region, switch to first available
-      if (regionInfo && regionInfo.models) {
-        const availableModels = Object.keys(regionInfo.models);
+      if (regionInfo && regionInfo.available_models) {
+        const availableModels = Object.keys(regionInfo.available_models);
         if (availableModels.length > 0 && !availableModels.includes(selectedModel)) {
           setSelectedModel(availableModels[0]);
         }
@@ -267,8 +268,10 @@ function App() {
 
   // Helper: compute normalized TPM (input-token-equivalent) using output weighting
   // Azure PTU utilization counts output tokens at a model-specific multiple of input tokens
+  // Cache hits reduce effective input tokens: normalizedTPM = (inputTPM × (1 - cacheRate)) + (outputWeight × outputTPM)
   const normalizeTPM = (inputTPM, outputTPM, outputWeight) => {
-    return inputTPM + (outputWeight * outputTPM);
+    const cacheRate = formData.cacheRate || 0;
+    return (inputTPM * (1 - cacheRate)) + (outputWeight * outputTPM);
   };
 
   // Helper: resolve effective input/output TPM from available data sources
@@ -1151,7 +1154,7 @@ Check browser console for detailed error information.`);
     // console.log(`Input: ${field} = ${value}`);
     let parsed = parseFloat(value);
     if (isNaN(parsed) || parsed < 0) parsed = 0;
-    if (field === 'inputOutputRatio') {
+    if (field === 'inputOutputRatio' || field === 'cacheRate') {
       parsed = Math.min(1, Math.max(0, parsed));
     }
     setFormData(prev => ({
@@ -1164,7 +1167,7 @@ Check browser console for detailed error information.`);
   const handleCustomPricingChange = (field, value) => {
     setCustomPricing(prev => ({
       ...prev,
-      [field]: parseFloat(value) || 0
+      [field]: Math.max(0, parseFloat(value) || 0)
     }));
   };
 
@@ -2599,6 +2602,30 @@ AzureMetrics
                         <div><strong>0.5</strong> = 50/50 split (balanced chat)</div>
                         <div><strong>0.7</strong> = 70% input (data analysis)</div>
                         <div><strong>0.3</strong> = 30% input (content generation)</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="cacheRate" className="flex items-center gap-2">
+                      Prompt Cache Hit Rate
+                      <TooltipIcon term="cache-rate" />
+                    </Label>
+                    <Input
+                      id="cacheRate"
+                      type="number"
+                      step="0.05"
+                      min="0"
+                      max="1"
+                      value={formData.cacheRate}
+                      onChange={(e) => handleInputChange('cacheRate', e.target.value)}
+                      placeholder="0"
+                    />
+                    <div className="text-sm text-gray-600 mt-1">
+                      <div className="mb-2">Fraction of input tokens served from cache ({Math.round(formData.cacheRate * 100)}%)</div>
+                      <div className="space-y-1 text-xs">
+                        <div><strong>0</strong> = No caching (default)</div>
+                        <div><strong>0.5</strong> = 50% cache hits (typical with system prompts)</div>
+                        <div><strong>0.8</strong> = 80% cache hits (heavy prompt reuse)</div>
                       </div>
                     </div>
                   </div>

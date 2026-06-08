@@ -223,7 +223,7 @@
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5 },
         "dataZone": { "min_ptu": 15, "increment": 5 },
-        "regional": { "min_ptu": 25, "increment": 50 }
+        "regional": { "min_ptu": 25, "increment": 25 }
       }
     }
   }

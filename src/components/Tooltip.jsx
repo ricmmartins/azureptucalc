@@ -62,6 +62,11 @@ export const tooltipContent = {
     title: 'Input/Output Ratio',
     content: 'The proportion of input tokens to total tokens consumed. Used to estimate token split when only TPM is available. Input and output tokens have different pricing.',
     example: 'Example: 0.7 = 70% input tokens ($0.15/1M), 30% output tokens ($0.60/1M)'
+  },
+  'cache-rate': {
+    title: 'Prompt Cache Hit Rate',
+    content: 'The fraction of input tokens served from Azure OpenAI prompt cache. Cached tokens consume fewer PTU resources and cost less in PAYG. The official formula discounts input tokens by this rate when computing PTU requirements.',
+    example: 'Example: 0.5 = 50% of input tokens are cached, reducing effective input TPM by half for PTU sizing'
   }
 };
 
