@@ -204,10 +204,6 @@ AzureMetrics
     onDataChange?.(newData);
   };
 
-  const UNUSED_isStepComplete = (stepIndex) => {
-    return completedSteps.has(stepIndex);
-  };
-
   const canProceed = () => {
     const step = wizardSteps[currentStep];
     switch (step.id) {

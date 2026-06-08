@@ -46,10 +46,6 @@ function App() {
     kqlQuery: true,
     noLogAnalytics: true,
   });
-  // const deviceInfo = useMobileDetection(); // Commented out since import is disabled
-
-  // Initialize enhanced pricing service with useMemo to prevent re-instantiation
-  // const pricingService = useMemo(() => new AzureOpenAIPricingService(), []); // Commented out since import is disabled
   
   // State management
   const [selectedRegion, setSelectedRegion] = useState('eastus');
@@ -1124,34 +1120,8 @@ Check browser console for detailed error information.`);
   }, [formData, currentPricing, hasValidData, selectedModel, selectedDeployment]);
 
   // Pricing validation effect - temporarily disabled
-  /*
-  useEffect(() => {
-    const validatePricing = async () => {
-      if (selectedModel && selectedRegion) {
-        try {
-          const validation = await pricingValidationService.validatePricingAccuracy(
-            selectedModel, 
-            selectedRegion, 
-            selectedDeployment
-          );
-          setPricingValidation(validation);
-        } catch (error) {
-          
-        }
-      }
-    };
-
-    // Only validate pricing every 30 minutes to avoid API rate limits
-    const validationStatus = pricingValidationService.getValidationStatus();
-    if (!validationStatus.hasRecentValidation) {
-      validatePricing();
-    }
-  }, [selectedModel, selectedRegion, selectedDeployment]);
-  */
-
   // Handle form input changes
   const handleInputChange = (field, value) => {
-    // console.log(`Input: ${field} = ${value}`);
     let parsed = parseFloat(value);
     if (isNaN(parsed) || parsed < 0) parsed = 0;
     if (field === 'inputOutputRatio' || field === 'cacheRate') {
@@ -1313,29 +1283,6 @@ Check browser console for detailed error information.`);
   };
 
   // Manual pricing validation handler - temporarily disabled
-  /*
-  const handleValidatePricing = async () => {
-    setIsValidatingPricing(true);
-    try {
-      const validation = await pricingValidationService.validatePricingAccuracy(
-        selectedModel,
-        selectedRegion, 
-        selectedDeployment
-      );
-      setPricingValidation(validation);
-      setShowPricingValidation(true);
-    } catch (error) {
-      console.error('Pricing validation failed:', error);
-      setCalculations(prev => ({ 
-        ...prev, 
-        exportError: 'Pricing validation failed. Please try again.' 
-      }));
-    } finally {
-      setIsValidatingPricing(false);
-    }
-  };
-  */
-
   // Load official pricing
   const loadOfficialPricing = () => {
     setPricingStatus(prev => ({ ...prev, isLoading: true }));
