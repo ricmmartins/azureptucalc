@@ -2,7 +2,7 @@
 
 ## What is the Azure OpenAI PTU Calculator?
 
-The Azure OpenAI PTU Calculator is a free, open-source tool that helps you optimize your Azure OpenAI costs by comparing PAYGO, PTU reservations, spillover (hybrid), and Priority Processing pricing. It supports 17 PTU models, 3 deployment types, and fetches live pricing from the Azure Retail Prices API.
+The Azure OpenAI PTU Calculator is a free, open-source tool that helps you optimize your Azure OpenAI costs by comparing PAYGO, PTU reservations, spillover (hybrid), and Priority Processing pricing. It supports 19 PTU models, 3 deployment types, and fetches live pricing from the Azure Retail Prices API.
 
 Try it live at [ptucalc.com](https://www.ptucalc.com)
 
@@ -31,7 +31,7 @@ Try it live at [ptucalc.com](https://www.ptucalc.com)
 
 ### 1. Select Your Model, Region, and Deployment Type
 
-- **Model:** Choose from 17 supported PTU models (GPT-5.4, GPT-5.2, GPT-4.1, GPT-4o, o3, o4-mini, and more)
+- **Model:** Choose from 19 supported PTU models (GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.3 Codex, GPT-5.2, GPT-4.1, GPT-4o, o3, o4-mini, and more)
 - **Region:** Select your Azure region (30+ supported)
 - **Deployment Type:**
   - **Global** - multi-region, lowest PTU cost ($1.00/PTU/hr base)
@@ -60,6 +60,14 @@ Adjust the ratio (0.0-1.0) to reflect your workload:
 - **0.7-0.9** - data analysis, summarization (high input)
 - **0.5** - balanced chat
 - **0.2-0.4** - content generation (high output)
+
+#### Prompt Cache Hit Rate
+Set the fraction of input tokens served from Azure's prompt cache (0.0-1.0):
+- **0** - no caching (default)
+- **0.5** - 50% cache hits (typical with reused system prompts)
+- **0.8** - 80% cache hits (heavy prompt reuse, e.g., RAG with common prefixes)
+
+Cached tokens consume fewer PTU resources, so this reduces the effective input TPM used for PTU sizing.
 
 ### 3. Review Results
 
@@ -115,7 +123,7 @@ Example: Need 2 PTU average, 8 PTU peaks. Reserve 2-3 PTUs, let extra 5-6 PTUs u
 
 A GA pay-per-token option with SLA-backed low-latency guarantees:
 
-- **Supported models:** GPT-5.4, GPT-5.2, GPT-5.1, GPT-4.1, GPT-4.1 Mini, o4-mini
+- **Supported models:** GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.2, GPT-5.1, GPT-4.1, GPT-4.1 Mini, o4-mini
 - **Deployments:** Global Standard, Data Zone Standard only
 - **Pricing:** varies by model (approximately 70% premium over standard PAYGO)
 - **When to use:** latency-sensitive production apps needing guaranteed throughput
