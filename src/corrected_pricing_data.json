@@ -472,7 +472,7 @@
         "yearly": 2652
       }
     },
-    "gpt-3.5-turbo": {
+    "gpt-35-turbo": {
       "displayName": "GPT-3.5 Turbo",
       "minPTU": {
         "global": 25,

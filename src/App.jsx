@@ -649,7 +649,7 @@ Check browser console for detailed error information.`);
         // Map deployment types to enhanced service format
         const deploymentTypeMap = {
           global: "global",
-          dataZone: "data-zone", 
+          dataZone: "dataZone", 
           regional: "regional"
         };
         
@@ -751,7 +751,7 @@ Check browser console for detailed error information.`);
       officialPTUPricing.yearly = officialPTUPricing.yearly || Math.round(officialPTUPricing.hourly * 730 * 12 * 0.3027);
       
       // PRIORITY 2: Use official token pricing for PAYG (fallback from live API)
-      const tokenPricing = getTokenPricing(selectedModel);
+      const tokenPricing = getTokenPricing(selectedModel, selectedDeployment);
       const tokenPricingIsFallback = tokenPricing.isFallback === true;
       
       // PRIORITY 3: Use per-deployment reservation rates from officialPTUPricing (which has correct rates per deployment type)
@@ -800,7 +800,7 @@ Check browser console for detailed error information.`);
       // Fallback to official base pricing structure
       // Final fallback: use corrected_pricing_data.json entries or safe defaults
       const correctedModel = correctedPricingData.models?.[selectedModel];
-      const fallbackTokenPricing = getTokenPricing(selectedModel);
+      const fallbackTokenPricing = getTokenPricing(selectedModel, selectedDeployment);
       const ptuMonthly = correctedModel?.reservations?.monthly || 260;
       const ptuYearly = correctedModel?.reservations?.yearly || 2652;
       return {
@@ -913,7 +913,7 @@ Check browser console for detailed error information.`);
     } else {
       monthlyTokens = 0;
       monthlyPaygoCost = 0;
-      paygoBreakdown = { inputCost: 0, outputCost: 0, totalCost: 0, pricing: getTokenPricing(selectedModel) };
+      paygoBreakdown = { inputCost: 0, outputCost: 0, totalCost: 0, pricing: getTokenPricing(selectedModel, selectedDeployment) };
     }
   // Use official Azure convention: 730 hours/month
   const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 730;
@@ -1372,16 +1372,22 @@ Check browser console for detailed error information.`);
         ];
       }
       
-      let availableModels = Object.entries(ptuModels.ptu_supported_models).map(([id, model]) => ({
-        id,
-        name: model.name,
-        minPTU: model.min_ptu
-      }));
+      let availableModels = Object.entries(ptuModels.ptu_supported_models).map(([id, model]) => {
+        // Use deployment-specific min_ptu from enhanced_model_config when available
+        const enhancedConfig = enhancedModelConfig.models?.[id];
+        const deploymentMinPtu = enhancedConfig?.deployments?.[selectedDeployment]?.min_ptu;
+        return {
+          id,
+          name: model.name,
+          minPTU: deploymentMinPtu || model.min_ptu
+        };
+      });
 
-      // Filter models for government regions
-      if (isGovernmentRegionSelected) {
-        const govModels = getGovernmentAvailableModels();
-        availableModels = availableModels.filter(model => govModels.includes(model.id));
+      // Filter models by selected region's available_models
+      const regionInfo = REGION_MODEL_AVAILABILITY[selectedRegion];
+      if (regionInfo && regionInfo.available_models) {
+        const regionModelIds = Object.keys(regionInfo.available_models);
+        availableModels = availableModels.filter(model => regionModelIds.includes(model.id));
       }
 
       return availableModels;
@@ -2221,9 +2227,9 @@ AzureMetrics
                         step="0.01"
                         value={customPricing.paygo_input}
                         onChange={(e) => handleCustomPricingChange('paygo_input', e.target.value)}
-                        placeholder={getTokenPricing(selectedModel).input.toString()}
+                        placeholder={getTokenPricing(selectedModel, selectedDeployment).input.toString()}
                       />
-                      <p className="text-xs text-red-600 mt-1">Default: ${getTokenPricing(selectedModel).input}/M</p>
+                      <p className="text-xs text-red-600 mt-1">Default: ${getTokenPricing(selectedModel, selectedDeployment).input}/M</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">PAYGO Output ($/1M tokens)</Label>
@@ -2232,9 +2238,9 @@ AzureMetrics
                         step="0.01"
                         value={customPricing.paygo_output}
                         onChange={(e) => handleCustomPricingChange('paygo_output', e.target.value)}
-                        placeholder={getTokenPricing(selectedModel).output.toString()}
+                        placeholder={getTokenPricing(selectedModel, selectedDeployment).output.toString()}
                       />
-                      <p className="text-xs text-red-600 mt-1">Default: ${getTokenPricing(selectedModel).output}/M</p>
+                      <p className="text-xs text-red-600 mt-1">Default: ${getTokenPricing(selectedModel, selectedDeployment).output}/M</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">PTU Hourly ($/hour)</Label>
@@ -2276,7 +2282,7 @@ AzureMetrics
                         variant="outline" 
                         onClick={() => {
                           const official = calculateOfficialPTUPricing(selectedRegion, selectedDeployment);
-                          const tokens = getTokenPricing(selectedModel);
+                          const tokens = getTokenPricing(selectedModel, selectedDeployment);
                           setCustomPricing({
                             paygo_input: tokens.input,
                             paygo_output: tokens.output,

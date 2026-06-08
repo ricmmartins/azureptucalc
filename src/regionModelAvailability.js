@@ -627,7 +627,87 @@ export const REGION_MODEL_AVAILABILITY = {
     pricing_tier: 'premium'
   },
 
-  // Additional APAC
+  // Africa
+  'southafricanorth': {
+    name: 'South Africa North',
+    displayName: 'South Africa North',
+    available_deployments: ['global', 'regional'],
+    available_models: {
+      'gpt-4o': { deployments: ['global', 'regional'], capacity: 'medium' },
+      'gpt-4o-mini': { deployments: ['global', 'regional'], capacity: 'high' },
+      'gpt-5.4': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.4-mini': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.5': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.3-codex': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.2-codex': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.1-codex': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-4.1': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'gpt-4.1-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'gpt-4.1-nano': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'o3': { deployments: ['global', 'dataZone'], capacity: 'medium' },
+      'o4-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'o1': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'o3-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'gpt-35-turbo': { deployments: ['global', 'regional'], capacity: 'high' },
+      'text-embedding-ada-002': { deployments: ['global', 'regional'], capacity: 'high' }
+    },
+    zone: 'AF',
+    pricing_tier: 'premium'
+  },
+
+  // Additional EU
+  'polandcentral': {
+    name: 'Poland Central',
+    displayName: 'Poland Central',
+    available_deployments: ['global', 'dataZone', 'regional'],
+    available_models: {
+      'gpt-4o': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'gpt-4o-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'gpt-5.4': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.4-mini': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.5': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.3-codex': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.2-codex': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.1-codex': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-4.1': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'gpt-4.1-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'gpt-4.1-nano': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'o3': { deployments: ['global', 'dataZone'], capacity: 'medium' },
+      'o4-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'o1': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'o3-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'gpt-35-turbo': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'text-embedding-ada-002': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' }
+    },
+    zone: 'EU',
+    pricing_tier: 'standard'
+  },
+  'germanywestcentral': {
+    name: 'Germany West Central',
+    displayName: 'Germany West Central',
+    available_deployments: ['global', 'dataZone', 'regional'],
+    available_models: {
+      'gpt-4o': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'gpt-4o-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'gpt-5.4': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.4-mini': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.5': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.3-codex': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.2-codex': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-5.1-codex': { deployments: ['global', 'dataZone'], capacity: 'low' },
+      'gpt-4.1': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'gpt-4.1-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'gpt-4.1-nano': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'o3': { deployments: ['global', 'dataZone'], capacity: 'medium' },
+      'o4-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'o1': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'o3-mini': { deployments: ['global', 'dataZone', 'regional'], capacity: 'medium' },
+      'gpt-35-turbo': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' },
+      'text-embedding-ada-002': { deployments: ['global', 'dataZone', 'regional'], capacity: 'high' }
+    },
+    zone: 'EU',
+    pricing_tier: 'standard'
+  },
   'koreacentral': {
     name: 'Korea Central',
     displayName: 'Korea Central',
@@ -798,17 +878,14 @@ export const isGovernmentRegion = (regionCode) => {
 };
 
 export const getGovernmentAvailableModels = () => {
-  // Models available in government regions (union of all gov regions)
-  // US Gov Arizona: GPT-4o, GPT-4o-mini, GPT-3.5-turbo, all embeddings
-  // US Gov Virginia: GPT-4o, GPT-3.5-turbo, text-embedding-ada-002 only
-  return [
-    'gpt-4o',
-    'gpt-4o-mini', 
-    'gpt-35-turbo',
-    'text-embedding-ada-002',
-    'text-embedding-3-large',
-    'text-embedding-3-small'
-  ];
+  // Derive available gov models from actual REGION_MODEL_AVAILABILITY data
+  const govModels = new Set();
+  Object.entries(REGION_MODEL_AVAILABILITY).forEach(([, regionInfo]) => {
+    if (regionInfo.isGovernment && regionInfo.available_models) {
+      Object.keys(regionInfo.available_models).forEach(model => govModels.add(model));
+    }
+  });
+  return [...govModels];
 };
 
 export const getRegionsByZone = () => {

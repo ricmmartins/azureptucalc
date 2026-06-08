@@ -144,12 +144,22 @@ for (const [modelId, modelData] of Object.entries(correctedPricingData.models ||
 
 // Function to get pricing for a specific model
 
-export function getTokenPricing(modelName) {
+export function getTokenPricing(modelName, deploymentType = 'global') {
+  // First try deployment-specific pricing from corrected_pricing_data.json
+  const correctedModel = correctedPricingData.models?.[modelName];
+  if (correctedModel?.paygo?.[deploymentType]) {
+    const depPricing = correctedModel.paygo[deploymentType];
+    if (depPricing.input != null || depPricing.output != null) {
+      return { input: depPricing.input ?? 0, output: depPricing.output ?? 0, isFallback: false };
+    }
+  }
+
+  // Fall back to global pricing from OFFICIAL_TOKEN_PRICING
   const pricing = OFFICIAL_TOKEN_PRICING[modelName];
   if (pricing) return { ...pricing, isFallback: false };
 
-  // Try to source PAYGO rates from corrected_pricing_data.json if available
-  const corrected = correctedPricingData.models?.[modelName]?.paygo?.global;
+  // Try global from corrected_pricing_data.json
+  const corrected = correctedModel?.paygo?.global;
   if (corrected && (corrected.input != null || corrected.output != null)) {
     return { input: corrected.input ?? 0, output: corrected.output ?? 0, isFallback: true };
   }
