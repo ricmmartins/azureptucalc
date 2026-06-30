@@ -11,11 +11,11 @@
 
 **Optimize your Azure OpenAI costs with intelligent PTU sizing, real-time pricing from the Azure Retail Prices API, and comprehensive cost analysis.**
 
-👉 **Try it live at [ptucalc.com](https://www.ptucalc.com)** | 📖 **[User Guide](./docs/USER_GUIDE.md)** | 📋 **[Changelog](./CHANGELOG.md)**
+**Try it live at [ptucalc.com](https://www.ptucalc.com)** | **[User Guide](./docs/USER_GUIDE.md)** | **[Changelog](./CHANGELOG.md)**
 
 ---
 
-## 🚀 Features
+## Features
 
 ### Pricing & Cost Analysis
 - **Live Azure pricing** — fetches real-time rates from the [Azure Retail Prices API](https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices) with intelligent fallback
@@ -53,7 +53,7 @@
 
 ---
 
-## 🏗️ How Pricing Works
+## How Pricing Works
 
 The calculator uses a **4-tier pricing priority system**:
 
@@ -78,7 +78,7 @@ Azure offers **two** PTU reservation options (there is no 3-year PTU reservation
 
 ---
 
-## 📊 KQL Query for Usage Data
+## KQL Query for Usage Data
 
 Use this query in Azure Monitor Log Analytics to get your TPM data:
 
@@ -106,7 +106,7 @@ AzureMetrics
 
 ---
 
-## 🏁 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
@@ -134,7 +134,7 @@ npm run dev
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 azureptucalc/
@@ -168,7 +168,7 @@ azureptucalc/
 
 ---
 
-## 🛠️ Configuration
+## Configuration
 
 ### Environment Variables (Optional)
 Set in Vercel dashboard:
@@ -179,7 +179,7 @@ VITE_CACHE_DURATION=10800000
 
 ---
 
-## 🚀 Alternative Deployment Options
+## Alternative Deployment Options
 
 ### Azure Static Web Apps
 ```bash
@@ -210,18 +210,18 @@ CMD ["nginx", "-g", "daemon off;"]
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-- 🐛 **Bug Reports** — include screenshots and browser info
-- 💡 **Feature Requests** — describe the business value
-- 🔧 **Code** — fork → branch → PR
-- 📝 **Docs** — improve clarity, add examples
+- **Bug Reports** — include screenshots and browser info
+- **Feature Requests** — describe the business value
+- **Code** — fork → branch → PR
+- **Docs** — improve clarity, add examples
 
 ---
 
-## ❓ FAQ
+## FAQ
 
 **How accurate are the pricing calculations?**
 The calculator fetches live rates from the Azure Retail Prices API. Fallback data is regularly updated against official documentation. Always verify with the [Azure pricing page](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/) before making purchasing decisions.
@@ -243,7 +243,7 @@ All calculations happen in your browser. No usage data is sent to external serve
 
 ---
 
-## 🆘 Support
+## Support
 
 - [GitHub Issues](https://github.com/ricmmartins/azureptucalc/issues)
 - [Azure OpenAI Documentation](https://learn.microsoft.com/en-us/azure/foundry/openai/)
@@ -251,19 +251,19 @@ All calculations happen in your browser. No usage data is sent to external serve
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgements
+## Acknowledgements
 
 - Azure OpenAI Service team for official pricing data
 - Ahmed Geedi for the PTU sizing & throttling prevention best practices document that inspired the Optimization tab
 - All contributors and testers
-- The Azure community ❤️
+- The Azure community
 
 ---
 
-**Made with ❤️ for the Azure community** — [ptucalc.com](https://www.ptucalc.com)
+**Made with love for the Azure community** — [ptucalc.com](https://www.ptucalc.com)
