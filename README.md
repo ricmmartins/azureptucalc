@@ -36,9 +36,17 @@
 - **Burst pattern detection** — identifies usage spikes and sizing implications
 - **Interactive cost comparison chart** with all tiers visualized
 
+### Optimization & Throttling Prevention (NEW)
+- **429 Risk Score** — real-time throttling risk gauge (0-100) with prioritized mitigation checklist
+- **max_tokens Optimizer** — concurrency impact analysis showing how tightening max_tokens increases effective capacity
+- **Leaky Bucket Simulation** — interactive visualization of Azure's rate-limiting algorithm with burst testing
+- **Spillover Architecture Comparison** — side-by-side analysis of PTU→PayGo, PTU→Priority Processing, and APIM AI Gateway patterns
+- **Retry & Backoff Calculator** — configurable retry strategy with exponential backoff + jitter, with code snippets (Python, JS, C#)
+- **Right-Size Wizard** — 4-step guided wizard for workload analysis, model selection, PTU sizing, and applying recommendations
+
 ### User Experience
-- **Guided Quick Tour** — 6-step interactive walkthrough with sample data
-- **Tabbed results** — Cost Analysis, Usage Patterns, and Advanced tabs
+- **Guided Quick Tour** — 8-step interactive walkthrough with sample data (now includes Optimization tab)
+- **Tabbed results** — Cost Analysis, Usage Patterns, Optimization, and Advanced tabs
 - **Sticky executive summary** — recommendation, savings, PTUs, and utilization always visible
 - **Export** — download analysis as CSV or copy results as JSON
 - **Built-in KQL query** — ready-to-use Log Analytics query for gathering usage data
@@ -136,7 +144,13 @@ azureptucalc/
 │   ├── components/
 │   │   ├── ui/                   # Shadcn/UI components
 │   │   ├── EnhancedResults.jsx   # Executive summary & cost breakdown
-│   │   └── GuidedTour.jsx        # Interactive quick tour
+│   │   ├── GuidedTour.jsx        # Interactive quick tour
+│   │   ├── MaxTokensOptimizer.jsx    # max_tokens concurrency optimizer
+│   │   ├── LeakyBucketVisualization.jsx  # Interactive leaky bucket simulation
+│   │   ├── ThrottlingAdvisor.jsx     # 429 Risk Score gauge
+│   │   ├── SpilloverComparison.jsx   # Spillover architecture comparison
+│   │   ├── RetryCalculator.jsx       # Retry & backoff calculator
+│   │   └── RightSizeWizard.jsx       # 4-step PTU right-sizing wizard
 │   ├── enhanced_pricing_service.js   # Pricing API client with cache & fallback
 │   ├── officialPTUPricing.js         # Official PTU rates & reservation overrides
 │   ├── official_token_pricing.js     # PAYGO & Priority Processing rates
@@ -246,6 +260,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 ## 🙏 Acknowledgements
 
 - Azure OpenAI Service team for official pricing data
+- Ahmed Geedi for the PTU sizing & throttling prevention best practices document that inspired the Optimization tab
 - All contributors and testers
 - The Azure community ❤️
 

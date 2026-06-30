@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { ChevronLeft, ChevronRight, X, Target, MapPin, BarChart3, Download, Settings, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Target, MapPin, BarChart3, Download, Settings, Zap, Shield, BookOpen } from 'lucide-react';
 
 const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -72,23 +72,33 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
       highlight: 'Personalized recommendation based on your utilization rate'
     },
     {
-      id: 'export',
-      title: 'Step 6: Export & Share',
-      description: 'Generate reports in CSV or JSON format to share with stakeholders and support decision-making.',
-      target: '.export-section',
-      fallbackTarget: '.recommendation-section',
+      id: 'optimization',
+      title: 'Step 6: Optimization & Throttling Prevention',
+      description: 'The Optimization tab helps you prevent 429 errors and maximize PTU efficiency. It includes a 429 Risk Score, max_tokens concurrency optimizer, interactive leaky bucket simulation, spillover architecture comparison, retry calculator, and a Right-Size Wizard.',
+      target: '.optimization-section',
+      fallbackTarget: '.cost-cards-section',
       position: 'top',
-      icon: <Download className="h-4 w-4" />,
-      highlight: 'Perfect for executive presentations and budget planning'
+      icon: <Shield className="h-4 w-4" />,
+      highlight: 'Tighten max_tokens — the single biggest lever to avoid 429 errors'
     },
     {
       id: 'advanced',
-      title: 'Step 7: Advanced Features',
-      description: 'Explore the Usage Patterns and Advanced tabs for burst analysis, interactive charts, and custom pricing options.',
+      title: 'Step 7: Usage Patterns & Advanced',
+      description: 'The Usage Patterns tab shows burst analysis and reservation savings opportunities. The Advanced tab lets you set custom pricing for negotiated enterprise rates.',
       target: '.custom-pricing-section',
       position: 'bottom',
       icon: <Settings className="h-4 w-4" />,
       highlight: 'Custom pricing for negotiated Microsoft rates'
+    },
+    {
+      id: 'export',
+      title: 'Step 8: Export, Share & Learn More',
+      description: 'Generate reports in CSV or JSON format to share with stakeholders. Check the User Guide link in the footer for detailed documentation and best practices.',
+      target: '.export-section',
+      fallbackTarget: '.recommendation-section',
+      position: 'top',
+      icon: <Download className="h-4 w-4" />,
+      highlight: 'Export for executive presentations and budget planning'
     }
   ]);
 
@@ -274,14 +284,15 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
               </p>
               
               {/* Show status message for steps that might not be visible */}
-              {(currentStep >= 2 && currentStep <= 4) && (
+              {(currentStep >= 2 && currentStep <= 5) && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
                   <div className="flex items-start gap-2">
                     <Zap className="h-3 w-3 text-yellow-600 flex-shrink-0 mt-1" />
                     <p className="text-xs text-yellow-700">
                       {currentStep === 2 && "Sample data loaded — see the cost breakdown below"}
-                      {currentStep === 3 && "Scroll down to see the full recommendation"}
-                      {currentStep === 4 && "Export features are always available"}
+                      {currentStep === 3 && "Scroll down to see the full cost cards"}
+                      {currentStep === 4 && "Scroll down to see the full recommendation"}
+                      {currentStep === 5 && "Switch to the Optimization tab to explore these features"}
                     </p>
                   </div>
                 </div>

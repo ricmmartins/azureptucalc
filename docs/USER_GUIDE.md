@@ -71,7 +71,7 @@ Cached tokens consume fewer PTU resources, so this reduces the effective input T
 
 ### 3. Review Results
 
-Results appear in three tabs:
+Results appear in four tabs:
 
 #### Cost Analysis Tab
 - **Cost comparison cards** - PAYGO, PTU On-Demand, PTU Monthly Reserved, PTU 1-Year Reserved, and Priority Processing (when available)
@@ -81,6 +81,15 @@ Results appear in three tabs:
 #### Usage Patterns Tab
 - **Reservation savings opportunity** - Monthly vs 1-Year reservation comparison
 - **Usage efficiency metrics** - utilization rate, burst ratio
+
+#### Optimization Tab (NEW)
+- **Workload Configuration** — set your max_tokens, actual output tokens, prompt tokens, and toggle retry logic, streaming, latency-critical, and APIM gateway settings
+- **429 Risk Score** — circular gauge (0-100) analyzing your configuration for throttling risk with a prioritized mitigation checklist
+- **max_tokens Concurrency Optimizer** — shows how tightening max_tokens dramatically increases effective concurrent capacity with before/after comparison
+- **Interactive Leaky Bucket Simulation** — visualize how Azure's rate-limiting algorithm works in real-time, with burst testing
+- **Spillover Architecture Comparison** — side-by-side comparison of PTU→PayGo, PTU→Priority Processing, and APIM AI Gateway patterns with pros/cons
+- **Retry & Backoff Calculator** — configure retry strategies with exponential backoff and jitter, with ready-to-use code snippets in Python, JavaScript, and C#
+- **Right-Size Wizard** — 4-step guided wizard that walks you through defining your workload, selecting your model, sizing PTUs, and applying the recommendation
 
 #### Advanced Tab
 - **Official PTU pricing transparency** - see exact rates, multipliers, and discount percentages
@@ -104,6 +113,7 @@ Results appear in three tabs:
 - **Export Summary** - download comprehensive CSV report
 - **Copy Results** - copy full JSON to clipboard
 - **Guided Tour** - click "Quick Tour" for an interactive walkthrough
+- **User Guide** — click the "User Guide" link in the footer for comprehensive documentation
 
 ---
 
@@ -178,6 +188,8 @@ AzureMetrics
 - **Check deployment type** - Global is cheapest but Regional gives lowest latency
 - **Review regularly** - revisit sizing as usage patterns change
 - **Use the Guided Tour** - click "Quick Tour" for an interactive walkthrough with sample data
+- **Optimize max_tokens** — setting max_tokens close to your actual output size is the single biggest lever to avoid 429 errors and maximize concurrency
+- **Check the Optimization tab** — use the 429 Risk Score and Right-Size Wizard before increasing PTU count
 
 ---
 
@@ -187,6 +199,7 @@ AzureMetrics
 - **Don't forget burst patterns** - use P99 or Max TPM for sizing, not just average
 - **Consider spillover** - for bursty workloads, hybrid is often cheaper than sizing PTUs for peak
 - **Check utilization** - PTU is typically cost-effective above 60% utilization; below that, PAYGO wins
+- **Prevent 429 errors proactively** — use the Optimization tab to analyze your request shape, implement proper retry logic, and compare spillover architectures
 
 ---
 
@@ -197,6 +210,10 @@ AzureMetrics
 - [TPM-per-PTU Table](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing#latest-azure-openai-models)
 - [Azure Retail Prices API](https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices)
 - [Monitor Model Deployments in Microsoft Foundry Models](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/monitor-models) — configure diagnostic settings to send metrics and logs to Log Analytics for new Foundry deployments
+- [Right-Size Your PTU Deployment](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/right-size-your-ptu-deployment-and-save-big/4053857)
+- [PTU Spillover Traffic Management](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/spillover-traffic-management)
+- [Priority Processing](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing)
+- [APIM GenAI Gateway Capabilities](https://learn.microsoft.com/en-us/azure/api-management/genai-gateway-capabilities)
 
 ---
 
