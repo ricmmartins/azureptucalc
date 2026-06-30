@@ -249,7 +249,7 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
           top: '1rem', 
           right: '1rem', 
           zIndex: 1000000,
-          width: '20rem'
+          width: '24rem'
         }}
       >
         <Card className="border-2 border-blue-500 shadow-2xl">
@@ -323,45 +323,45 @@ const GuidedTour = ({ isActive, onComplete, onSkip, onPopulateSampleData }) => {
             </div>
 
             {/* Navigation */}
-            <div className="flex justify-between">
-              <div className="flex gap-2">
+            <div className="space-y-2">
+              {/* Special button for sample data step */}
+              {currentStep === 1 && onPopulateSampleData && !isDataPopulated && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={prevStep}
-                  disabled={currentStep === 0 || isUpdating}
-                  className="h-8"
-                >
-                  <ChevronLeft className="h-3 w-3 mr-1" />
-                  Back
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={skipTour}
+                  onClick={async () => {
+                    await handleDataPopulation();
+                    nextStep();
+                  }}
                   disabled={isUpdating}
-                  className="h-8 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                  className="w-full h-8 text-blue-600 border-blue-300 hover:bg-blue-50 disabled:opacity-50"
                 >
-                  Skip Tour
+                  {isUpdating ? 'Loading...' : 'Try with Sample Data →'}
                 </Button>
-              </div>
+              )}
               
-              <div className="flex gap-2">
-                {/* Special button for usage data step */}
-                {currentStep === 1 && onPopulateSampleData && !isDataPopulated && (
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={async () => {
-                      await handleDataPopulation();
-                      nextStep();
-                    }}
-                    disabled={isUpdating}
-                    className="h-8 text-blue-600 border-blue-300 hover:bg-blue-50 disabled:opacity-50"
+                    onClick={prevStep}
+                    disabled={currentStep === 0 || isUpdating}
+                    className="h-8"
                   >
-                    {isUpdating ? 'Loading...' : 'Try with Sample Data'}
+                    <ChevronLeft className="h-3 w-3 mr-1" />
+                    Back
                   </Button>
-                )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={skipTour}
+                    disabled={isUpdating}
+                    className="h-8 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                  >
+                    Skip
+                  </Button>
+                </div>
                 
                 <Button
                   onClick={nextStep}
