@@ -11,7 +11,7 @@
 
 **Optimize your Azure OpenAI costs with intelligent PTU sizing, real-time pricing from the Azure Retail Prices API, and comprehensive cost analysis.**
 
-👉 **Try it live at [ptucalc.com](https://www.ptucalc.com)** | 📖 **[User Guide](./docs/USER_GUIDE.md)**
+👉 **Try it live at [ptucalc.com](https://www.ptucalc.com)** | 📖 **[User Guide](./docs/USER_GUIDE.md)** | 📋 **[Changelog](./CHANGELOG.md)**
 
 ---
 
@@ -246,7 +246,7 @@ All calculations happen in your browser. No usage data is sent to external serve
 ## 🆘 Support
 
 - [GitHub Issues](https://github.com/ricmmartins/azureptucalc/issues)
-- [Azure OpenAI Documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
+- [Azure OpenAI Documentation](https://learn.microsoft.com/en-us/azure/foundry/openai/)
 - [PTU Provisioned Throughput Guide](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/provisioned-throughput)
 
 ---

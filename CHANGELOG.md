@@ -6,16 +6,20 @@ All notable changes to the Azure OpenAI PTU Calculator are documented in this fi
 
 ### Added
 - **User Guide link in footer** — direct link to comprehensive documentation
+- **Changelog link in footer** — direct link to this changelog
 - **CHANGELOG.md** — this file, tracking all notable changes
 - **Improved Quick Tour** — expanded from 7 to 8 steps, now covers the Optimization tab and reorders Export as the final step
 
 ### Changed
 - Updated README.md with Optimization features, new components in project structure, and acknowledgements
-- Updated USER_GUIDE.md with Optimization tab documentation
+- Updated USER_GUIDE.md with Optimization tab documentation and new references
+
+### Fixed
+- Priority Processing model list corrected to match official Microsoft documentation (removed GPT-4.1 Mini and o4-mini which are not officially supported)
 
 ---
 
-## [2.5.0] - 2026-06-30
+## [2.4.0] - 2026-06-30
 
 ### Added
 - **Optimization tab** — new 4th results tab with 6 PTU throttling prevention features:
@@ -36,7 +40,7 @@ All notable changes to the Azure OpenAI PTU Calculator are documented in this fi
 
 ---
 
-## [2.4.0] - 2026-06-08
+## [2.3.0] - 2026-06-08
 
 ### Added
 - **GPT-5.5 and GPT-5.4 Mini** PTU model support
@@ -53,16 +57,10 @@ All notable changes to the Azure OpenAI PTU Calculator are documented in this fi
 
 ---
 
-## [2.3.0] - 2026-04-20
+## [2.2.0] - 2026-04-14 – 2026-04-20
 
 ### Added
 - Google Analytics (GA4) tracking snippet for usage metrics
-
----
-
-## [2.2.0] - 2026-04-14 – 2026-04-16
-
-### Added
 - **Model selector in Step 1** — KQL query section now includes model picker
 - **Learn-more modal** — full model reference table with TPM/PTU values
 - **Foundry diagnostic settings link** — for new deployments needing Log Analytics setup
@@ -90,17 +88,17 @@ All notable changes to the Azure OpenAI PTU Calculator are documented in this fi
 
 ---
 
-## [2.0.0] - 2026-03-24 – 2026-03-25
+## [2.0.0] - 2026-02-20 – 2026-03-25
 
 ### Added
 - **Priority Processing pricing tier** — GA pay-per-token option with SLA-backed latency
 - **Interactive Analytics Dashboard** — 4-tab dashboard with cost breakdown, usage patterns, reservation analysis, and Priority Processing comparison
 - **Prompt Cache Hit Rate** — factor in Azure's prompt caching to reduce effective input tokens
 - **Spillover (hybrid) pricing** — base PTUs + PAYGO overflow strategy
-- **Welcome Modal & Guided Tour** — onboarding system with 7-step interactive walkthrough
-- **Export functionality** — CSV and JSON export of analysis results
+- **Tabbed results layout** — Cost Analysis, Usage Patterns, and Advanced tabs
+- **Sticky executive summary** — recommendation, savings, PTUs always visible
+- **Welcome Modal & Guided Tour** — onboarding system with interactive walkthrough
 - **Live Pricing Data Status** — transparency section showing data source and freshness
-- Project context file for future Copilot sessions
 
 ### Changed
 - Complete README rewrite with accurate feature list and pricing info
@@ -112,38 +110,125 @@ All notable changes to the Azure OpenAI PTU Calculator are documented in this fi
 - PAYGO pricing guard: never use incorrect values from live API
 - Welcome Modal and Guided Tour text accuracy
 - All findings from deep 4-agent code audit
+- Break-even analysis and burst pattern detection
+- GPT-5 series pricing corrected to match official Azure docs
 
 ---
 
-## [1.5.0] - 2026-03-19 – 2026-03-21
+## [1.7.0] - 2025-12-22
 
 ### Added
-- **Dynamic pricing with live Azure API** — real-time rates from Azure Retail Prices API via Vercel serverless proxy
+- **GPT-5.1 and GPT-5.2** model support
+- Comprehensive production fixes and improvements
+- Pricing validation system
+- **Live Azure API v2** — Vercel serverless function for Azure Retail Prices API proxy
+
+### Fixed
+- PAYG Token Usage section validation
+- Input/Output Ratio clarity and documentation
+- JSON syntax error in corrected_pricing_data.json
+- Vercel build errors resolved
+
+---
+
+## [1.6.0] - 2025-10-27
+
+### Added
+- **Azure Government regions** support
+- Improved custom pricing for government-specific scenarios
+
+### Fixed
+- Government regions model availability per Microsoft documentation
+- Government regions warning message and alert icon alignment
+- Custom Pricing tooltip for government regions
+
+---
+
+## [1.5.0] - 2025-10-23 – 2025-10-24
+
+### Added
+- **GPT-4.1, GPT-4.1-mini, and GPT-4.1-nano** models with correct throughput values
+- Comprehensive user guide (docs/USER_GUIDE.md)
+
+### Fixed
+- PAYGO pricing for GPT-4.1-nano and GPT-4o to match official Azure pricing
+
+---
+
+## [1.4.0] - 2025-10-09 – 2025-10-14
+
+### Added
+- Unit tests (vitest) and E2E scaffold (playwright)
+- GPT-5 series reservation and PAYGO entries from MS docs
+- GitHub repo link in footer
+- Left-aligned help button with modal popup for throughput docs
+
+### Changed
+- Open source release cleanup — removed backup files, old tests, unused docs
+- Unified README with deployment, usage, and troubleshooting
+- Updated CONTRIBUTING.md for open source onboarding
+
+### Fixed
+- PTU pricing: global deployment base rate, reservation override, renamed Hybrid to Spillover
+- Official PTU fallback rates enforced, global multiplier=1
+- Duplicate import and identifier collision in official_token_pricing.js
+- PTU monthly/yearly calculations aligned with Azure official pricing
+
+---
+
+## [1.3.0] - 2025-09-30 – 2025-10-02
+
+### Added
+- **Export functionality** — CSV and JSON export of analysis results
+- **External pricing configuration** — versioned fallback pricing data
+- **Interactive Analytics Dashboard** — first implementation
+- **Welcome Modal & Guided Tour** — onboarding system with interactive walkthrough
+- **User Guide** — first version (docs/USER_GUIDE.md)
+
+### Fixed
+- Z-index conflicts between tour controls and modal overlays
+- Tour controls positioning restored to top-right corner
+
+---
+
+## [1.2.0] - 2025-09-14 – 2025-09-23
+
+### Added
+- **Dynamic pricing with live Azure API** — real-time rates from Azure Retail Prices API
 - **API transparency** — shows specific endpoint and data source information
 - **Model-specific throughput per PTU** — accurate TPM/PTU values per model
 - **Official PTU pricing alignment** — US$1/PTU-hour with accurate discount calculations
 - **Model and deployment-specific PTU minimums** — enforced per official sizing table
-- **External pricing configuration** — fallback pricing system with versioned data
 
 ### Fixed
 - Region model counts and Pro Tip formatting
 - PAYG costs recalculated using official per-token rates
+- Microsoft Learn compliance fixes
 
 ---
 
-## [1.0.0] - 2026-03-17 – 2026-03-18
+## [1.1.0] - 2025-09-12
+
+### Added
+- **Interactive Analytics Dashboard** — dynamic cost visualization
+- **Microsoft Clarity** analytics integration
+
+### Fixed
+- Alert spacing with flex layout improvements
+
+---
+
+## [1.0.0] - 2025-09-08
 
 ### Added
 - Initial release of Azure OpenAI PTU Calculator
-- **19 PTU-supported models** — GPT-5.5, GPT-5.4, GPT-4.1, GPT-4o, o3, o4-mini, and more
+- Basic PTU cost comparison (PAYGO vs PTU)
 - **KQL query generator** — ready-to-use Log Analytics query for usage data
 - **3 deployment types** — Global, Data Zone, and Regional
 - **30+ Azure regions** supported
-- **Cost comparison** — PAYGO vs PTU On-Demand vs Monthly vs 1-Year reservations
-- **Context-aware recommendations** — PAYGO, Full PTU, or Spillover based on utilization
-- **Microsoft Clarity analytics** integration
+- Footer with Azure community message
+- README, CONTRIBUTING.md, and issue templates
 - Vercel deployment configuration
-- Docker and Azure Static Web Apps deployment options
 - MIT License
 
 ---

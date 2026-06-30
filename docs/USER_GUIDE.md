@@ -133,7 +133,7 @@ Example: Need 2 PTU average, 8 PTU peaks. Reserve 2-3 PTUs, let extra 5-6 PTUs u
 
 A GA pay-per-token option with SLA-backed low-latency guarantees:
 
-- **Supported models:** GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.2, GPT-5.1, GPT-4.1, GPT-4.1 Mini, o4-mini
+- **Supported models:** GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.2, GPT-5.1, GPT-4.1
 - **Deployments:** Global Standard, Data Zone Standard only
 - **Pricing:** varies by model (approximately 70% premium over standard PAYGO)
 - **When to use:** latency-sensitive production apps needing guaranteed throughput
