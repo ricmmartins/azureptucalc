@@ -37,6 +37,14 @@ import { TooltipIcon, TooltipText } from './components/Tooltip';
 import './App.css';
 import Modal from './components/ui/Modal';
 
+// Optimization & Throttling Prevention features
+import MaxTokensOptimizer from './components/MaxTokensOptimizer';
+import LeakyBucketVisualization from './components/LeakyBucketVisualization';
+import ThrottlingAdvisor from './components/ThrottlingAdvisor';
+import SpilloverComparison from './components/SpilloverComparison';
+import RetryCalculator from './components/RetryCalculator';
+import RightSizeWizard from './components/RightSizeWizard';
+
 function App() {
   // Enhanced features state
   // console.log('🎯 App loading'); // Debug only
@@ -2787,9 +2795,10 @@ AzureMetrics
           <div className="space-y-6">{/* Results content starts here */}
             
             <Tabs defaultValue="costs" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="costs"><DollarSign className="h-4 w-4 mr-1 inline" /> Cost Analysis</TabsTrigger>
                 <TabsTrigger value="patterns"><BarChart3 className="h-4 w-4 mr-1 inline" /> Usage Patterns</TabsTrigger>
+                <TabsTrigger value="optimization"><Shield className="h-4 w-4 mr-1 inline" /> Optimization</TabsTrigger>
                 <TabsTrigger value="advanced"><Settings className="h-4 w-4 mr-1 inline" /> Advanced</TabsTrigger>
               </TabsList>
               
@@ -3273,6 +3282,68 @@ AzureMetrics
                 </CardContent>
               </Card>
             </div>
+
+              </TabsContent>
+
+              <TabsContent value="optimization" className="space-y-6">
+
+            {/* 429 Risk Score & Throttling Advisor */}
+            <ThrottlingAdvisor
+              ptuCount={calculations.ptuNeeded || 0}
+              tokensPerPTU={enhancedModelConfig.models[selectedModel]?.throughput_per_ptu || 2500}
+              avgTPM={formData.avgTPM || 0}
+              p99TPM={formData.p99TPM || 0}
+              maxTokens={4096}
+              actualOutputTokens={200}
+              promptTokens={500}
+              burstRatio={calculations.burstRatio || 1.0}
+              hasRetryLogic={false}
+              hasSpillover={formData.basePTUs > 0}
+              usagePattern={calculations.usagePattern || 'Steady'}
+            />
+
+            {/* max_tokens & Concurrency Estimator */}
+            <MaxTokensOptimizer
+              ptuCount={calculations.ptuNeeded || 50}
+              selectedModel={selectedModel}
+              throughputPerPTU={enhancedModelConfig.models[selectedModel]?.throughput_per_ptu || 2500}
+            />
+
+            {/* Leaky Bucket Utilization Visualization */}
+            <LeakyBucketVisualization
+              ptuCount={calculations.ptuNeeded || 50}
+              tokensPerPTU={enhancedModelConfig.models[selectedModel]?.throughput_per_ptu || 2500}
+              selectedModel={selectedModel}
+            />
+
+            {/* Spillover Architecture Comparison */}
+            <SpilloverComparison
+              burstRatio={calculations.burstRatio || 1.0}
+              isStreamingWorkload={false}
+              hasAPIM={false}
+              isLatencyCritical={false}
+            />
+
+            {/* Retry Logic Calculator */}
+            <RetryCalculator />
+
+            {/* Right-Size My Deployment Wizard */}
+            <RightSizeWizard
+              selectedModel={selectedModel}
+              selectedDeployment={selectedDeployment}
+              ptuHourlyRate={currentPricing?.ptu_hourly || 2.0}
+              onApply={({ ptuCount, basePTUs, model, deployment }) => {
+                if (ptuCount) {
+                  setFormData(prev => ({
+                    ...prev,
+                    recommendedPTU: ptuCount,
+                    basePTUs: basePTUs || 0
+                  }));
+                }
+                if (model) setSelectedModel(model);
+                if (deployment) setSelectedDeployment(deployment);
+              }}
+            />
 
               </TabsContent>
 
