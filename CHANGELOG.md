@@ -13,9 +13,20 @@ All notable changes to the Azure OpenAI PTU Calculator are documented in this fi
 ### Changed
 - Updated README.md with Optimization features, new components in project structure, and acknowledgements
 - Updated USER_GUIDE.md with Optimization tab documentation and new references
+- Removed all emoji icons from README headings (kept only shields.io badges)
+- Updated repo description on GitHub
 
 ### Fixed
 - Priority Processing model list corrected to match official Microsoft documentation (removed GPT-4.1 Mini and o4-mini which are not officially supported)
+- CHANGELOG dates corrected to match actual git history (project started 2025-09-08)
+- README Azure OpenAI docs URL updated from `/ai-services/` to `/foundry/`
+- Quick Tour card widened from 20rem to 24rem to prevent button text overflow
+- "Try with Sample Data" button moved to full-width row to avoid clipping
+
+### Removed
+- `.playwright-mcp/` debug logs
+- `playwright.config.mjs` (referenced non-existent `./e2e` directory)
+- `scripts/` local pricing test utilities
 
 ---
 
