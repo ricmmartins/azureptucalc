@@ -2,7 +2,7 @@
 
 All notable changes to the Azure OpenAI PTU Calculator are documented in this file.
 
-## [Unreleased]
+## [2.5.0] - 2026-06-30
 
 ### Added
 - **User Guide link in footer** — direct link to comprehensive documentation
