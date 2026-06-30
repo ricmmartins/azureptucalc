@@ -135,11 +135,11 @@ export function LeakyBucketVisualization({
   const applyBurst = useCallback(
     (requestCount, eventLabel = 'Burst') => {
       const current = utilizationRef.current;
-      const addedTokens = requestCount * requestSize;
-      const nextUtilization = current + addedTokens;
       const safeRequests =
         requestSize > 0 ? Math.max(0, Math.floor((totalCapacity - current) / requestSize)) : 0;
+      const accepted = Math.min(requestCount, safeRequests);
       const rejected = Math.max(0, requestCount - safeRequests);
+      const nextUtilization = current + accepted * requestSize;
 
       utilizationRef.current = nextUtilization;
       setCurrentUtilization(nextUtilization);
@@ -169,8 +169,9 @@ export function LeakyBucketVisualization({
             ? Math.max(0, Math.floor((totalCapacity - drainedUtilization) / requestSize))
             : 0;
 
+        const accepted = Math.min(incomingRequests, safeRequests);
         rejected = Math.max(0, incomingRequests - safeRequests);
-        nextUtilization += incomingRequests * requestSize;
+        nextUtilization += accepted * requestSize;
         eventLabel = 'Auto traffic';
 
         if (rejected > 0) {

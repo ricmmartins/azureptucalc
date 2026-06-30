@@ -34,18 +34,18 @@ const STEP_CONFIG = [
 ];
 
 const MODEL_OPTIONS = [
-  { value: 'GPT-5.5', throughputPerPTU: 1200 },
-  { value: 'GPT-5.4', throughputPerPTU: 2400 },
-  { value: 'GPT-5.4 Mini', throughputPerPTU: 7900 },
-  { value: 'GPT-4.1', throughputPerPTU: 3000 },
-  { value: 'GPT-4.1 Mini', throughputPerPTU: 6000 },
-  { value: 'GPT-4o', throughputPerPTU: 2500 },
-  { value: 'GPT-4o Mini', throughputPerPTU: 7900 },
+  { value: 'gpt-5.5', label: 'GPT-5.5', throughputPerPTU: 1200 },
+  { value: 'gpt-5.4', label: 'GPT-5.4', throughputPerPTU: 2400 },
+  { value: 'gpt-5.4-mini', label: 'GPT-5.4 Mini', throughputPerPTU: 7900 },
+  { value: 'gpt-4.1', label: 'GPT-4.1', throughputPerPTU: 3000 },
+  { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini', throughputPerPTU: 6000 },
+  { value: 'gpt-4o', label: 'GPT-4o', throughputPerPTU: 2500 },
+  { value: 'gpt-4o-mini', label: 'GPT-4o Mini', throughputPerPTU: 7900 },
 ];
 
 const DEPLOYMENT_OPTIONS = [
   { value: 'global', label: 'Global', minPTU: 15 },
-  { value: 'data-zone', label: 'Data Zone', minPTU: 15 },
+  { value: 'dataZone', label: 'Data Zone', minPTU: 15 },
   { value: 'regional', label: 'Regional', minPTU: 50 },
 ];
 
@@ -83,10 +83,10 @@ const normalizeDeployment = (deployment) => {
     return '';
   }
 
-  const cleaned = String(deployment).trim().toLowerCase().replace(/\s+/g, '-');
+  const cleaned = String(deployment).trim().toLowerCase();
   const matched = DEPLOYMENT_OPTIONS.find(
     (option) =>
-      option.value === cleaned ||
+      option.value.toLowerCase() === cleaned ||
       option.label.toLowerCase() === cleaned ||
       option.label.toLowerCase().replace(/\s+/g, '-') === cleaned,
   );
@@ -413,7 +413,7 @@ export function RightSizeWizard({
       ptuCount: recommendedCard.ptus,
       basePTUs: calculations.basePTUsSpillover,
       model: selectedModelOption.value,
-      deployment: selectedDeploymentOption.label,
+      deployment: selectedDeploymentOption.value,
     });
   };
 
@@ -539,7 +539,7 @@ export function RightSizeWizard({
               <SelectContent>
                 {MODEL_OPTIONS.map((model) => (
                   <SelectItem key={model.value} value={model.value}>
-                    {model.value} · {formatNumber(model.throughputPerPTU)} TPM/PTU
+                    {model.label} · {formatNumber(model.throughputPerPTU)} TPM/PTU
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -611,7 +611,7 @@ export function RightSizeWizard({
           {wizardData.model ? (
             <div className="rounded-xl border bg-muted/40 p-4 text-sm">
               <p className="font-medium">
-                {wizardData.model} delivers {formatNumber(calculations.throughputPerPTU)} TPM per
+                {selectedModelOption.label} delivers {formatNumber(calculations.throughputPerPTU)} TPM per
                 PTU.
               </p>
               {wizardData.deployment ? (
@@ -717,7 +717,7 @@ export function RightSizeWizard({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap gap-2">
                 <Badge>{recommendedCard.ptus} PTUs</Badge>
-                <Badge variant="outline">{selectedModelOption.value}</Badge>
+                <Badge variant="outline">{selectedModelOption.label}</Badge>
                 <Badge variant="outline">{selectedDeploymentOption.label}</Badge>
               </div>
               <Button onClick={handleApply}>
@@ -867,7 +867,7 @@ export function RightSizeWizard({
               <div className="space-y-2">
                 <p className="font-medium">Model & deployment</p>
                 <div className="text-muted-foreground space-y-1">
-                  <p>Model: {wizardData.model || 'Not selected'}</p>
+                  <p>Model: {selectedModelOption?.label || 'Not selected'}</p>
                   <p>
                     Deployment:{' '}
                     {wizardData.deployment

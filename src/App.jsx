@@ -54,6 +54,17 @@ function App() {
     kqlQuery: true,
     noLogAnalytics: true,
   });
+
+  // Optimization tab shared state
+  const [optimizationInputs, setOptimizationInputs] = useState({
+    maxTokens: 4096,
+    actualOutputTokens: 200,
+    promptTokens: 500,
+    hasRetryLogic: false,
+    isStreamingWorkload: false,
+    hasAPIM: false,
+    isLatencyCritical: false,
+  });
   
   // State management
   const [selectedRegion, setSelectedRegion] = useState('eastus');
@@ -3289,15 +3300,15 @@ AzureMetrics
 
             {/* 429 Risk Score & Throttling Advisor */}
             <ThrottlingAdvisor
-              ptuCount={calculations.ptuNeeded || 0}
+              ptuCount={calculations.ptuNeeded || undefined}
               tokensPerPTU={enhancedModelConfig.models[selectedModel]?.throughput_per_ptu || 2500}
-              avgTPM={formData.avgTPM || 0}
-              p99TPM={formData.p99TPM || 0}
-              maxTokens={4096}
-              actualOutputTokens={200}
-              promptTokens={500}
-              burstRatio={calculations.burstRatio || 1.0}
-              hasRetryLogic={false}
+              avgTPM={formData.avgTPM || undefined}
+              p99TPM={formData.p99TPM || undefined}
+              maxTokens={optimizationInputs.maxTokens}
+              actualOutputTokens={optimizationInputs.actualOutputTokens}
+              promptTokens={optimizationInputs.promptTokens}
+              burstRatio={calculations.burstRatio || undefined}
+              hasRetryLogic={optimizationInputs.hasRetryLogic}
               hasSpillover={formData.basePTUs > 0}
               usagePattern={calculations.usagePattern || 'Steady'}
             />
@@ -3319,9 +3330,9 @@ AzureMetrics
             {/* Spillover Architecture Comparison */}
             <SpilloverComparison
               burstRatio={calculations.burstRatio || 1.0}
-              isStreamingWorkload={false}
-              hasAPIM={false}
-              isLatencyCritical={false}
+              isStreamingWorkload={optimizationInputs.isStreamingWorkload}
+              hasAPIM={optimizationInputs.hasAPIM}
+              isLatencyCritical={optimizationInputs.isLatencyCritical}
             />
 
             {/* Retry Logic Calculator */}
@@ -3332,7 +3343,7 @@ AzureMetrics
               selectedModel={selectedModel}
               selectedDeployment={selectedDeployment}
               ptuHourlyRate={currentPricing?.ptu_hourly || 2.0}
-              onApply={({ ptuCount, basePTUs, model, deployment }) => {
+              onApply={({ ptuCount, basePTUs }) => {
                 if (ptuCount) {
                   setFormData(prev => ({
                     ...prev,
@@ -3340,8 +3351,6 @@ AzureMetrics
                     basePTUs: basePTUs || 0
                   }));
                 }
-                if (model) setSelectedModel(model);
-                if (deployment) setSelectedDeployment(deployment);
               }}
             />
 
