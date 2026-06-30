@@ -30,3 +30,7 @@ coverage/
 
 # Copilot
 .copilot-context.txt
+
+# Dev/test artifacts
+.playwright-mcp/
+scripts/
