@@ -3298,6 +3298,92 @@ AzureMetrics
 
               <TabsContent value="optimization" className="space-y-6">
 
+            {/* Optimization Settings Panel */}
+            <Card className="border-blue-200 bg-blue-50/50">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  <CardTitle className="text-blue-800">Workload Configuration</CardTitle>
+                </div>
+                <CardDescription>Configure your request shape and workload characteristics for accurate throttling analysis.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">max_tokens setting</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={128000}
+                      value={optimizationInputs.maxTokens}
+                      onChange={(e) => setOptimizationInputs(prev => ({ ...prev, maxTokens: Math.max(1, Number(e.target.value) || 4096) }))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Actual avg output tokens</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={128000}
+                      value={optimizationInputs.actualOutputTokens}
+                      onChange={(e) => setOptimizationInputs(prev => ({ ...prev, actualOutputTokens: Math.max(1, Number(e.target.value) || 200) }))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Avg prompt tokens</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={128000}
+                      value={optimizationInputs.promptTokens}
+                      onChange={(e) => setOptimizationInputs(prev => ({ ...prev, promptTokens: Math.max(1, Number(e.target.value) || 500) }))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-6 mt-4 pt-4 border-t border-blue-200">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={optimizationInputs.hasRetryLogic}
+                      onChange={(e) => setOptimizationInputs(prev => ({ ...prev, hasRetryLogic: e.target.checked }))}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">Has retry logic</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={optimizationInputs.isStreamingWorkload}
+                      onChange={(e) => setOptimizationInputs(prev => ({ ...prev, isStreamingWorkload: e.target.checked }))}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">Streaming workload</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={optimizationInputs.isLatencyCritical}
+                      onChange={(e) => setOptimizationInputs(prev => ({ ...prev, isLatencyCritical: e.target.checked }))}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">Latency critical</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={optimizationInputs.hasAPIM}
+                      onChange={(e) => setOptimizationInputs(prev => ({ ...prev, hasAPIM: e.target.checked }))}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">Has APIM Gateway</span>
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* 429 Risk Score & Throttling Advisor */}
             <ThrottlingAdvisor
               ptuCount={calculations.ptuNeeded || undefined}

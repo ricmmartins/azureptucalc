@@ -189,7 +189,7 @@ export function LeakyBucketVisualization({
 
   const currentUtilizationPercent = totalCapacity > 0 ? (currentUtilization / totalCapacity) * 100 : 0;
   const overflowTokens = Math.max(0, currentUtilization - totalCapacity);
-  const timeUntilClear = overflowTokens > 0 ? Math.ceil(overflowTokens / capacityPerSecond) : 0;
+  const timeUntilClear = overflowTokens > 0 && capacityPerSecond > 0 ? Math.ceil(overflowTokens / capacityPerSecond) : 0;
   const maxSafeConcurrentRequests =
     requestSize > 0 ? Math.max(0, Math.floor((totalCapacity - currentUtilization) / requestSize)) : 0;
 
