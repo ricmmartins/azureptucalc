@@ -136,7 +136,7 @@
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5, "available": true },
         "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
-        "regional": { "min_ptu": 25, "increment": 25, "available": true }
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
       },
       "regions": ["eastus", "eastus2", "westus", "westus3", "northcentralus", "southcentralus", "swedencentral", "westeurope"]
     },

@@ -59,7 +59,11 @@ export class ExternalPricingService {
       dataExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       ptuPricing: {
         baseHourlyRate: 1.00,
-        discounts: { monthly: 0.0, yearly: 0.30 },
+        reservationOverrides: {
+          global: { monthly: 260, yearly: 2652 },
+          dataZone: { monthly: 286, yearly: 2916 },
+          regional: { monthly: 286, yearly: 2916 }
+        },
         deploymentMultipliers: { global: 1.0, dataZone: 1.1, regional: 2.0 },
         regionalMultipliers: { eastus: 1.0, westus: 1.05, northeurope: 1.05 }
       },
@@ -109,14 +113,27 @@ export class ExternalPricingService {
     
     const hourlyRate = baseRate * deploymentMultiplier;
     const monthlyRate = hourlyRate * 730;
-    const yearlyRate = monthlyRate * 12 * (1 - pricing.discounts.yearly);
+    
+    // Use reservation overrides from config (official pricing)
+    const defaultOverrides = {
+      global: { monthly: 260, yearly: 2652 },
+      dataZone: { monthly: 286, yearly: 2916 },
+      regional: { monthly: 286, yearly: 2916 }
+    };
+    const configOverrides = pricing.reservationOverrides || defaultOverrides;
+    const overrides = configOverrides[deploymentType] || defaultOverrides.global;
+    const yearlyRate = overrides.yearly;
+    
+    const hourlyAnnualized = monthlyRate * 12;
     
     return {
       hourly: Number(hourlyRate.toFixed(3)),
       monthly: Number(monthlyRate.toFixed(2)),
+      reservationMonthly: overrides.monthly,
       yearly: Number(yearlyRate.toFixed(2)),
       discount: {
-        yearlyVsMonthly: Number((pricing.discounts.yearly * 100).toFixed(1))
+        monthlyVsHourly: Number(((1 - (overrides.monthly / monthlyRate)) * 100).toFixed(1)),
+        yearlyVsHourly: Number(((1 - (yearlyRate / hourlyAnnualized)) * 100).toFixed(1))
       }
     };
   }

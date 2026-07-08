@@ -6,9 +6,10 @@
   "dataExpiry": "2026-12-31T23:59:59Z",
   "ptuPricing": {
     "baseHourlyRate": 1.00,
-    "discounts": {
-      "monthly": 0.0,
-      "yearly": 0.30
+    "reservationOverrides": {
+      "global": { "monthly": 260, "yearly": 2652 },
+      "dataZone": { "monthly": 286, "yearly": 2916 },
+      "regional": { "monthly": 286, "yearly": 2916 }
     },
     "deploymentMultipliers": {
       "global": 1.0,
