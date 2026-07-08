@@ -33,6 +33,7 @@ import { SkeletonCard, CalculationLoader, SuccessAnimation, AnimatedButton, Puls
 import InteractiveCharts from './components/InteractiveCharts';
 import WelcomeModal from './components/WelcomeModal';
 import GuidedTour from './components/GuidedTour';
+import QualificationWizard from './components/QualificationWizard';
 import { TooltipIcon, TooltipText } from './components/Tooltip';
 import './App.css';
 import Modal from './components/ui/Modal';
@@ -220,6 +221,8 @@ function App() {
   }, [externalPricingService, azurePricingService, selectedModel, selectedRegion, selectedDeployment]);
 
   // Onboarding state management
+  const [showQualificationWizard, setShowQualificationWizard] = useState(false);
+  const [qualificationResult, setQualificationResult] = useState(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showGuidedTour, setShowGuidedTour] = useState(false);
   const [showReadmeModal, setShowReadmeModal] = useState(false);
@@ -228,15 +231,29 @@ function App() {
   useEffect(() => {
     const hasVisited = localStorage.getItem('azurePTUCalculatorVisited');
     const hasCompletedOnboarding = localStorage.getItem('azurePTUOnboardingCompleted');
+    const hasCompletedQualification = localStorage.getItem('azurePTUQualificationCompleted');
     
-    if (!hasVisited && !hasCompletedOnboarding) {
-      // First-time visitor - show welcome modal
-      setShowWelcomeModal(true);
+    if (!hasVisited && !hasCompletedOnboarding && !hasCompletedQualification) {
+      // First-time visitor - show qualification wizard
+      setShowQualificationWizard(true);
       localStorage.setItem('azurePTUCalculatorVisited', 'true');
     }
   }, []);
 
   // Onboarding handlers
+  const handleQualificationComplete = (result) => {
+    setShowQualificationWizard(false);
+    setQualificationResult(result);
+    localStorage.setItem('azurePTUQualificationCompleted', 'true');
+    localStorage.setItem('azurePTUOnboardingCompleted', 'true');
+  };
+
+  const handleQualificationSkip = () => {
+    setShowQualificationWizard(false);
+    localStorage.setItem('azurePTUQualificationCompleted', 'true');
+    localStorage.setItem('azurePTUOnboardingCompleted', 'true');
+  };
+
   const handleStartTour = () => {
     setShowWelcomeModal(false);
     setShowGuidedTour(true);
@@ -1443,6 +1460,16 @@ AzureMetrics
   };
 
   return (
+    <>
+    {/* Qualification Wizard - shown to first-time visitors */}
+    {showQualificationWizard && (
+      <QualificationWizard
+        onComplete={handleQualificationComplete}
+        onSkip={handleQualificationSkip}
+      />
+    )}
+
+    {!showQualificationWizard && (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
@@ -1466,8 +1493,17 @@ AzureMetrics
               Optimize your Azure OpenAI costs by analyzing real usage patterns and comparing PAYGO, PTU, and hybrid pricing models
             </CardDescription>
             
-            {/* Quick Action Button */}
-            <div className="flex justify-center mt-4">
+            {/* Quick Action Buttons */}
+            <div className="flex justify-center gap-3 mt-4">
+              <Button 
+                onClick={() => setShowQualificationWizard(true)}
+                variant="outline"
+                size="sm"
+                className="border-green-300 text-green-700 hover:bg-green-50"
+              >
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Do I Need PTU?
+              </Button>
               <Button 
                 onClick={handleStartTour}
                 variant="outline"
@@ -3762,6 +3798,8 @@ AzureMetrics
         onPopulateSampleData={populateSampleData}
       />
     </div>
+    )}
+    </>
   );
 }
 
