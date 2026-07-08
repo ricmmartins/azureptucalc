@@ -55,7 +55,7 @@ const QualificationWizard = ({ onComplete, onSkip }) => {
         title: 'Stay with Pay-As-You-Go (PAYGO)',
         summary: 'Your current spending level doesn\'t justify reserved capacity. PAYGO gives you flexibility without commitment.',
         reasoning: [
-          'PTU requires a minimum of 50 units, which costs ~$36,000/month on-demand',
+          'PTU minimum entry is 15 units (Global deployment), costing ~$3,900/month with a monthly reservation',
           'At your spending level, PAYGO is significantly more cost-effective',
           'You maintain full flexibility to scale up or down',
         ],
@@ -72,7 +72,7 @@ const QualificationWizard = ({ onComplete, onSkip }) => {
         title: 'Likely stay with PAYGO, but worth checking',
         summary: 'At this spending level, PAYGO is usually more cost-effective. However, if your usage is very consistent, PTU reservations might offer some savings.',
         reasoning: [
-          'PTU minimum (50 units) monthly reservation starts at ~$13,000/month',
+          'PTU minimum (15 units, Global) monthly reservation starts at ~$3,900/month',
           'You\'d need very consistent, high-utilization workloads to break even',
           'Priority Processing might be a better middle-ground for latency needs',
         ],
