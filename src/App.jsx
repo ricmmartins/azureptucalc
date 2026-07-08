@@ -764,7 +764,7 @@ Check browser console for detailed error information.`);
       // If calculateOfficialPTUPricing is unavailable or missing reservation values,
       // fall back to corrected_pricing_data.json which contains authoritative reservation rates.
       const correctedModel = correctedPricingData.models?.[selectedModel];
-      const correctedReservations = correctedModel?.reservations || null;
+      const correctedReservations = correctedModel?.reservations?.[selectedDeployment] || correctedModel?.reservations?.global || null;
 
       // Ensure officialPTUPricing is a valid object before accessing properties
       if (!officialPTUPricing) {
@@ -833,8 +833,8 @@ Check browser console for detailed error information.`);
       // Final fallback: use corrected_pricing_data.json entries or safe defaults
       const correctedModel = correctedPricingData.models?.[selectedModel];
       const fallbackTokenPricing = getTokenPricing(selectedModel, selectedDeployment);
-      const ptuMonthly = correctedModel?.reservations?.monthly || 260;
-      const ptuYearly = correctedModel?.reservations?.yearly || 2652;
+      const ptuMonthly = correctedModel?.reservations?.[selectedDeployment]?.monthly || correctedModel?.reservations?.global?.monthly || 260;
+      const ptuYearly = correctedModel?.reservations?.[selectedDeployment]?.yearly || correctedModel?.reservations?.global?.yearly || 2652;
       return {
         paygo_input: fallbackTokenPricing.input,
         paygo_output: fallbackTokenPricing.output,
@@ -956,7 +956,7 @@ Check browser console for detailed error information.`);
     
     // FIXED: Dynamic utilization calculation
     // Utilization: normalized TPM vs provisioned capacity (in input-token-equivalent units)
-    const utilizationRate = normalizedAvgTPM > 0 && ptuNeeded > 0 ? normalizedAvgTPM / (ptuNeeded * enhancedPTUData.throughput) : 0;
+    const utilizationRate = normalizedAvgTPM > 0 && ptuNeeded > 0 ? Math.min(1.0, normalizedAvgTPM / (ptuNeeded * enhancedPTUData.throughput)) : 0;
     
     // Task 6: Break-even analysis calculations
     const breakEvenAnalysis = (() => {

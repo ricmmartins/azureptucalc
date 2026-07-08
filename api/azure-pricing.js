@@ -24,10 +24,10 @@ export default async function handler(req, res) {
     const modelNormalized = (model || 'gpt-4o').toLowerCase().replace(/\./g, '.').replace(/-/g, ' ');
 
     // --- STEP 1: Fetch PAYGO token pricing ---
-    const paygo = await fetchPaygoPricing(model, modelNormalized);
+    const paygo = await fetchPaygoPricing(model, modelNormalized, region, deployment);
 
     // --- STEP 2: Fetch PTU (Provisioned Managed) pricing ---
-    const ptu = await fetchPTUPricing();
+    const ptu = await fetchPTUPricing(deployment);
 
     const result = {
       success: true,
@@ -54,35 +54,59 @@ export default async function handler(req, res) {
   }
 }
 
+// ─── Pagination Helper ────────────────────────────────────────────────────────
+
+async function fetchAllPages(initialUrl, maxPages = 3) {
+  let allItems = [];
+  let url = initialUrl;
+  let page = 0;
+
+  while (url && page < maxPages) {
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!response.ok) break;
+    const data = await response.json();
+    if (data.Items) allItems.push(...data.Items);
+    url = data.NextPageLink || null;
+    page++;
+  }
+
+  return allItems;
+}
+
 // ─── PAYGO Token Pricing ────────────────────────────────────────────────────────
 
-async function fetchPaygoPricing(model, modelNormalized) {
+async function fetchPaygoPricing(model, modelNormalized, region, deployment) {
   // Build model-specific search terms
   // The Azure API uses product names like "Azure OpenAI GPT5", "Azure OpenAI"
   // and meter names like "GPT 5.2 chat inp Gl 1M Tokens", "gpt 4o 0513 Input Data Zone Tokens"
   const modelSearchTerms = buildModelSearchTerms(model);
 
+  // Add armRegionName filter if region is provided
+  const regionFilter = region ? ` and armRegionName eq '${region}'` : '';
+
   // Try model-specific queries first, then broader queries
   const queries = [
     ...modelSearchTerms.map(term =>
-      `contains(productName, 'OpenAI') and contains(meterName, '${term}')`
+      `contains(productName, 'OpenAI') and contains(meterName, '${term}')${regionFilter}`
     ),
     // Broader fallback: search product name for model family
-    `contains(productName, 'OpenAI') and contains(productName, '${getModelFamily(model)}')`
+    `contains(productName, 'OpenAI') and contains(productName, '${getModelFamily(model)}')${regionFilter}`
   ];
+
+  // If region filter yields no results, retry without it
+  const queryVariants = regionFilter
+    ? [...queries, ...queries.map(q => q.replace(regionFilter, ''))]
+    : queries;
 
   let allItems = [];
 
-  for (const query of queries) {
+  for (const query of queryVariants) {
     try {
-      const url = `https://prices.azure.com/api/retail/prices?$filter=${encodeURIComponent(query)}&$top=100`;
-      const response = await fetch(url, {
-        headers: { 'Accept': 'application/json' }
-      });
-      if (!response.ok) continue;
-      const data = await response.json();
-      if (data.Items && data.Items.length > 0) {
-        allItems = data.Items;
+      const items = await fetchAllPages(`https://prices.azure.com/api/retail/prices?$filter=${encodeURIComponent(query)}&$top=100`);
+      if (items.length > 0) {
+        allItems = items;
         break;
       }
     } catch (e) {
@@ -276,7 +300,7 @@ function isModelMatch(meter, sku, product, model) {
 
 // ─── PTU (Provisioned Managed) Pricing ──────────────────────────────────────────
 
-async function fetchPTUPricing() {
+async function fetchPTUPricing(deployment) {
   // PTU pricing is uniform across all models — query for "Provisioned Managed" meters
   // Also fetch from the reservation product for monthly/yearly reservation rates
   const queries = [
@@ -288,13 +312,8 @@ async function fetchPTUPricing() {
 
   for (const query of queries) {
     try {
-      const url = `https://prices.azure.com/api/retail/prices?$filter=${encodeURIComponent(query)}&$top=100`;
-      const response = await fetch(url, {
-        headers: { 'Accept': 'application/json' }
-      });
-      if (!response.ok) continue;
-      const data = await response.json();
-      if (data.Items) allItems.push(...data.Items);
+      const items = await fetchAllPages(`https://prices.azure.com/api/retail/prices?$filter=${encodeURIComponent(query)}&$top=100`);
+      allItems.push(...items);
     } catch (e) {
       console.warn('PTU query failed:', e.message);
     }
@@ -317,9 +336,8 @@ async function fetchPTUPricing() {
     const term = (item.reservationTerm || '').toLowerCase();
 
     if (price <= 0) continue;
-    if (!unit.includes('hour')) continue;
 
-    // Determine deployment type
+    // Determine deployment type from meter name
     let depType = null;
     if (meter.includes('global')) depType = 'global';
     else if (meter.includes('data zone')) depType = 'dataZone';
@@ -327,7 +345,7 @@ async function fetchPTUPricing() {
     if (!depType) continue;
 
     if (item.type === 'Reservation') {
-      // Reservation pricing (monthly or yearly term)
+      // Reservation pricing — may use "1 Hour" or other units; don't filter by unit
       if (term.includes('month')) {
         if (!reservations[depType].monthly || price < reservations[depType].monthly) {
           reservations[depType].monthly = price;
@@ -338,7 +356,8 @@ async function fetchPTUPricing() {
         }
       }
     } else {
-      // Hourly consumption pricing
+      // Hourly consumption pricing — must be per-hour unit
+      if (!unit.includes('hour')) continue;
       if (depType === 'global' && (!global || price < global)) global = price;
       else if (depType === 'dataZone' && (!dataZone || price < dataZone)) dataZone = price;
       else if (depType === 'regional' && (!regional || price < regional)) regional = price;
