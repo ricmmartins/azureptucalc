@@ -960,20 +960,28 @@ Check browser console for detailed error information.`);
     
     // Task 6: Break-even analysis calculations
     const breakEvenAnalysis = (() => {
-      if (monthlyPaygoCost === 0 || currentPricing.ptu_monthly === 0) {
-        return { breakEvenPTUs: 0, breakEvenTPM: 0, utilizationAtBreakEven: 0 };
+      if (monthlyPaygoCost === 0 || currentPricing.ptu_monthly === 0 || ptuNeeded === 0) {
+        return { breakEvenPTUs: 0, breakEvenUtilization: 0, isPTUCheaper: false };
       }
       
-      // Break-even PTU count: where PTU monthly cost equals PAYG monthly cost
-      const breakEvenPTUs = Math.ceil(monthlyPaygoCost / currentPricing.ptu_monthly);
+      // True break-even: at what utilization does PTU monthly cost = PAYGO cost?
+      // PTU cost is fixed (ptuNeeded × reservation rate), PAYGO scales linearly with usage.
+      // Current PAYGO cost corresponds to current utilization rate.
+      // Break-even utilization = (PTU cost / PAYGO cost) × current utilization
+      const ptuFixedCost = monthlyPtuReservationCost;
+      const breakEvenUtilization = utilizationRate > 0
+        ? (ptuFixedCost / monthlyPaygoCost) * utilizationRate
+        : 0;
       
-      // Break-even TPM: TPM needed to justify PTU reservation
-      const breakEvenTPM = breakEvenPTUs * enhancedPTUData.throughput;
+      // PTU is cheaper when break-even utilization < current utilization
+      const isPTUCheaper = monthlyPtuReservationCost < monthlyPaygoCost;
       
-      // Utilization at break-even point (use normalized TPM for consistency)
-      const utilizationAtBreakEven = breakEvenTPM > 0 ? normalizedAvgTPM / breakEvenTPM : 0;
+      // Break-even PTUs: minimum PTUs where reservation equals current PAYGO spend
+      const breakEvenPTUs = currentPricing.ptu_monthly > 0
+        ? Math.ceil(monthlyPaygoCost / currentPricing.ptu_monthly)
+        : 0;
       
-      return { breakEvenPTUs, breakEvenTPM, utilizationAtBreakEven };
+      return { breakEvenPTUs, breakEvenUtilization: Math.min(breakEvenUtilization, 2.0), isPTUCheaper };
     })();
     
     // Cost per 1M tokens
@@ -999,8 +1007,11 @@ Check browser console for detailed error information.`);
     const p99OutputTPM = (formData.p99TPM || 0) * (1 - formData.inputOutputRatio);
     const normalizedP99TPM = normalizeTPM(p99InputTPM, p99OutputTPM, outputWeight);
     const hybridOverflowTPM = Math.max(0, normalizedP99TPM - (hybridBasePTU * currentPricing.tokensPerPTUPerMinute));
-    // Convert overflow back to raw tokens for PAYGO cost (split by ratio)
-    const overflowRawTPM = outputWeight > 0 ? hybridOverflowTPM / (formData.inputOutputRatio + outputWeight * (1 - formData.inputOutputRatio)) : hybridOverflowTPM;
+    // Convert normalized overflow back to raw tokens for PAYGO cost
+    // Reverse of normalization: rawTPM = normalizedTPM / [inputRatio×(1-cacheRate) + outputWeight×(1-inputRatio)]
+    const cacheRate = formData.cacheRate || 0;
+    const denormFactor = (formData.inputOutputRatio * (1 - cacheRate)) + (outputWeight * (1 - formData.inputOutputRatio));
+    const overflowRawTPM = denormFactor > 0 ? hybridOverflowTPM / denormFactor : hybridOverflowTPM;
     const hybridOverflowTokensMonthly = (overflowRawTPM * formData.monthlyMinutes) / 1000000;
     const hybridOverflowCost = (hybridOverflowTokensMonthly * formData.inputOutputRatio * currentPricing.paygo_input) + (hybridOverflowTokensMonthly * (1 - formData.inputOutputRatio) * currentPricing.paygo_output);
     const hybridBaseCost = hybridBasePTU * currentPricing.ptu_monthly;
