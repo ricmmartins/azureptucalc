@@ -45,6 +45,7 @@
 - **Right-Size Wizard** — 4-step guided wizard for workload analysis, model selection, PTU sizing, and applying recommendations
 
 ### User Experience
+- **"Do I Need PTU?" Qualification Wizard** — guided 60-second assessment for new users to determine if PTU is relevant before diving into the calculator
 - **Guided Quick Tour** — 8-step interactive walkthrough with sample data (now includes Optimization tab)
 - **Tabbed results** — Cost Analysis, Usage Patterns, Optimization, and Advanced tabs
 - **Sticky executive summary** — recommendation, savings, PTUs, and utilization always visible
@@ -143,6 +144,7 @@ azureptucalc/
 ├── src/
 │   ├── components/
 │   │   ├── ui/                   # Shadcn/UI components
+│   │   ├── QualificationWizard.jsx # "Do I Need PTU?" guided assessment
 │   │   ├── EnhancedResults.jsx   # Executive summary & cost breakdown
 │   │   ├── GuidedTour.jsx        # Interactive quick tour
 │   │   ├── MaxTokensOptimizer.jsx    # max_tokens concurrency optimizer

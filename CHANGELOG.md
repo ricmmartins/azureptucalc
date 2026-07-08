@@ -2,7 +2,22 @@
 
 All notable changes to the Azure OpenAI PTU Calculator are documented in this file.
 
-## [2.5.0] - 2026-06-30
+## [2.6.0] - 2026-07-07
+
+### Added
+- **Qualification Wizard ("Do I Need PTU?")** — new guided onboarding flow for first-time visitors who don't know what PTU is or whether they need it:
+  - 5-step assessment: familiarity level, monthly spend, usage patterns, and priorities
+  - Clear recommendation with confidence level (PAYGO, PTU, or Spillover)
+  - Contextual PTU education (explains concepts only when relevant to the user)
+  - Potential savings percentage displayed on result screen
+  - "Do I Need PTU?" button in header for returning users to re-access the wizard
+- **Improved first-time experience** — wizard replaces the previous WelcomeModal as the entry point for new visitors
+
+### Changed
+- Header now shows two quick-action buttons: "Do I Need PTU?" and "Quick Tour"
+- First-time visitor flow: Qualification Wizard → Calculator (previously: Welcome Modal → Calculator)
+
+---
 
 ### Added
 - **User Guide link in footer** — direct link to comprehensive documentation

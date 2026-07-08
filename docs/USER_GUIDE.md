@@ -29,6 +29,25 @@ Try it live at [ptucalc.com](https://www.ptucalc.com)
 
 ## Step-by-Step Walkthrough
 
+### 0. "Do I Need PTU?" — Qualification Wizard
+
+If you're new to Azure OpenAI pricing or unsure whether PTU is right for you, the calculator starts with a **60-second guided assessment**:
+
+1. **Familiarity** — How much do you know about Azure OpenAI pricing? (adjusts explanations to your level)
+2. **Monthly Spend** — Approximate Azure OpenAI charges (the #1 factor in the decision)
+3. **Usage Pattern** — Is your load steady, business-hours, spiky, or growing?
+4. **Priorities** — What matters most: cost, latency, throughput, or simplicity?
+
+At the end, you get a **clear recommendation** with:
+- Whether to stay with PAYGO, consider PTU, or try a spillover approach
+- Estimated savings percentage
+- Confidence level (high/medium/low)
+- An explanation of PTU in plain language (for new users)
+
+**Returning users** can re-access this at any time via the "Do I Need PTU?" button in the header.
+
+> **Tip:** If you already know about PTU and just need the calculator, click "Skip to calculator" on the first screen.
+
 ### 1. Select Your Model, Region, and Deployment Type
 
 - **Model:** Choose from 19 supported PTU models (GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.3 Codex, GPT-5.2, GPT-4.1, GPT-4o, o3, o4-mini, and more)
@@ -183,6 +202,7 @@ AzureMetrics
 
 ## Practical Tips
 
+- **Not sure if you need PTU?** Start with the "Do I Need PTU?" wizard — it takes 60 seconds and gives a clear answer
 - **No Log Analytics?** Use Method B (token counts) or estimate TPM from your app's API logs
 - **Start conservative** - begin with lower estimates and adjust as you gather data
 - **Check deployment type** - Global is cheapest but Regional gives lowest latency
