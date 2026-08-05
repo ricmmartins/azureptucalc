@@ -9,17 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Slider } from './ui/slider';
 import { cn } from '@/lib/utils';
 import { AlertTriangle, Gauge, Info, Layers3, Sparkles, TrendingUp, Zap } from 'lucide-react';
+import ptuModels from '../ptu_supported_models.json';
 
-const MODEL_OPTIONS = {
-  'gpt-5.6-sol': { label: 'gpt-5.6-sol', throughputPerPTU: 1200 },
-  'gpt-5.6-terra': { label: 'gpt-5.6-terra', throughputPerPTU: 2400 },
-  'gpt-5.6-luna': { label: 'gpt-5.6-luna', throughputPerPTU: 5950 },
-  'gpt-5.5': { label: 'gpt-5.5', throughputPerPTU: 1200 },
-  'gpt-5.4': { label: 'gpt-5.4', throughputPerPTU: 2400 },
-  'gpt-4.1': { label: 'gpt-4.1', throughputPerPTU: 3000 },
-  'gpt-4o': { label: 'gpt-4o', throughputPerPTU: 2500 },
-  'gpt-4o-mini': { label: 'gpt-4o-mini', throughputPerPTU: 7900 }
-};
+const MODEL_OPTIONS = Object.fromEntries(
+  Object.entries(ptuModels.ptu_supported_models).map(([id, model]) => [
+    id,
+    { label: model.name, throughputPerPTU: model.throughput_per_ptu },
+  ]),
+);
 
 const LIMITS = {
   promptTokens: { min: 50, max: 128000 },
@@ -32,7 +29,7 @@ const DEFAULTS = {
   maxTokens: 4096,
   actualOutputTokens: 200,
   ptuCount: 50,
-  model: 'gpt-4o-mini'
+  model: 'gpt-5.6-luna'
 };
 
 const BUFFER_RATIO = 0.2;
