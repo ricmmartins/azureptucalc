@@ -2,6 +2,28 @@
 
 All notable changes to the Azure OpenAI PTU Calculator are documented in this file.
 
+## [Unreleased] - 2026-08-05
+
+### Added
+- **GPT-5.6 PTU support** for `gpt-5.6-sol`, `gpt-5.6-terra`, and `gpt-5.6-luna`
+- Official Microsoft Learn sizing parameters:
+  - Sol: 1,200 input TPM/PTU
+  - Terra: 2,400 input TPM/PTU
+  - Luna: 5,950 input TPM/PTU
+  - Output-to-input ratio: 6 for all three models
+  - Global/Data Zone minimum 15 PTUs with 5-PTU increments
+  - Regional minimum 50 PTUs with 50-PTU increments
+- GPT-5.6 options in the Right-Size Wizard and max_tokens Optimizer
+
+### Changed
+- Model catalog documentation now lists 22 PTU-supported models
+
+### Notes
+- PAYGO pricing was not added because the public Azure pricing page does not currently expose numeric GPT-5.6 rates.
+- Region lists remain unspecified in local model metadata rather than inferring provisioned availability from standard deployment tables.
+
+---
+
 ## [2.6.0] - 2026-07-07
 
 ### Added

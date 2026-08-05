@@ -1,5 +1,47 @@
 {
   "models": {
+    "gpt-5.6-sol": {
+      "name": "GPT-5.6 Sol",
+      "description": "GPT-5.6 reasoning model with text and image processing",
+      "throughput_per_ptu": 1200,
+      "output_weight": 6,
+      "output_weight_source": "ms_learn",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
+      },
+      "regions": []
+    },
+    "gpt-5.6-terra": {
+      "name": "GPT-5.6 Terra",
+      "description": "GPT-5.6 reasoning model with text and image processing",
+      "throughput_per_ptu": 2400,
+      "output_weight": 6,
+      "output_weight_source": "ms_learn",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
+      },
+      "regions": []
+    },
+    "gpt-5.6-luna": {
+      "name": "GPT-5.6 Luna",
+      "description": "GPT-5.6 reasoning model with text and image processing",
+      "throughput_per_ptu": 5950,
+      "output_weight": 6,
+      "output_weight_source": "ms_learn",
+      "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5, "available": true },
+        "dataZone": { "min_ptu": 15, "increment": 5, "available": true },
+        "regional": { "min_ptu": 50, "increment": 50, "available": true }
+      },
+      "regions": []
+    },
     "gpt-5.5": {
       "name": "GPT-5.5",
       "description": "Most advanced GPT-5 series model with frontier reasoning capabilities",

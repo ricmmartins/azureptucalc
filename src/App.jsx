@@ -2759,7 +2759,7 @@ AzureMetrics
               <div>
                 <h4 className="font-semibold text-amber-900 mb-1">Availability</h4>
                 <ul className="text-amber-800 space-y-1">
-                  <li>• <strong>Models:</strong> GPT-5.4, 5.2, 5.1, 4.1, 4.1-mini, o4-mini</li>
+                  <li>• <strong>Models:</strong> GPT-5.6 Sol, Terra, Luna, GPT-5.5, 5.4, 5.2, 5.1, 4.1, 4.1-mini, o4-mini</li>
                   <li>• <strong>Deployments:</strong> Global Standard, Data Zone Standard</li>
                   <li>• <strong>Pricing:</strong> ~70% premium over standard PAYGO rates</li>
                 </ul>
@@ -3815,4 +3815,3 @@ AzureMetrics
 }
 
 export default App;
-
