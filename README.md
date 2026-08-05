@@ -24,7 +24,7 @@
 - **Deployment-aware pricing** — Global, Data Zone, and Regional deployments with correct per-deployment rates
 
 ### Models & Usage
-- **22 PTU-supported models** — GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.3 Codex, GPT-5.2, GPT-5.2 Codex, GPT-5.1, GPT-5.1 Codex, GPT-5, GPT-5 Mini, GPT-4.1, GPT-4.1 Mini, GPT-4.1 Nano, GPT-4o, GPT-4o Mini, o3, o4-mini, o1, o3-mini
+- **14 current PTU-supported models** — GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.3 Codex, GPT-5.2, GPT-5.2 Codex, GPT-5.1, GPT-5.1 Codex, GPT-5, GPT-5 Mini, and o3
 - **Two input methods** — KQL/TPM data from Azure Log Analytics (Method A) or direct monthly token counts (Method B)
 - **Prompt Cache Hit Rate** — factor in Azure's prompt caching to reduce effective input tokens for more accurate PTU sizing
 - **Region-aware model filtering** — model picker shows only models available in the selected region
@@ -156,7 +156,7 @@ azureptucalc/
 │   ├── enhanced_pricing_service.js   # Pricing API client with cache & fallback
 │   ├── officialPTUPricing.js         # Official PTU rates & reservation overrides
 │   ├── official_token_pricing.js     # PAYGO & Priority Processing rates
-│   ├── enhanced_model_config.json    # 22 PTU model definitions
+│   ├── enhanced_model_config.json    # PTU sizing definitions
 │   ├── ptu_supported_models.json     # Model support matrix
 │   ├── external_pricing_config.json  # Fallback pricing config
 │   ├── ExternalPricingService.js     # Config-based pricing service

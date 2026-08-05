@@ -1377,11 +1377,14 @@ Check browser console for detailed error information.`);
         };
       });
 
-      // Filter models by selected region's available_models
+      // Preserve newly supported models until the regional map is explicitly curated.
       const regionInfo = REGION_MODEL_AVAILABILITY[selectedRegion];
       if (regionInfo && regionInfo.available_models) {
         const regionModelIds = Object.keys(regionInfo.available_models);
-        availableModels = availableModels.filter(model => regionModelIds.includes(model.id));
+        availableModels = availableModels.filter(model => {
+          const configuredRegions = ptuModels.ptu_supported_models[model.id]?.regions;
+          return regionModelIds.includes(model.id) || configuredRegions?.length === 0;
+        });
       }
 
       return availableModels;
@@ -2759,7 +2762,7 @@ AzureMetrics
               <div>
                 <h4 className="font-semibold text-amber-900 mb-1">Availability</h4>
                 <ul className="text-amber-800 space-y-1">
-                  <li>• <strong>Models:</strong> GPT-5.6 Sol, Terra, Luna, GPT-5.5, 5.4, 5.2, 5.1, 4.1, 4.1-mini, o4-mini</li>
+                  <li>• <strong>Models:</strong> GPT-5.6 Sol, Terra, Luna, GPT-5.5, 5.4, 5.2, 5.1, and GPT-5</li>
                   <li>• <strong>Deployments:</strong> Global Standard, Data Zone Standard</li>
                   <li>• <strong>Pricing:</strong> ~70% premium over standard PAYGO rates</li>
                 </ul>

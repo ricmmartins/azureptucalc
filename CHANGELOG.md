@@ -16,11 +16,15 @@ All notable changes to the Azure OpenAI PTU Calculator are documented in this fi
 - GPT-5.6 options in the Right-Size Wizard and max_tokens Optimizer
 
 ### Changed
-- Model catalog documentation now lists 22 PTU-supported models
+- Model selector now keeps newly supported models visible while regional metadata is pending
+- Model catalog now lists 14 current PTU-supported models
 
 ### Notes
 - PAYGO pricing was not added because the public Azure pricing page does not currently expose numeric GPT-5.6 rates.
 - Region lists remain unspecified in local model metadata rather than inferring provisioned availability from standard deployment tables.
+
+### Removed
+- Deprecated models from the public selector: GPT-4.1, GPT-4.1 Mini, GPT-4.1 Nano, GPT-4o, GPT-4o Mini, o1, o3-mini, and o4-mini
 
 ---
 
