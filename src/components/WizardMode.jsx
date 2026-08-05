@@ -132,7 +132,7 @@ AzureMetrics
   const wizardSteps = [
     {
       id: 'welcome',
-      title: 'Welcome to PTU Calculator',
+      title: 'Welcome to Microsoft Foundry PTU Calculator',
       description: 'Let\'s optimize your Azure OpenAI costs step by step',
       icon: Play,
       component: WelcomeStep
@@ -232,7 +232,7 @@ AzureMetrics
           <Zap className="h-8 w-8 text-blue-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Welcome to Azure OpenAI PTU Calculator</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Welcome to Microsoft Foundry PTU Calculator</h2>
           <p className="text-gray-600 mt-2">
             This guided wizard will help you optimize your Azure OpenAI costs by analyzing your usage patterns 
             and comparing different pricing models.
@@ -857,4 +857,3 @@ AzureMetrics
 };
 
 export default WizardMode;
-

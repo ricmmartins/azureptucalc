@@ -17,7 +17,7 @@
     "tags": {
       "value": {
         "Environment": "Production",
-        "Application": "Azure OpenAI PTU Estimator",
+        "Application": "Microsoft Foundry PTU Calculator",
         "Owner": "DevOps Team",
         "CostCenter": "IT",
         "Project": "Azure OpenAI Cost Optimization"
@@ -25,4 +25,3 @@
     }
   }
 }
-

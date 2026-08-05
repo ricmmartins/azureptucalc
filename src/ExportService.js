@@ -27,13 +27,13 @@ export class ExportService {
     } = calculationData;
 
     const reportTimestamp = new Date().toISOString();
-    
+
     this.reportData = {
       metadata: {
         reportType: "Azure PTU Cost Analysis",
         generatedAt: reportTimestamp,
         version: "2025.09.30",
-        calculator: "Azure PTU Calculator Enhanced"
+        calculator: "Microsoft Foundry PTU Calculator"
       },
       configuration: {
         model: model,
@@ -123,12 +123,12 @@ export class ExportService {
     }
 
     const csvRows = [];
-    
+
     // Header
     csvRows.push('Azure PTU Cost Analysis Report');
     csvRows.push(`Generated: ${this.reportData.metadata.generatedAt}`);
     csvRows.push('');
-    
+
     // Configuration
     csvRows.push('CONFIGURATION');
     csvRows.push('Field,Value');
@@ -138,7 +138,7 @@ export class ExportService {
     csvRows.push(`PTU Count,${this.reportData.configuration.ptuCount}`);
     csvRows.push(`Usage Scenario,${this.reportData.configuration.usageScenario}`);
     csvRows.push('');
-    
+
     // Output Token Weighting
     if (this.reportData.configuration.outputWeighting) {
       const ow = this.reportData.configuration.outputWeighting;
@@ -152,7 +152,7 @@ export class ExportService {
       csvRows.push(`Output TPM,${ow.resolvedOutputTPM || 'N/A'}`);
       csvRows.push('');
     }
-    
+
     // Cost Breakdown
     csvRows.push('PTU COSTS');
     csvRows.push('Period,Cost (USD)');
@@ -160,14 +160,14 @@ export class ExportService {
     csvRows.push(`Monthly,${this.reportData.costBreakdown.ptu.monthly}`);
     csvRows.push(`Yearly,${this.reportData.costBreakdown.ptu.yearly}`);
     csvRows.push('');
-    
+
     csvRows.push('PAY-AS-YOU-GO COSTS');
     csvRows.push('Token Type,Usage,Price per 1M,Total Cost (USD)');
     csvRows.push(`Input,${this.reportData.costBreakdown.payg.inputTokens.usage},${this.reportData.costBreakdown.payg.inputTokens.pricePer1M},${this.reportData.costBreakdown.payg.inputTokens.cost}`);
     csvRows.push(`Output,${this.reportData.costBreakdown.payg.outputTokens.usage},${this.reportData.costBreakdown.payg.outputTokens.pricePer1M},${this.reportData.costBreakdown.payg.outputTokens.cost}`);
     csvRows.push(`Total,,,$${this.reportData.costBreakdown.payg.total}`);
     csvRows.push('');
-    
+
     // Break-even Analysis
     csvRows.push('BREAK-EVEN ANALYSIS');
     csvRows.push('Metric,Value');
@@ -175,14 +175,14 @@ export class ExportService {
     csvRows.push(`Break-Even TPM,${this.reportData.costBreakdown.breakEven.breakEvenTPM || 'N/A'}`);
     csvRows.push(`Utilization at Break-Even,${this.reportData.costBreakdown.breakEven.utilizationAtBreakEven ? (this.reportData.costBreakdown.breakEven.utilizationAtBreakEven * 100).toFixed(1) + '%' : 'N/A'}`);
     csvRows.push('');
-    
+
     // Analysis
     csvRows.push('COST COMPARISON');
     csvRows.push('Model,PTU Monthly,PAYG Monthly,Difference,Percentage');
     const comparison = this.reportData.analysis.costComparison.ptuVsPayg.monthly;
     csvRows.push(`${this.reportData.configuration.model},${comparison.ptu},${comparison.payg},${comparison.difference},${comparison.percentageDifference}%`);
     csvRows.push('');
-    
+
     // Warnings
     if (this.reportData.analysis.warnings.length > 0) {
       csvRows.push('WARNINGS');
@@ -192,7 +192,7 @@ export class ExportService {
       });
       csvRows.push('');
     }
-    
+
     // Recommendations
     csvRows.push('RECOMMENDATIONS');
     csvRows.push('Recommendation');
@@ -217,7 +217,7 @@ export class ExportService {
     const csv = this.exportAsCSV();
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const defaultFilename = `azure-ptu-analysis-${timestamp}.csv`;
-    
+
     this.downloadFile(csv, filename || defaultFilename, 'text/csv');
   }
 
@@ -226,7 +226,7 @@ export class ExportService {
     const json = this.exportAsJSON();
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const defaultFilename = `azure-ptu-analysis-${timestamp}.json`;
-    
+
     this.downloadFile(json, filename || defaultFilename, 'application/json');
   }
 
@@ -280,32 +280,32 @@ export class ExportService {
   generateRecommendations(calculationData) {
     const recommendations = [];
     const { ptuCostCalculation, paygCostCalculation, ptuCount, model } = calculationData;
-    
+
     // Cost-based recommendations
     if (ptuCostCalculation.monthly < paygCostCalculation.total) {
       recommendations.push(`PTU is ${((paygCostCalculation.total - ptuCostCalculation.monthly) / paygCostCalculation.total * 100).toFixed(1)}% cheaper than PAYG for your usage pattern`);
     } else if (paygCostCalculation.total < ptuCostCalculation.monthly) {
       recommendations.push(`PAYG is ${((ptuCostCalculation.monthly - paygCostCalculation.total) / ptuCostCalculation.monthly * 100).toFixed(1)}% cheaper than PTU for your usage pattern`);
     }
-    
+
     // Throughput recommendations
     const throughputPerPTU = this.getModelThroughputPerPTU(model);
     const totalThroughput = throughputPerPTU * ptuCount;
-    
+
     if (totalThroughput > 100000) {
       recommendations.push('Consider distributing workload across multiple deployments for better resilience');
     }
-    
+
     // PTU optimization
     if (ptuCount > 100) {
       recommendations.push('Large PTU deployments benefit significantly from yearly commitment pricing');
     }
-    
+
     // Model-specific recommendations
     if (throughputPerPTU > 10000 && ptuCount < 25) {
       recommendations.push(`${model} has high throughput per PTU (${throughputPerPTU.toLocaleString()} TPM) - consider if lower PTU count meets your needs`);
     }
-    
+
     return recommendations;
   }
 }

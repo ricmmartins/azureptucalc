@@ -3,9 +3,10 @@
   "private": false,
   "version": "1.0.0",
   "type": "module",
-  "description": "Enterprise-grade tool for optimizing Azure OpenAI costs through intelligent PTU sizing and burst pattern analysis",
+  "description": "Microsoft Foundry PTU calculator for optimizing Azure OpenAI costs through intelligent sizing and burst pattern analysis",
   "keywords": [
     "azure",
+    "microsoft-foundry",
     "openai",
     "ptu",
     "cost-optimization",

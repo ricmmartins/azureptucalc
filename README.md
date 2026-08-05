@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Open%20Source-%E2%9D%A4%EF%B8%8F-red?style=for-the-badge" alt="Open Source" />
 </div>
 
-# Azure OpenAI PTU Calculator
+# Microsoft Foundry PTU Calculator
 
 **Optimize your Azure OpenAI costs with intelligent PTU sizing, real-time pricing from the Azure Retail Prices API, and comprehensive cost analysis.**
 

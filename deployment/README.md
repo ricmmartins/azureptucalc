@@ -1,6 +1,6 @@
 # Azure Deployment Guide
 
-This guide provides step-by-step instructions for deploying the Azure OpenAI PTU Estimator to various Azure services.
+This guide provides step-by-step instructions for deploying the Microsoft Foundry PTU Calculator to various Azure services.
 
 ## 🚀 Deployment Options
 
@@ -456,4 +456,3 @@ az staticwebapp hostname show --name azure-openai-ptu-estimator
 ---
 
 **Need help?** Open an issue in the [GitHub repository](https://github.com/ricmmartins/azureptucalc//issues).
-
