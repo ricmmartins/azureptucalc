@@ -2,7 +2,7 @@
 
 ## What is the Azure OpenAI PTU Calculator?
 
-The Azure OpenAI PTU Calculator is a free, open-source tool that helps you optimize your Azure OpenAI costs by comparing PAYGO, PTU reservations, spillover (hybrid), and Priority Processing pricing. It supports 19 PTU models, 3 deployment types, and fetches live pricing from the Azure Retail Prices API.
+The Azure OpenAI PTU Calculator is a free, open-source tool that helps you optimize your Azure OpenAI costs by comparing PAYGO, PTU reservations, spillover (hybrid), and Priority Processing pricing. It supports 14 current PTU models, 3 deployment types, and fetches live pricing from the Azure Retail Prices API.
 
 Try it live at [ptucalc.com](https://www.ptucalc.com)
 
@@ -50,7 +50,7 @@ At the end, you get a **clear recommendation** with:
 
 ### 1. Select Your Model, Region, and Deployment Type
 
-- **Model:** Choose from 19 supported PTU models (GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.3 Codex, GPT-5.2, GPT-4.1, GPT-4o, o3, o4-mini, and more)
+- **Model:** Choose from 14 current PTU models, including GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.3 Codex, GPT-5.2, GPT-5.1, GPT-5, GPT-5 Mini, and o3
 - **Region:** Select your Azure region (30+ supported)
 - **Deployment Type:**
   - **Global** - multi-region, lowest PTU cost ($1.00/PTU/hr base)

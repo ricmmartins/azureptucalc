@@ -19,6 +19,7 @@ All notable changes to the Azure OpenAI PTU Calculator are documented in this fi
 - Model selector now keeps newly supported models visible while regional metadata is pending
 - Model catalog now lists 14 current PTU-supported models
 - Optimization model selectors now consume the same current-model catalog as the main calculator
+- User Guide model count and examples now match the current 14-model catalog
 
 ### Notes
 - PAYGO pricing was not added because the public Azure pricing page does not currently expose numeric GPT-5.6 rates.
