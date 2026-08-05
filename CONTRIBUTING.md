@@ -1,6 +1,6 @@
-# Contributing to Azure OpenAI PTU Calculator
+# Contributing to Microsoft Foundry PTU Calculator
 
-Thank you for your interest in contributing to the Azure OpenAI PTU Calculator! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to the Microsoft Foundry PTU Calculator! This document provides guidelines and information for contributors.
 
 ## First-Time Contributors
 
@@ -145,6 +145,6 @@ By contributing to this project, you agree that your contributions will be licen
 
 ---
 
-**Thank you for contributing to the Azure OpenAI PTU Calculator!**
+**Thank you for contributing to the Microsoft Foundry PTU Calculator!**
 
 Your contributions help make Azure OpenAI cost optimization accessible to everyone.

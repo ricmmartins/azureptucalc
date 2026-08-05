@@ -1494,7 +1494,7 @@ AzureMetrics
               <div className="flex items-center gap-2">
                 <Brain className="h-8 w-8 text-blue-600" />
                 <CardTitle className="text-3xl font-bold text-blue-600">
-                  Azure OpenAI PTU Calculator
+                  Microsoft Foundry PTU Calculator
                 </CardTitle>
               </div>
               {/* Accessibility Toggle */}

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Azure OpenAI PTU Calculator are documented in this file.
+All notable changes to the Microsoft Foundry PTU Calculator are documented in this file.
 
 ## [Unreleased] - 2026-08-05
 
@@ -16,6 +16,8 @@ All notable changes to the Azure OpenAI PTU Calculator are documented in this fi
 - GPT-5.6 options in the Right-Size Wizard and max_tokens Optimizer
 
 ### Changed
+- Renamed the product to **Microsoft Foundry PTU Calculator** across the application, documentation, deployment metadata, and exported reports
+- Retained Azure OpenAI terminology for service-specific pricing and capacity guidance
 - Model selector now keeps newly supported models visible while regional metadata is pending
 - Model catalog now lists 14 current PTU-supported models
 - Optimization model selectors now consume the same current-model catalog as the main calculator

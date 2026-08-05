@@ -14,10 +14,10 @@ const WelcomeModal = ({ isOpen, onClose, onStartTour }) => {
             <div className="p-2 bg-blue-100 rounded-lg">
               <Info className="h-6 w-6 text-blue-600" />
             </div>
-            Welcome to Azure PTU Calculator
+            Welcome to Microsoft Foundry PTU Calculator
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Introduction */}
           <div className="text-center space-y-2">
@@ -151,16 +151,16 @@ const WelcomeModal = ({ isOpen, onClose, onStartTour }) => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button 
-                  onClick={onStartTour} 
+                <Button
+                  onClick={onStartTour}
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
                   <Zap className="h-4 w-4 mr-2" />
                   Take the Guided Tour
                 </Button>
-                <Button 
-                  onClick={onClose} 
-                  variant="outline" 
+                <Button
+                  onClick={onClose}
+                  variant="outline"
                   className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50"
                 >
                   Start Using Calculator

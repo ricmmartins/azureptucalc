@@ -1,8 +1,8 @@
-# Azure OpenAI PTU Calculator - User Guide
+# Microsoft Foundry PTU Calculator - User Guide
 
-## What is the Azure OpenAI PTU Calculator?
+## What is the Microsoft Foundry PTU Calculator?
 
-The Azure OpenAI PTU Calculator is a free, open-source tool that helps you optimize your Azure OpenAI costs by comparing PAYGO, PTU reservations, spillover (hybrid), and Priority Processing pricing. It supports 14 current PTU models, 3 deployment types, and fetches live pricing from the Azure Retail Prices API.
+The Microsoft Foundry PTU Calculator is a free, open-source tool that helps you optimize your Azure OpenAI costs by comparing PAYGO, PTU reservations, spillover (hybrid), and Priority Processing pricing. It supports 14 current PTU models, 3 deployment types, and fetches live pricing from the Azure Retail Prices API.
 
 Try it live at [ptucalc.com](https://www.ptucalc.com)
 
