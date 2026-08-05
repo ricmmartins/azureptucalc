@@ -23,6 +23,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ptuModels from '../ptu_supported_models.json';
 
 const HOURS_PER_MONTH = 730;
 
@@ -33,18 +34,11 @@ const STEP_CONFIG = [
   { title: 'Results & Recommendation', shortTitle: 'Results' },
 ];
 
-const MODEL_OPTIONS = [
-  { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol', throughputPerPTU: 1200 },
-  { value: 'gpt-5.6-terra', label: 'GPT-5.6 Terra', throughputPerPTU: 2400 },
-  { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna', throughputPerPTU: 5950 },
-  { value: 'gpt-5.5', label: 'GPT-5.5', throughputPerPTU: 1200 },
-  { value: 'gpt-5.4', label: 'GPT-5.4', throughputPerPTU: 2400 },
-  { value: 'gpt-5.4-mini', label: 'GPT-5.4 Mini', throughputPerPTU: 7900 },
-  { value: 'gpt-4.1', label: 'GPT-4.1', throughputPerPTU: 3000 },
-  { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini', throughputPerPTU: 6000 },
-  { value: 'gpt-4o', label: 'GPT-4o', throughputPerPTU: 2500 },
-  { value: 'gpt-4o-mini', label: 'GPT-4o Mini', throughputPerPTU: 7900 },
-];
+const MODEL_OPTIONS = Object.entries(ptuModels.ptu_supported_models).map(([value, model]) => ({
+  value,
+  label: model.name,
+  throughputPerPTU: model.throughput_per_ptu,
+}));
 
 const DEPLOYMENT_OPTIONS = [
   { value: 'global', label: 'Global', minPTU: 15 },
