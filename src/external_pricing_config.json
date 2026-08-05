@@ -1,6 +1,6 @@
 {
-  "version": "2026.03.25",
-  "lastUpdated": "2026-03-25T00:00:00Z",
+  "version": "2026.08.05",
+  "lastUpdated": "2026-08-05T00:00:00Z",
   "source": "Microsoft Learn",
   "sourceUrl": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
   "dataExpiry": "2026-12-31T23:59:59Z",
@@ -75,6 +75,30 @@
     "o1": { "input": 15.00, "output": 60.00 }
   },
   "modelConfigurations": {
+    "gpt-5.6-sol": {
+      "throughput_per_ptu": 1200,
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5 },
+        "dataZone": { "min_ptu": 15, "increment": 5 },
+        "regional": { "min_ptu": 50, "increment": 50 }
+      }
+    },
+    "gpt-5.6-terra": {
+      "throughput_per_ptu": 2400,
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5 },
+        "dataZone": { "min_ptu": 15, "increment": 5 },
+        "regional": { "min_ptu": 50, "increment": 50 }
+      }
+    },
+    "gpt-5.6-luna": {
+      "throughput_per_ptu": 5950,
+      "deployments": {
+        "global": { "min_ptu": 15, "increment": 5 },
+        "dataZone": { "min_ptu": 15, "increment": 5 },
+        "regional": { "min_ptu": 50, "increment": 50 }
+      }
+    },
     "gpt-5.5": {
       "throughput_per_ptu": 1200,
       "deployments": {

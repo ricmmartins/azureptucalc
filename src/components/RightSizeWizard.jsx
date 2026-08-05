@@ -34,6 +34,9 @@ const STEP_CONFIG = [
 ];
 
 const MODEL_OPTIONS = [
+  { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol', throughputPerPTU: 1200 },
+  { value: 'gpt-5.6-terra', label: 'GPT-5.6 Terra', throughputPerPTU: 2400 },
+  { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna', throughputPerPTU: 5950 },
   { value: 'gpt-5.5', label: 'GPT-5.5', throughputPerPTU: 1200 },
   { value: 'gpt-5.4', label: 'GPT-5.4', throughputPerPTU: 2400 },
   { value: 'gpt-5.4-mini', label: 'GPT-5.4 Mini', throughputPerPTU: 7900 },

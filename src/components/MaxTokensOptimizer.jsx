@@ -11,6 +11,9 @@ import { cn } from '@/lib/utils';
 import { AlertTriangle, Gauge, Info, Layers3, Sparkles, TrendingUp, Zap } from 'lucide-react';
 
 const MODEL_OPTIONS = {
+  'gpt-5.6-sol': { label: 'gpt-5.6-sol', throughputPerPTU: 1200 },
+  'gpt-5.6-terra': { label: 'gpt-5.6-terra', throughputPerPTU: 2400 },
+  'gpt-5.6-luna': { label: 'gpt-5.6-luna', throughputPerPTU: 5950 },
   'gpt-5.5': { label: 'gpt-5.5', throughputPerPTU: 1200 },
   'gpt-5.4': { label: 'gpt-5.4', throughputPerPTU: 2400 },
   'gpt-4.1': { label: 'gpt-4.1', throughputPerPTU: 3000 },
