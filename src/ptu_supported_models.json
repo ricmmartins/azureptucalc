@@ -13,7 +13,7 @@
       "description": "GPT-5.6 reasoning model with text and image processing",
       "ptu_support": true,
       "min_ptu": 15,
-      "throughput_per_ptu": 2400,
+      "throughput_per_ptu": 3000,
       "regions": []
     },
     "gpt-5.6-luna": {
@@ -21,7 +21,7 @@
       "description": "GPT-5.6 reasoning model with text and image processing",
       "ptu_support": true,
       "min_ptu": 15,
-      "throughput_per_ptu": 5950,
+      "throughput_per_ptu": 30000,
       "regions": []
     },
     "gpt-5.5": {
