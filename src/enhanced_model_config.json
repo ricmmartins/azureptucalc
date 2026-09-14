@@ -17,7 +17,7 @@
     "gpt-5.6-terra": {
       "name": "GPT-5.6 Terra",
       "description": "GPT-5.6 reasoning model with text and image processing",
-      "throughput_per_ptu": 2400,
+      "throughput_per_ptu": 3000,
       "output_weight": 6,
       "output_weight_source": "ms_learn",
       "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",
@@ -31,7 +31,7 @@
     "gpt-5.6-luna": {
       "name": "GPT-5.6 Luna",
       "description": "GPT-5.6 reasoning model with text and image processing",
-      "throughput_per_ptu": 5950,
+      "throughput_per_ptu": 30000,
       "output_weight": 6,
       "output_weight_source": "ms_learn",
       "official_source": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing",

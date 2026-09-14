@@ -1728,7 +1728,7 @@ AzureMetrics
               </Select>
               <div className="mt-2 flex items-center gap-4 text-xs text-blue-800">
                 <span>Output Weight: <strong>{getModelOutputWeight()}×</strong></span>
-                <span>TPM per PTU: <strong>{getCurrentModelThroughput().toLocaleString()}</strong></span>
+                <span>Input TPM per PTU: <strong>{getCurrentModelThroughput().toLocaleString()}</strong></span>
               </div>
             </div>
 
@@ -2072,7 +2072,7 @@ AzureMetrics
                       </button>
                     </div>
                     <p id="model-help" className="text-xs text-gray-500 mt-1">
-                      Model is selected in Step 1 above. Output Weight: {getModelOutputWeight()}× | TPM/PTU: {getCurrentModelThroughput().toLocaleString()}
+                      Model is selected in Step 1 above. Output Weight: {getModelOutputWeight()}× | Input TPM/PTU: {getCurrentModelThroughput().toLocaleString()}
                     </p>
                   </div>
 

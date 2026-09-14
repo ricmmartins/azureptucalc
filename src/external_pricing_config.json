@@ -84,7 +84,7 @@
       }
     },
     "gpt-5.6-terra": {
-      "throughput_per_ptu": 2400,
+      "throughput_per_ptu": 3000,
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5 },
         "dataZone": { "min_ptu": 15, "increment": 5 },
@@ -92,7 +92,7 @@
       }
     },
     "gpt-5.6-luna": {
-      "throughput_per_ptu": 5950,
+      "throughput_per_ptu": 30000,
       "deployments": {
         "global": { "min_ptu": 15, "increment": 5 },
         "dataZone": { "min_ptu": 15, "increment": 5 },

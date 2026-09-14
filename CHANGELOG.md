@@ -2,7 +2,16 @@
 
 All notable changes to the Microsoft Foundry PTU Calculator are documented in this file.
 
-## [Unreleased] - 2026-08-05
+## [Unreleased] - 2026-09-14
+
+### Fixed
+- Updated GPT-5.6 Luna from 5,950 to **30,000 input TPM/PTU** and GPT-5.6 Terra from 2,400 to **3,000 input TPM/PTU** across all three model catalogs.
+- Preserved the 6x output weight, deployment minimums, and scale increments.
+- The corrected parameters apply to calculator sizing, generated KQL, optimization tools, and exported throughput analysis. Previous Luna and Terra estimates may overstate required PTUs and associated costs; regenerate KQL and recalculate saved analyses, especially those with manually entered PTU counts.
+- Clarified the displayed throughput unit as **Input TPM per PTU**.
+- Source: [Microsoft Learn PTU sizing](https://learn.microsoft.com/azure/foundry/openai/how-to/provisioned-throughput-sizing#deployment-parameters-and-throughput-values-by-model), reviewed September 14, 2026.
+
+## 2026-08-05
 
 ### Added
 - **GPT-5.6 PTU support** for `gpt-5.6-sol`, `gpt-5.6-terra`, and `gpt-5.6-luna`
