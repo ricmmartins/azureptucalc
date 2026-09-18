@@ -5,6 +5,13 @@
   "models": {
     "gpt-5.6-sol": {
       "displayName": "GPT-5.6 Sol",
+      "paygo": {
+        "global": { "input": 5, "output": 30 },
+        "dataZone": { "input": 5.5, "output": 33 }
+      },
+      "paygoContext": "short",
+      "paygoSource": "https://azure.microsoft.com/en-us/pricing/details/azure-openai/",
+      "paygoVerifiedAt": "2026-09-18",
       "minPTU": { "global": 15, "dataZone": 15, "regional": 50 },
       "ptu": { "global": 1, "dataZone": 1.1, "regional": 2 },
       "reservations": {
@@ -15,6 +22,12 @@
     },
     "gpt-5.6-terra": {
       "displayName": "GPT-5.6 Terra",
+      "paygo": {
+        "global": { "input": 2, "output": 12 }
+      },
+      "paygoContext": "short",
+      "paygoSource": "https://azure.microsoft.com/en-us/pricing/details/azure-openai/",
+      "paygoVerifiedAt": "2026-09-18",
       "minPTU": { "global": 15, "dataZone": 15, "regional": 50 },
       "ptu": { "global": 1, "dataZone": 1.1, "regional": 2 },
       "reservations": {
@@ -25,6 +38,13 @@
     },
     "gpt-5.6-luna": {
       "displayName": "GPT-5.6 Luna",
+      "paygo": {
+        "global": { "input": 0.2, "output": 1.2 },
+        "dataZone": { "input": 0.22, "output": 1.32 }
+      },
+      "paygoContext": "short",
+      "paygoSource": "https://azure.microsoft.com/en-us/pricing/details/azure-openai/",
+      "paygoVerifiedAt": "2026-09-18",
       "minPTU": { "global": 15, "dataZone": 15, "regional": 50 },
       "ptu": { "global": 1, "dataZone": 1.1, "regional": 2 },
       "reservations": {

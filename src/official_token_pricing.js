@@ -126,51 +126,57 @@ export const OFFICIAL_TOKEN_PRICING = {
 import correctedPricingData from './corrected_pricing_data.json';
 
 for (const [modelId, modelData] of Object.entries(correctedPricingData.models || {})) {
-  try {
-    const paygo = modelData.paygo?.global;
-    if (!OFFICIAL_TOKEN_PRICING[modelId] && paygo && (paygo.input != null || paygo.output != null)) {
-      OFFICIAL_TOKEN_PRICING[modelId] = {
-        input: paygo.input ?? 0,
-        output: paygo.output ?? 0,
-        description: modelData.displayName || modelId
-      };
-      // eslint-disable-next-line no-console
-    }
-  } catch (e) {
-    // ignore
+  const paygo = modelData.paygo?.global;
+  if (!OFFICIAL_TOKEN_PRICING[modelId] && hasTokenPricing(paygo)) {
+    OFFICIAL_TOKEN_PRICING[modelId] = {
+      ...paygo,
+      description: modelData.displayName || modelId
+    };
   }
 }
 
-// Function to get pricing for a specific model
+export function hasTokenPricing(pricing) {
+  return Number.isFinite(pricing?.input) && pricing.input >= 0
+    && Number.isFinite(pricing?.output) && pricing.output >= 0;
+}
 
 export function getTokenPricing(modelName, deploymentType = 'global') {
-  // First try deployment-specific pricing from corrected_pricing_data.json
   const correctedModel = correctedPricingData.models?.[modelName];
-  if (correctedModel?.paygo?.[deploymentType]) {
-    const depPricing = correctedModel.paygo[deploymentType];
-    if (depPricing.input != null || depPricing.output != null) {
-      return { input: depPricing.input ?? 0, output: depPricing.output ?? 0, isFallback: false };
-    }
+  const pricing = correctedModel?.paygo?.[deploymentType]
+    ?? (deploymentType === 'global' ? OFFICIAL_TOKEN_PRICING[modelName] : null);
+  const metadata = {
+    model: modelName,
+    deployment: deploymentType,
+    context: correctedModel?.paygoContext,
+    sourceUrl: correctedModel?.paygoSource,
+    verifiedAt: correctedModel?.paygoVerifiedAt
+  };
+
+  if (hasTokenPricing(pricing)) {
+    return { ...pricing, ...metadata, available: true, source: 'published', isFallback: false };
   }
+  return { ...metadata, input: null, output: null, available: false, source: 'unavailable', isFallback: true };
+}
 
-  // Fall back to global pricing from OFFICIAL_TOKEN_PRICING
-  const pricing = OFFICIAL_TOKEN_PRICING[modelName];
-  if (pricing) return { ...pricing, isFallback: false };
-
-  // Try global from corrected_pricing_data.json
-  const corrected = correctedModel?.paygo?.global;
-  if (corrected && (corrected.input != null || corrected.output != null)) {
-    return { input: corrected.input ?? 0, output: corrected.output ?? 0, isFallback: true };
+export function resolveTokenPricing(modelName, deploymentType, livePricing) {
+  const published = getTokenPricing(modelName, deploymentType);
+  const live = livePricing?.paygo?.byDeployment?.[deploymentType];
+  // Never mix models, deployments, context tiers, or a partial live quote with static rates.
+  const contextMatches = !published.context || livePricing?.paygo?.context === published.context;
+  if (livePricing?.source === 'live' && livePricing.model === modelName
+      && livePricing.deployment === deploymentType && contextMatches
+      && hasTokenPricing(live) && live.input > 0 && live.output > 0) {
+    return { ...published, ...live, available: true, source: 'live', isFallback: false };
   }
-
-  // Final fallback to GPT-4o-mini pricing
-  const fallback = OFFICIAL_TOKEN_PRICING["gpt-4o-mini"];
-  return { ...fallback, isFallback: true };
+  return published;
 }
 
 // Function to calculate PAYG cost based on token usage
-export function calculatePAYGCost(modelName, inputTokensInMillions, outputTokensInMillions) {
-  const pricing = getTokenPricing(modelName);
+export function calculatePAYGCost(modelName, inputTokensInMillions, outputTokensInMillions, deploymentType = 'global', resolvedPricing) {
+  const pricing = resolvedPricing ?? getTokenPricing(modelName, deploymentType);
+  if (!hasTokenPricing(pricing)) {
+    throw new Error(`PAYGO pricing unavailable for ${modelName} (${deploymentType}). Enter verified custom rates.`);
+  }
   
   const inputCost = inputTokensInMillions * pricing.input;
   const outputCost = outputTokensInMillions * pricing.output;
@@ -180,6 +186,7 @@ export function calculatePAYGCost(modelName, inputTokensInMillions, outputTokens
     inputCost,
     outputCost,
     totalCost,
+    pricing,
     totalTokens: inputTokensInMillions + outputTokensInMillions,
     effectiveCostPerMillionTokens: (inputTokensInMillions + outputTokensInMillions) > 0 
       ? totalCost / (inputTokensInMillions + outputTokensInMillions) 
@@ -192,4 +199,3 @@ export function calculatePAYGCost(modelName, inputTokensInMillions, outputTokens
     }
   };
 }
-

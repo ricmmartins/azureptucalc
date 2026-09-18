@@ -183,7 +183,7 @@ function getModelFamily(model) {
   return 'OpenAI';
 }
 
-function parsePaygoItems(items, model, modelNormalized) {
+export function parsePaygoItems(items, model, modelNormalized) {
   // We want: Global Standard, per 1M tokens, non-batch, non-cached
   // Input patterns: "inp", "input", "inpt", "prompt"
   // Output patterns: "opt", "outpt", "output", "completion"
@@ -193,7 +193,7 @@ function parsePaygoItems(items, model, modelNormalized) {
   const inputPattern = /\b(inp|input|inpt|prompt)\b/i;
   const outputPattern = /\b(opt|outpt|output|completion|generated)\b/i;
   const globalPattern = /\b(gl\b|glbl|global)/i;
-  const excludePattern = /\b(batch|cached|cd\b|cchd|fine.?tun|grdr|dev ft|ft |tts|aud)/i;
+  const excludePattern = /\b(batch|cache|cached|cd\b|cchd|priority|long[\s-]?context|fine.?tun|grdr|dev ft|ft |tts|aud)/i;
 
   let bestInput = null;
   let bestOutput = null;
@@ -208,7 +208,8 @@ function parsePaygoItems(items, model, modelNormalized) {
     const price = parseFloat(item.retailPrice || item.unitPrice || 0);
 
     if (price <= 0) continue;
-    if (excludePattern.test(meter) || excludePattern.test(sku)) continue;
+    if (excludePattern.test(`${meter} ${sku} ${product}`)) continue;
+    if (model.startsWith('gpt-5.6-') && !/\bshort[\s-]?context\b/i.test(`${meter} ${sku} ${product}`)) continue;
     if (item.type === 'Reservation') continue;
 
     // Must be token-based pricing
@@ -256,6 +257,7 @@ function parsePaygoItems(items, model, modelNormalized) {
   console.log(`PAYGO for ${model}: input=$${bestInput}/1M, output=$${bestOutput}/1M (${inputCandidates.length} input, ${outputCandidates.length} output candidates)`);
 
   return {
+    context: model.startsWith('gpt-5.6-') ? 'short' : undefined,
     input: Number(bestInput.toFixed(4)),
     output: Number(bestOutput.toFixed(4)),
     found_items: items.length,

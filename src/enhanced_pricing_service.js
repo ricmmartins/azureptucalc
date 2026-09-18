@@ -1,6 +1,7 @@
 // Enhanced Azure OpenAI Pricing Service
 // Fetches live pricing from Azure Retail Prices API via Vercel serverless proxy
 // Falls back to hardcoded official pricing when the API is unavailable
+import { getTokenPricing } from './official_token_pricing.js';
 
 class AzureOpenAIPricingService {
   constructor() {
@@ -137,7 +138,7 @@ class AzureOpenAIPricingService {
     }
 
     // Fallback to hardcoded pricing
-    const fallback = this.getFallbackPricing(model, deploymentType);
+    const fallback = { ...this.getFallbackPricing(model, deploymentType), region };
     this.cache.set(cacheKey, { data: fallback, timestamp: Date.now() });
     return fallback;
   }
@@ -189,10 +190,14 @@ class AzureOpenAIPricingService {
       const fallback = this.fallbackPricing[model] || {};
 
       return {
+        model,
+        region,
+        deployment: deploymentType,
         paygo: {
-          input: paygoInput || fallback.paygo?.input || 0,
-          output: paygoOutput || fallback.paygo?.output || 0,
-          byDeployment: data.paygo?.byDeployment || null
+          input: paygoInput || null,
+          output: paygoOutput || null,
+          byDeployment: data.paygo?.byDeployment || null,
+          context: data.paygo?.context
         },
         ptu: {
           global: data.ptu?.global || fallback.ptu?.global || 1.00,
@@ -227,19 +232,11 @@ class AzureOpenAIPricingService {
     };
 
     const fallback = this.fallbackPricing[model];
-    
-    if (!fallback) {
-      return {
-        paygo: { input: 0, output: 0 },
-        ptu: { global: 1.00, dataZone: 1.10, regional: 2.00, reservations },
-        source: 'fallback',
-        timestamp: new Date().toISOString()
-      };
-    }
-
     return {
-      paygo: { ...fallback.paygo },
-      ptu: { ...fallback.ptu, reservations },
+      model,
+      deployment: deploymentType,
+      paygo: getTokenPricing(model, deploymentType),
+      ptu: { global: 1.00, dataZone: 1.10, regional: 2.00, ...fallback?.ptu, reservations },
       source: 'fallback',
       timestamp: new Date().toISOString()
     };
@@ -272,4 +269,3 @@ class AzureOpenAIPricingService {
 
 // Export for use in React app
 export default AzureOpenAIPricingService;
-

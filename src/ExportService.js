@@ -43,6 +43,7 @@ export class ExportService {
         usageScenario: usageScenario,
         requiredThroughput: throughputNeeded,
         customPricing: customPricing?.enabled || false,
+        paygoPricing: paygCostCalculation.pricing,
         outputWeighting: outputWeighting ? {
           outputWeight: outputWeighting.outputWeight,
           rawAvgTPM: outputWeighting.rawAvgTPM,
@@ -137,6 +138,12 @@ export class ExportService {
     csvRows.push(`Deployment Type,${this.reportData.configuration.deploymentType}`);
     csvRows.push(`PTU Count,${this.reportData.configuration.ptuCount}`);
     csvRows.push(`Usage Scenario,${this.reportData.configuration.usageScenario}`);
+    const pricing = this.reportData.configuration.paygoPricing;
+    if (pricing) {
+      csvRows.push(`PAYGO Price Source,${pricing.source}`);
+      csvRows.push(`PAYGO Context,${pricing.context || 'User-provided or model default'}`);
+      if (pricing.sourceUrl) csvRows.push(`PAYGO Reference,${pricing.sourceUrl}`);
+    }
     csvRows.push('');
 
     // Output Token Weighting

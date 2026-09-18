@@ -17,7 +17,7 @@ import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
 import enhancedModelConfig from "./enhanced_model_config.json";
 import correctedPricingData from './corrected_pricing_data.json';
 import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTUPricing.js";
-import { getTokenPricing, calculatePAYGCost, OFFICIAL_TOKEN_PRICING, PRIORITY_PROCESSING_PRICING, PRIORITY_PROCESSING_DEPLOYMENTS } from "./official_token_pricing.js";
+import { getTokenPricing, resolveTokenPricing, hasTokenPricing, calculatePAYGCost, PRIORITY_PROCESSING_PRICING, PRIORITY_PROCESSING_DEPLOYMENTS } from "./official_token_pricing.js";
 import { REGION_MODEL_AVAILABILITY, getRegionsByZone, isGovernmentRegion, getGovernmentAvailableModels } from "./regionModelAvailability.js";
 import ExternalPricingService from './ExternalPricingService.js';
 import ExportService from './ExportService.js';
@@ -97,8 +97,8 @@ function App() {
   
   // Custom pricing data - aligned with official PTU reservation pricing
   const [customPricing, setCustomPricing] = useState({
-    paygo_input: 0.15,
-    paygo_output: 0.60,
+    paygo_input: '',
+    paygo_output: '',
     ptu_hourly: 1.00,      // Official US$1/PTU-hour base rate (on-demand)
     ptu_monthly: 260,      // Monthly reservation: $260/PTU/month (Global)
     ptu_yearly: 2652       // 1-Year reservation: $2,652/PTU/year (Global)
@@ -180,45 +180,15 @@ function App() {
         const updateInfo = await externalPricingService.checkForUpdates();
         setPricingUpdateInfo(updateInfo);
         
-        // Load live Azure pricing data for current model and region
-        if (selectedModel && selectedRegion && selectedDeployment) {
-          setIsLoadingLivePricing(true);
-          try {
-            const livePricing = await azurePricingService.getPricing(selectedModel, selectedRegion, selectedDeployment);
-            setLivePricingData(livePricing);
-            
-            
-            // Update pricing status based on live data availability
-            setPricingStatus(prev => ({
-              ...prev,
-              usingLiveData: livePricing && (livePricing.source === 'live' || livePricing.source === 'fallback'),
-              pricingSource: livePricing?.source || 'unknown',
-              lastRefreshed: new Date().toLocaleString(),
-              dataExpiry: livePricing && livePricing.timestamp 
-                ? new Date(new Date(livePricing.timestamp).getTime() + 3 * 60 * 60 * 1000).toLocaleString()
-                : prev.dataExpiry
-            }));
-          } catch (error) {
-            
-            setPricingStatus(prev => ({
-              ...prev,
-              usingLiveData: false,
-              pricingSource: 'error',
-              lastRefreshed: new Date().toLocaleString()
-            }));
-          } finally {
-            setIsLoadingLivePricing(false);
-          }
-        }
       } catch (error) {
-        
+        console.error('Failed to load bundled pricing:', error);
       } finally {
         setIsLoadingExternalPricing(false);
       }
     };
     
     loadExternalPricing();
-  }, [externalPricingService, azurePricingService, selectedModel, selectedRegion, selectedDeployment]);
+  }, [externalPricingService]);
 
   // Onboarding state management
   const [showQualificationWizard, setShowQualificationWizard] = useState(false);
@@ -400,16 +370,11 @@ function App() {
     return warnings;
   };
 
-  // Pricing state - initialized with official pricing structure
-  const [currentPricing, setCurrentPricing] = useState({
-    paygo_input: 0.15,
-    paygo_output: 0.60,
-    ptu_hourly: 1.00,      // Official US$1/PTU-hour base rate
-    ptu_monthly: 260,      // Official monthly reservation (Global)
-    ptu_yearly: 2652,      // Official yearly reservation (Global)
-    minPTU: 15,
-    tokensPerPTUPerMinute: 2500  // Conservative default; updated dynamically per model
-  });
+  const currentPricing = useMemo(() => getCurrentPricing(), [
+    selectedModel, selectedDeployment, selectedRegion, useCustomPricing,
+    customPricing, livePricingData, isLoadingLivePricing
+  ]);
+  const paygoAvailable = hasTokenPricing(currentPricing.tokenPricing);
   
   const [calculations, setCalculations] = useState({});
   const [pricingStatus, setPricingStatus] = useState({
@@ -672,10 +637,12 @@ Check browser console for detailed error information.`);
 
   // Load live pricing data when model or deployment changes
   useEffect(() => {
+    let cancelled = false;
     const loadPricingData = async () => {
       if (!selectedModel) return;
       
       setPricingStatus(prev => ({ ...prev, isLoading: true }));
+      setIsLoadingLivePricing(true);
       
       try {
         // Map deployment types to enhanced service format
@@ -687,32 +654,43 @@ Check browser console for detailed error information.`);
         
         const enhancedDeploymentType = deploymentTypeMap[selectedDeployment] || "data-zone";
         const pricing = await azurePricingService.getPricing(selectedModel, selectedRegion, enhancedDeploymentType);
+        if (cancelled) return;
         
         setLivePricingData(pricing);
         setPricingStatus(prev => ({
           ...prev,
           isLoading: false,
-          usingLiveData: true,
+          usingLiveData: pricing.source === 'live',
+          pricingSource: pricing.source,
           lastRefreshed: new Date().toLocaleString()
         }));
       } catch (error) {
-        
+        if (cancelled) return;
+        console.error('Failed to load live pricing:', error);
         setLivePricingData(null);
         setPricingStatus(prev => ({
           ...prev,
           isLoading: false,
           usingLiveData: false
         }));
+      } finally {
+        if (!cancelled) setIsLoadingLivePricing(false);
       }
     };
     
     loadPricingData();
-  }, [selectedModel, selectedDeployment, selectedRegion]);
+    return () => { cancelled = true; };
+  }, [azurePricingService, selectedModel, selectedDeployment, selectedRegion]);
 
   // Get current pricing from service
-  const getCurrentPricing = () => {
-    if (useCustomPricing) {
+  function getCurrentPricing(ignoreCustom = false) {
+    if (useCustomPricing && !ignoreCustom) {
       return {
+        tokenPricing: {
+          input: customPricing.paygo_input,
+          output: customPricing.paygo_output,
+          source: 'custom'
+        },
         paygo_input: customPricing.paygo_input,
         paygo_output: customPricing.paygo_output,
         ptu_hourly: customPricing.ptu_hourly,
@@ -729,19 +707,12 @@ Check browser console for detailed error information.`);
       let livePTU = null;
       let pricingSource = 'static';
       
-      if (livePricingData && (livePricingData.source === 'live' || livePricingData.source === 'fallback')) {
-        const hasPaygo = (livePricingData.paygo?.input > 0 || livePricingData.paygo?.output > 0);
+      if (livePricingData?.model === selectedModel && livePricingData?.region === selectedRegion
+          && livePricingData?.deployment === selectedDeployment
+          && (livePricingData.source === 'live' || livePricingData.source === 'fallback')) {
         const hasPtu = (livePricingData.ptu?.global > 0 || livePricingData.ptu?.dataZone > 0 || livePricingData.ptu?.regional > 0);
-        
-        if (hasPaygo) {
-          // Use per-deployment PAYGO rates if available, fall back to global
-          const depPaygo = livePricingData.paygo?.byDeployment?.[selectedDeployment];
-          const hasDepPaygo = depPaygo && (depPaygo.input > 0 || depPaygo.output > 0);
-          livePAYGO = {
-            input: hasDepPaygo ? depPaygo.input : livePricingData.paygo.input,
-            output: hasDepPaygo ? depPaygo.output : livePricingData.paygo.output
-          };
-        }
+        const resolved = resolveTokenPricing(selectedModel, selectedDeployment, livePricingData);
+        if (resolved.source === 'live') livePAYGO = resolved;
         if (hasPtu) {
           const hourlyRate = livePricingData.ptu?.[selectedDeployment] || livePricingData.ptu?.global || 0;
           // Use live reservation prices if available from the API
@@ -784,16 +755,17 @@ Check browser console for detailed error information.`);
       
       // PRIORITY 2: Use official token pricing for PAYG (fallback from live API)
       const tokenPricing = getTokenPricing(selectedModel, selectedDeployment);
-      const tokenPricingIsFallback = tokenPricing.isFallback === true;
+      const tokenPricingIsFallback = !tokenPricing.available;
+      const resolvedTokenPricing = livePAYGO || tokenPricing;
       
       // PRIORITY 3: Use per-deployment reservation rates from officialPTUPricing (which has correct rates per deployment type)
       const ptuMonthly = livePTU?.monthly || officialPTUPricing?.reservationMonthly || correctedReservations?.monthly || (officialPTUPricing?.hourly ? Math.round(officialPTUPricing.hourly * 24 * 30.4167) : 730);
       const ptuYearly = livePTU?.yearly || officialPTUPricing?.yearly || correctedReservations?.yearly || 2652;
 
       return {
-        // Guard: never use $0 from live API when we have a known good hardcoded price
-        paygo_input: (livePAYGO?.input > 0) ? livePAYGO.input : tokenPricing.input,
-        paygo_output: (livePAYGO?.output > 0) ? livePAYGO.output : tokenPricing.output,
+        tokenPricing: resolvedTokenPricing,
+        paygo_input: resolvedTokenPricing.input,
+        paygo_output: resolvedTokenPricing.output,
         ptu_hourly: livePTU?.hourly || officialPTUPricing?.hourly || correctedModel?.ptu?.[selectedDeployment] || 1.00,
         ptu_monthly: ptuMonthly,
         ptu_yearly: ptuYearly,
@@ -801,7 +773,6 @@ Check browser console for detailed error information.`);
         tokensPerPTUPerMinute: getCurrentModelThroughput(),
         // Additional metadata for transparency
         officialPricing: officialPTUPricing || { source: 'corrected_pricing_data.json', model: correctedModel },
-        paygoIsFallback: tokenPricingIsFallback && !livePAYGO?.input,
         pricingSource: pricingSource,
         livePricingTimestamp: livePricingData?.timestamp,
         isLoadingLivePricing: isLoadingLivePricing,
@@ -836,6 +807,7 @@ Check browser console for detailed error information.`);
       const ptuMonthly = correctedModel?.reservations?.[selectedDeployment]?.monthly || correctedModel?.reservations?.global?.monthly || 260;
       const ptuYearly = correctedModel?.reservations?.[selectedDeployment]?.yearly || correctedModel?.reservations?.global?.yearly || 2652;
       return {
+        tokenPricing: fallbackTokenPricing,
         paygo_input: fallbackTokenPricing.input,
         paygo_output: fallbackTokenPricing.output,
         ptu_hourly: correctedModel?.ptu?.[selectedDeployment] || 1.00,
@@ -846,13 +818,7 @@ Check browser console for detailed error information.`);
         officialPricing: { source: 'fallback-corrected_pricing_data.json', model: correctedModel }
       };
     }
-  };
-
-  // Update pricing when selections change
-  useEffect(() => {
-    const pricing = getCurrentPricing();
-    setCurrentPricing(pricing);
-  }, [selectedModel, selectedDeployment, useCustomPricing, customPricing, livePricingData, selectedRegion]);
+  }
 
   // Calculate costs and recommendations
   useEffect(() => {
@@ -921,6 +887,12 @@ Check browser console for detailed error information.`);
     const isUsingMinimum = manualPTU > 0 
       ? manualPTU < enhancedPTUData.minPTU 
       : enhancedPTUData.isUsingMinimum;
+
+    if (!paygoAvailable) {
+      setCalculations({ ptuNeeded, enhancedPTUData, isUsingMinimum, pricing: currentPricing });
+      setIsCalculating(false);
+      return;
+    }
     
     // Monthly calculations
     // Task 3: Enhanced PAYG calculation using official token pricing
@@ -930,7 +902,7 @@ Check browser console for detailed error information.`);
       // Use explicit input/output token counts if provided
       const inputTokensInMillions = formData.inputTokensMonthly / 1000000;
       const outputTokensInMillions = formData.outputTokensMonthly / 1000000;
-      paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions);
+      paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions, selectedDeployment, currentPricing.tokenPricing);
       monthlyPaygoCost = paygoBreakdown.totalCost;
       monthlyTokens = (formData.inputTokensMonthly + formData.outputTokensMonthly) / 1000000;
     } else if (effectiveInputTPM > 0 || effectiveOutputTPM > 0) {
@@ -940,12 +912,12 @@ Check browser console for detailed error information.`);
       monthlyTokens = (inputTokensMonthly + outputTokensMonthly) / 1000000;
       const inputTokensInMillions = inputTokensMonthly / 1000000;
       const outputTokensInMillions = outputTokensMonthly / 1000000;
-      paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions);
+      paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions, selectedDeployment, currentPricing.tokenPricing);
       monthlyPaygoCost = paygoBreakdown.totalCost;
     } else {
       monthlyTokens = 0;
       monthlyPaygoCost = 0;
-      paygoBreakdown = { inputCost: 0, outputCost: 0, totalCost: 0, pricing: getTokenPricing(selectedModel, selectedDeployment) };
+      paygoBreakdown = calculatePAYGCost(selectedModel, 0, 0, selectedDeployment, currentPricing.tokenPricing);
     }
   // Use official Azure convention: 730 hours/month
   const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 730;
@@ -1086,6 +1058,7 @@ Check browser console for detailed error information.`);
     ];
     
     setCalculations({
+      pricing: currentPricing,
       enhancedPTUData,
       burstRatio,
       peakRatio,
@@ -1164,7 +1137,7 @@ Check browser console for detailed error information.`);
     }, 100); // Small delay to allow UI to update
 
     return () => clearTimeout(calculateAsync);
-  }, [formData, currentPricing, hasValidData, selectedModel, selectedDeployment]);
+  }, [formData, currentPricing, hasValidData, selectedModel, selectedDeployment, paygoAvailable]);
 
   // Pricing validation effect - temporarily disabled
   // Handle form input changes
@@ -1184,13 +1157,14 @@ Check browser console for detailed error information.`);
   const handleCustomPricingChange = (field, value) => {
     setCustomPricing(prev => ({
       ...prev,
-      [field]: Math.max(0, parseFloat(value) || 0)
+      [field]: value === '' ? '' : Math.max(0, parseFloat(value) || 0)
     }));
   };
 
   // Task 10: Export functionality handlers
   const handleExportCSV = () => {
     try {
+      if (!paygoAvailable || calculations.pricing !== currentPricing) throw new Error('Current pricing must be available and calculated before exporting.');
       const reportData = {
         model: selectedModel,
         region: selectedRegion,
@@ -1207,6 +1181,7 @@ Check browser console for detailed error information.`);
         paygCostCalculation: (() => {
           const bd = calculations.paygoBreakdown;
           return bd ? {
+            pricing: bd.pricing,
             inputCost: bd.inputCost,
             outputCost: bd.outputCost,
             total: bd.totalCost,
@@ -1250,6 +1225,7 @@ Check browser console for detailed error information.`);
 
   const handleExportJSON = () => {
     try {
+      if (!paygoAvailable || calculations.pricing !== currentPricing) throw new Error('Current pricing must be available and calculated before exporting.');
       const reportData = {
         model: selectedModel,
         region: selectedRegion,
@@ -1266,6 +1242,7 @@ Check browser console for detailed error information.`);
         paygCostCalculation: (() => {
           const bd = calculations.paygoBreakdown;
           return bd ? {
+            pricing: bd.pricing,
             inputCost: bd.inputCost,
             outputCost: bd.outputCost,
             total: bd.totalCost,
@@ -1332,11 +1309,15 @@ Check browser console for detailed error information.`);
   // Manual pricing validation handler - temporarily disabled
   // Load official pricing
   const loadOfficialPricing = () => {
+    const pricing = getCurrentPricing(true);
+    if (!hasTokenPricing(pricing.tokenPricing)) {
+      setCalculations(prev => ({ ...prev, exportError: 'Official PAYGO pricing is unavailable for this deployment. Enter verified custom rates.' }));
+      return;
+    }
     setPricingStatus(prev => ({ ...prev, isLoading: true }));
     
     // Simulate API call
     setTimeout(() => {
-      const pricing = getCurrentPricing();
       setCustomPricing({
         paygo_input: pricing.paygo_input,
         paygo_output: pricing.paygo_output,
@@ -2127,30 +2108,46 @@ AzureMetrics
                 )}
 
                 {/* Current Model Pricing Display */}
-                <Card className="bg-green-50 border-green-200">
+                <Card className={paygoAvailable ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"}>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-medium text-green-800">
-                        {(ptuModels.ptu_supported_models?.[selectedModel]?.name || 'Unknown Model').toString().toUpperCase()} - Official Pricing Available
+                        {(ptuModels.ptu_supported_models?.[selectedModel]?.name || 'Unknown Model').toString().toUpperCase()} - {useCustomPricing ? 'Custom Pricing' : paygoAvailable ? 'Published Pricing Available' : 'PAYGO Pricing Unavailable'}
                       </h3>
-                      <Badge variant="default" className="bg-green-600">Official</Badge>
+                      <Badge variant="default" className={paygoAvailable ? "bg-green-600" : "bg-amber-600"}>
+                        {useCustomPricing ? 'Custom' : !paygoAvailable ? 'Incomplete' : currentPricing.tokenPricing.source === 'live' ? 'Live' : 'Published'}
+                      </Badge>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <strong>Deployment Type:</strong> {selectedDeployment === 'dataZone' ? 'Data Zone' : selectedDeployment === 'regional' ? 'Regional' : 'Global'}
                       </div>
                       <div>
-                        <strong>PAYGO:</strong> ${currentPricing.paygo_input}/1M input tokens
-                        {currentPricing.paygoIsFallback && (
-                          <div className="text-xs text-yellow-700">(PAYGO fallback rates used)</div>
-                        )}
+                        <strong>PAYGO:</strong> {paygoAvailable ? `$${currentPricing.paygo_input}/1M input tokens` : 'Unavailable'}
                       </div>
                       <div>
                         <strong>PTU Hourly:</strong> ${currentPricing.ptu_hourly}/hour per PTU
                       </div>
                       <div>
-                        <strong>Output tokens:</strong> ${currentPricing.paygo_output}/1M ({selectedDeployment === 'dataZone' ? 'Data Zone' : selectedDeployment === 'regional' ? 'Regional' : 'Global'} deployment)
+                        <strong>Output tokens:</strong> {paygoAvailable ? `$${currentPricing.paygo_output}/1M` : 'Unavailable'} ({selectedDeployment === 'dataZone' ? 'Data Zone' : selectedDeployment === 'regional' ? 'Regional' : 'Global'} deployment)
                       </div>
+                      {currentPricing.tokenPricing.context === 'short' && !useCustomPricing && (
+                        <p className="text-sm mt-2">
+                          Short-context, standard PAYGO list prices (USD). Long context, cached input,
+                          cache writes, and Priority Processing rates are not included in this estimate.
+                          {' '}<a className="underline" href={currentPricing.tokenPricing.sourceUrl} target="_blank" rel="noopener noreferrer">Azure pricing source</a>
+                          {currentPricing.tokenPricing.source === 'published'
+                            ? ` (reviewed ${currentPricing.tokenPricing.verifiedAt}).`
+                            : ' (current rates supplied by Azure Retail Prices API).'}
+                        </p>
+                      )}
+                      {!paygoAvailable && (
+                        <p role="alert" className="text-sm text-amber-900 mt-2">
+                          No complete PAYGO rate is available for this model and deployment.
+                          Enter verified input and output rates in Custom Pricing to enable cost comparisons and exports.
+                          No prices from another model or deployment will be substituted.
+                        </p>
+                      )}
                     </div>
                     
                     {/* TASK 2: Official PTU Pricing Structure Display */}
@@ -2181,7 +2178,7 @@ AzureMetrics
                     )}
                     
                     <p className="text-sm text-green-700 mt-2">
-                      Click "Load Official Pricing" to automatically populate the input fields below
+                      Published prices can be loaded into the custom pricing fields below when available.
                     </p>
                   </CardContent>
                 </Card>
@@ -2189,7 +2186,7 @@ AzureMetrics
                 <div className="flex gap-4 mt-4">
                   <Button 
                     onClick={loadOfficialPricing}
-                    disabled={pricingStatus.isLoading}
+                    disabled={pricingStatus.isLoading || !hasTokenPricing(getCurrentPricing(true).tokenPricing)}
                     className="bg-gray-800 hover:bg-gray-700"
                   >
                     {pricingStatus.isLoading ? (
@@ -2214,7 +2211,18 @@ AzureMetrics
                     type="checkbox"
                     id="customPricing"
                     checked={useCustomPricing}
-                    onChange={(e) => setUseCustomPricing(e.target.checked)}
+                    onChange={(e) => {
+                      if (e.target.checked && customPricing.paygo_input === '' && customPricing.paygo_output === '') {
+                        setCustomPricing({
+                          paygo_input: currentPricing.paygo_input ?? '',
+                          paygo_output: currentPricing.paygo_output ?? '',
+                          ptu_hourly: currentPricing.ptu_hourly,
+                          ptu_monthly: currentPricing.ptu_monthly,
+                          ptu_yearly: currentPricing.ptu_yearly
+                        });
+                      }
+                      setUseCustomPricing(e.target.checked);
+                    }}
                     className="rounded"
                   />
                   <Label htmlFor="customPricing" className="text-red-600">
@@ -2227,9 +2235,8 @@ AzureMetrics
                 <Alert className="mt-2 border-red-200 bg-red-50">
                   <Info className="h-4 w-4" />
                   <AlertDescription className="text-red-700">
-                    <strong>Custom Pricing:</strong> Use this section only if you have negotiated rates with Microsoft 
-                    or special enterprise agreements. Default values shown are official Microsoft pricing. 
-                    Custom pricing will override all calculations below.
+                    <strong>Custom Pricing:</strong> Enter your negotiated rates or verified prices when published rates are unavailable.
+                    These user-provided values override the displayed prices, cost comparisons, and exports.
                   </AlertDescription>
                 </Alert>
 
@@ -2241,22 +2248,22 @@ AzureMetrics
                       <Input
                         type="number"
                         step="0.01"
-                        value={customPricing.paygo_input}
+                        value={customPricing.paygo_input ?? ''}
                         onChange={(e) => handleCustomPricingChange('paygo_input', e.target.value)}
-                        placeholder={getTokenPricing(selectedModel, selectedDeployment).input.toString()}
+                        placeholder={getTokenPricing(selectedModel, selectedDeployment).input?.toString() ?? 'Enter verified rate'}
                       />
-                      <p className="text-xs text-red-600 mt-1">Default: ${getTokenPricing(selectedModel, selectedDeployment).input}/M</p>
+                      <p className="text-xs text-red-600 mt-1">Published: {getTokenPricing(selectedModel, selectedDeployment).available ? `$${getTokenPricing(selectedModel, selectedDeployment).input}/M` : 'Unavailable'}</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">PAYGO Output ($/1M tokens)</Label>
                       <Input
                         type="number"
                         step="0.01"
-                        value={customPricing.paygo_output}
+                        value={customPricing.paygo_output ?? ''}
                         onChange={(e) => handleCustomPricingChange('paygo_output', e.target.value)}
-                        placeholder={getTokenPricing(selectedModel, selectedDeployment).output.toString()}
+                        placeholder={getTokenPricing(selectedModel, selectedDeployment).output?.toString() ?? 'Enter verified rate'}
                       />
-                      <p className="text-xs text-red-600 mt-1">Default: ${getTokenPricing(selectedModel, selectedDeployment).output}/M</p>
+                      <p className="text-xs text-red-600 mt-1">Published: {getTokenPricing(selectedModel, selectedDeployment).available ? `$${getTokenPricing(selectedModel, selectedDeployment).output}/M` : 'Unavailable'}</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">PTU Hourly ($/hour)</Label>
@@ -2278,7 +2285,7 @@ AzureMetrics
                         onChange={(e) => handleCustomPricingChange('ptu_monthly', e.target.value)}
                         placeholder="260"
                       />
-                      <p className="text-xs text-red-600 mt-1">Official: $260/month (monthly reservation)</p>
+                      <p className="text-xs text-red-600 mt-1">Published: ${getCurrentPricing(true).ptu_monthly}/month (monthly reservation)</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">PTU Yearly ($/year)</Label>
@@ -2289,13 +2296,14 @@ AzureMetrics
                         onChange={(e) => handleCustomPricingChange('ptu_yearly', e.target.value)}
                         placeholder="2652"
                       />
-                      <p className="text-xs text-red-600 mt-1">Official: $2,652/year (1-year reservation)</p>
+                      <p className="text-xs text-red-600 mt-1">Published: ${getCurrentPricing(true).ptu_yearly}/year (1-year reservation)</p>
                     </div>
                     
                     {/* Task 7: Reset button for custom pricing */}
                     <div className="col-span-full">
                       <Button 
                         variant="outline" 
+                        disabled={!getTokenPricing(selectedModel, selectedDeployment).available}
                         onClick={() => {
                           const official = calculateOfficialPTUPricing(selectedRegion, selectedDeployment);
                           const tokens = getTokenPricing(selectedModel, selectedDeployment);
@@ -2682,7 +2690,7 @@ AzureMetrics
                             </div>
                           </div>
                           <div className="text-xs mt-2 text-blue-700">
-                            <strong>💰 Why it matters:</strong> Input tokens cost ~$0.15/1M, output tokens cost ~$0.60/1M
+                            <strong>💰 Why it matters:</strong> Input and output token prices differ by model and deployment. Use the rates shown above.
                           </div>
                         </div>
                       </div>
@@ -2748,7 +2756,7 @@ AzureMetrics
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <h4 className="font-semibold text-amber-900 mb-1">What is it?</h4>
-                <p className="text-amber-800">Priority Processing provides guaranteed throughput and SLA-backed latency for Azure OpenAI requests. It's a pay-per-token model (like PAYGO) with a ~70% premium, but with performance guarantees.</p>
+                <p className="text-amber-800">Priority Processing provides SLA-backed latency for supported Azure OpenAI requests. It's a pay-per-token option with model-specific pricing; check the official pricing page for availability and rates.</p>
               </div>
               <div>
                 <h4 className="font-semibold text-amber-900 mb-1">When to consider?</h4>
@@ -2762,9 +2770,9 @@ AzureMetrics
               <div>
                 <h4 className="font-semibold text-amber-900 mb-1">Availability</h4>
                 <ul className="text-amber-800 space-y-1">
-                  <li>• <strong>Models:</strong> GPT-5.6 Sol, Terra, Luna, GPT-5.5, 5.4, 5.2, 5.1, and GPT-5</li>
+                  <li>• <strong>Models:</strong> Availability varies by model; verify the official pricing page. GPT-5.6 Luna currently lists Priority Processing as N/A.</li>
                   <li>• <strong>Deployments:</strong> Global Standard, Data Zone Standard</li>
-                  <li>• <strong>Pricing:</strong> ~70% premium over standard PAYGO rates</li>
+                  <li>• <strong>Pricing:</strong> Model-specific rates; not a fixed percentage premium over PAYGO</li>
                 </ul>
                 <a href="https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing"
                    target="_blank" rel="noopener noreferrer"
@@ -2777,7 +2785,7 @@ AzureMetrics
         </Card>
 
         {/* Sticky Executive Summary */}
-        {hasValidData && Object.keys(calculations).length > 0 && (
+        {hasValidData && paygoAvailable && calculations.pricing === currentPricing && calculations.paygoBreakdown && !isCalculating && (
           <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-50/95 to-indigo-50/95 backdrop-blur-sm border border-blue-200 rounded-lg shadow-md p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
@@ -2838,7 +2846,15 @@ AzureMetrics
               </div>
             </CardContent>
           </Card>
-        ) : isCalculating ? (
+        ) : !paygoAvailable ? (
+          <Card className="border-amber-300 bg-amber-50">
+            <CardContent className="p-8">
+              <h3 className="text-xl font-semibold">Cost comparison unavailable</h3>
+              <p>Enter verified custom PAYGO rates for this model and deployment. Savings, recommendations, charts, and exports are withheld rather than calculated from an unrelated price.</p>
+              <p className="mt-2"><strong>PTU sizing:</strong> {calculations.ptuNeeded ?? 'Calculating...'} PTUs. Throughput sizing does not require PAYGO prices.</p>
+            </CardContent>
+          </Card>
+        ) : isCalculating || calculations.pricing !== currentPricing ? (
           <Card className="border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50">
             <CardContent className="p-8 text-center">
               <div className="space-y-4">
