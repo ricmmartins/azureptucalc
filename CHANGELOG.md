@@ -4,13 +4,29 @@ All notable changes to the Microsoft Foundry PTU Calculator are documented in th
 
 ## [Unreleased] - 2026-09-18
 
+### Added
+- Standard/Priority token-mix scenarios with a separately selected Priority share for estimated spillover. Each share applies the same fraction to input and output tokens, not requests; PTU sizing remains unchanged.
+- Latency-aware, qualified PAYGO/PTU/spillover recommendations comparing actual available costs rather than utilization thresholds. PTU labels identify the selected reservation term. A lowest-cost Standard primary/overflow option with latency-critical selected produces a review result with null recommended cost and retains its economic cost leader.
+- CSV/JSON scenario exports include both shares, latency flag, quote sources/context/dates, weighted rates, Standard and 100% Priority baselines, spillover costs and unavailability reasons, and the shared recommendation. Unavailable costs remain null/N/A rather than zero.
+- Preserved both monthly- and 1-year-reservation spillover comparisons in charts, recommendations, and exports. Annual-base and annual-total spillover costs are monthly equivalents; existing monthly-base totals and the shared overflow cost remain unchanged.
+
+### Changed
+- Priority uses verified published rates, never arbitrary premiums or cross-deployment substitutes. Zero percent remains Standard; 100% Priority can price without Standard when Priority is available. Unsupported settings block the relevant calculation without silently resetting shares.
+- Custom token rates remain Standard-only. Mixed scenarios disclose custom Standard plus published Priority; there is no Priority custom-rate UI in this iteration.
+- Priority availability follows [Microsoft Learn](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing), reviewed September 18, 2026: no Regional/EU Data Zone or Luna support; Global Sol/Terra support is verified. Data Zone Sol/Terra prices exist but their absence from the documented availability table keeps these scenarios unavailable.
+- Clarified that Priority can downgrade at ramp limits, peak demand, or applicable long-context limits, and that P99-based spillover extrapolation is a planning approximation, not measured monthly traffic or routing validation.
+- Savings remain the selected PAYGO cost versus the 1-year PTU reservation monthly equivalent, independent of the recommended strategy. Break-even utilization remains based on monthly reservations and is no longer clipped at 100%.
+- Replaced legacy Priority constants in `official_token_pricing.js` with the dedicated `priorityPricing.js` verified-rate and availability module. Long-context billing is not modeled or inferred from short-context rates.
+
 ### Fixed
 - Added verified short-context standard PAYGO list prices (USD per 1M tokens) for GPT-5.6 Sol (Global $5/$30; Data Zone $5.50/$33), Terra (Global $2/$12), and Luna (Global $0.20/$1.20; Data Zone $0.22/$1.32).
 - Removed GPT-4o Mini pricing as a fallback for unknown models and stopped substituting Global prices for deployments without a complete rate. Terra short-context Data Zone is listed as N/A; unlisted Regional PAYGO rates remain unavailable.
 - PAYGO calculations now use the same deployment-specific, live, or custom rates displayed in the UI and included in exports.
-- Missing PAYGO prices now show an explicit unavailable state and withhold financial comparisons and exports while retaining PTU sizing. Custom prices are no longer labeled official.
+- Missing PAYGO prices now show an explicit unavailable state and withhold the affected financial comparisons and exports while retaining PTU sizing. Custom prices are no longer labeled official.
 - Live quotes must match the selected model, region, deployment, and context tier. GPT-5.6 API meters without explicit short-context identification cannot override published short-context prices.
-- Source: [Azure OpenAI pricing](https://azure.microsoft.com/en-us/pricing/details/azure-openai/), reviewed September 18, 2026. Long-context, cached-input, cache-write, and Priority Processing prices are not included in the GPT-5.6 PAYGO estimate.
+- Source: [Azure OpenAI pricing](https://azure.microsoft.com/en-us/pricing/details/azure-openai/), reviewed September 18, 2026. The GPT-5.6 Standard baseline excludes long-context, cached-input, cache-write, and Priority prices; selected Priority scenarios use separate verified published prices.
+- Exports now use the shared recommendation rather than recomputing contradictory generic advice, and map break-even utilization correctly while preserving valid zero values.
+- Spillover base sizing now respects deployment minimums and increments, compares monthly and 1-year reservation terms, and prices estimated overflow with the actual monthly input/output token split.
 - Recalculate previous GPT-5.6 financial analyses: the former $0.15/$0.60 fallback understated PAYGO costs and could distort PTU recommendations. The September 14 throughput correction remains unchanged.
 
 ## 2026-09-14

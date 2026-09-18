@@ -129,13 +129,15 @@ export const SpilloverComparison = ({
   isStreamingWorkload = false,
   hasAPIM = false,
   isLatencyCritical = false,
+  priorityAvailable = false,
+  priorityUnavailableReason = 'Priority availability has not been verified for this configuration.',
   isMultiTenant = false
 }) => {
   const normalizedBurstRatio = Number.isFinite(Number(burstRatio)) ? Number(burstRatio) : 1;
 
   const recommendationId = (() => {
-    if (isStreamingWorkload && isLatencyCritical) {
-      return 'priority';
+    if (isLatencyCritical) {
+      return priorityAvailable ? 'priority' : 'review';
     }
 
     if (isMultiTenant) {
@@ -169,15 +171,15 @@ export const SpilloverComparison = ({
       id: 'priority',
       title: 'PTU → Priority Processing',
       icon: Shield,
-      description: 'Native spillover with latency SLA coverage and streaming continuity.',
+      description: 'Overflow using Priority where the model and location are eligible. Validate latency and streaming behavior.',
       bestFor: 'Latency-critical, streaming',
       link: links[0].href,
       diagram: <PatternTwoDiagram />,
       features: [
-        { label: 'Latency SLA', value: 'Yes (e.g., GPT-5.5: 99% >100 TPS)', supported: true, tone: 'emerald' },
-        { label: 'Mid-stream preservation', value: 'Yes (SSE continues)', supported: true, tone: 'emerald' },
+        { label: 'Latency targets', value: 'Model-specific; conditions and fallback apply', supported: priorityAvailable, tone: 'amber' },
+        { label: 'Mid-stream preservation', value: 'Validate client and routing behavior', supported: false, tone: 'amber' },
         { label: 'Setup complexity', value: '⭐ Simple', tone: 'blue' },
-        { label: 'Cost model', value: 'Pay-per-token (same cost)', tone: 'slate' },
+        { label: 'Cost model', value: 'Separate Priority rates; selected overflow share', tone: 'slate' },
         { label: 'Requires APIM', value: 'No', supported: false, tone: 'slate' },
         { label: 'Circuit breaker', value: 'Native', tone: 'blue' },
         { label: 'Multi-backend routing', value: 'No', supported: false, tone: 'amber' },
@@ -207,13 +209,15 @@ export const SpilloverComparison = ({
 
   const recommendationDetails = {
     paygo: 'Native PTU to PayGo spillover is the easiest default when you mostly need overflow protection with minimal operational overhead.',
-    priority: 'Priority Processing is the best fit for streaming workloads that still need latency guarantees and uninterrupted SSE responses.',
+    priority: 'Evaluate Priority for latency-sensitive overflow. Set its share in the processing controls to include the cost, and validate latency and streaming behavior under load.',
+    review: `Latency review required: ${priorityUnavailableReason} Evaluate an eligible model/location or additional PTU capacity.`,
     apim: hasAPIM
       ? 'APIM AI Gateway is a strong fit when you already have gateway infrastructure and need multi-backend routing or tenant-aware policies.'
       : 'APIM AI Gateway is best for multi-tenant or advanced routing patterns, but it requires APIM deployment and policy management first.'
   };
 
-  const recommendationTitle = comparisonOptions.find((option) => option.id === recommendationId)?.title || 'PTU → PayGo';
+  const recommendationTitle = recommendationId === 'review' ? 'Latency review required'
+    : comparisonOptions.find((option) => option.id === recommendationId)?.title;
 
   return (
     <Card className="border-slate-200">
@@ -227,7 +231,7 @@ export const SpilloverComparison = ({
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge className="bg-green-100 text-green-800">Recommended: {recommendationTitle}</Badge>
+            <Badge className="bg-green-100 text-green-800">Architecture candidate: {recommendationTitle}</Badge>
             {recommendationId === 'apim' && !hasAPIM && (
               <Badge variant="outline" className="border-amber-300 bg-amber-100 text-amber-700">
                 APIM setup required
