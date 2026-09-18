@@ -35,16 +35,25 @@ const InteractiveCharts = ({
   const costComparisonData = useMemo(() => {
     if (!costData) return [];
     const data = [
-      { name: 'PAYGO', cost: costData.paygo || 0, fill: '#3b82f6' },
+      { name: costData.paygoLabel || 'PAYGO Standard', cost: costData.paygo ?? 0, fill: '#3b82f6' },
       { name: 'PTU On-Demand', cost: costData.ptuHourly || 0, fill: '#f59e0b' },
       { name: 'PTU Monthly Res.', cost: costData.ptuMonthly || 0, fill: '#10b981' },
       { name: 'PTU 1-Year Res.', cost: costData.ptuYearly || 0, fill: '#8b5cf6' }
     ];
     if (costData.priority != null && costData.priority > 0) {
-      data.splice(1, 0, { name: 'Priority', cost: costData.priority, fill: '#d97706' });
+      data.splice(1, 0, { name: 'Priority (100% reference)', cost: costData.priority, fill: '#d97706' });
+    }
+    if (costData.standard != null && calculations?.processingScenario?.priorityShare > 0) {
+      data.push({ name: 'Standard (0% Priority)', cost: costData.standard, fill: '#64748b' });
+    }
+    if (costData.spillover != null) {
+      data.push({ name: costData.spilloverLabel, cost: costData.spillover, fill: '#059669' });
+    }
+    if (costData.spilloverYearly != null) {
+      data.push({ name: costData.spilloverYearlyLabel, cost: costData.spilloverYearly, fill: '#047857' });
     }
     return data;
-  }, [costData]);
+  }, [costData, calculations?.processingScenario?.priorityShare]);
 
   // 24-hour utilization pattern scaled to actual user utilization
   const utilizationPattern = useMemo(() => {
@@ -129,7 +138,7 @@ const InteractiveCharts = ({
     return {
       savings: Math.abs(diff),
       ptuWins: diff > 0,
-      savingsLabel: diff > 0 ? 'PTU Savings' : 'PAYGO Advantage',
+      savingsLabel: diff > 0 ? 'PTU Savings vs Selected PAYGO' : 'Selected PAYGO Advantage vs PTU',
       utilization: (calculations?.utilizationRate || 0) * 100,
       burstRatio: calculations?.burstRatio || 1.0,
       peakRatio: calculations?.peakRatio || 1.0,
@@ -148,7 +157,8 @@ const InteractiveCharts = ({
           <CardTitle>Interactive Analytics Dashboard</CardTitle>
         </div>
         <CardDescription>
-          Visualizations derived from your actual usage data and cost calculations
+          Selected PAYGO mix: {calculations?.processingScenario?.priorityShare ?? 0}% Priority.
+          {' '}Priority reference series assumes 100%; spillover uses its separately selected share.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -283,7 +293,8 @@ const InteractiveCharts = ({
             <div>
               <h3 className="text-lg font-semibold mb-1">12-Month Cost Projection</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Pay-per-token costs (PAYGO{costData?.priority != null && costData.priority > 0 ? ', Priority Processing' : ''}) grow at 1% monthly as usage scales. PTU reservations remain fixed — this shows when the crossover point may occur.
+                Selected PAYGO mix costs grow at an assumed 1% monthly, with a fixed Priority share.
+                The Priority reference uses 100%. PTU reservations remain fixed; this projection does not validate latency.
               </p>
 
               <ResponsiveContainer width="100%" height={300}>
@@ -296,9 +307,9 @@ const InteractiveCharts = ({
                     labelStyle={{ color: '#374151' }}
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="PAYGO" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="PAYGO" name={costData?.paygoLabel || 'PAYGO Standard'} stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
                   {costData?.priority != null && costData.priority > 0 && (
-                    <Line type="monotone" dataKey="Priority" stroke="#d97706" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="5 3" />
+                    <Line type="monotone" dataKey="Priority" name="Priority (100% reference)" stroke="#d97706" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="5 3" />
                   )}
                   <Line type="monotone" dataKey="PTU Monthly Res." stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
                   <Line type="monotone" dataKey="PTU 1-Year Res." stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} />

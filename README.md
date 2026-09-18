@@ -20,7 +20,7 @@
 ### Pricing & Cost Analysis
 - **Live Azure pricing** — fetches real-time rates from the [Azure Retail Prices API](https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices) with intelligent fallback
 - **5 pricing tiers compared** — PAYGO, PTU On-Demand, PTU Monthly Reserved, PTU 1-Year Reserved, and Spillover (hybrid) model
-- **Priority Processing (GA)** — new pay-per-token tier with SLA-backed latency guarantees
+- **Priority Processing scenarios** — choose the Priority share of input and output tokens using verified published rates; compare Standard, mixed, and 100% Priority PAYGO
 - **Deployment-aware pricing** — Global, Data Zone, and Regional deployments with correct per-deployment rates
 
 ### Models & Usage
@@ -31,7 +31,7 @@
 - **Spillover strategy** — reserve base PTUs for average usage, let burst traffic spill over to PAYGO
 
 ### Smart Analysis
-- **Context-aware recommendations** — PAYGO, Full PTU, or Spillover based on utilization rate and cost comparison
+- **Latency-aware recommendations** — compare actual costs across selected PAYGO, PTU terms, and available spillover; qualify the lowest-cost option for latency instead of applying utilization thresholds
 - **Break-even analysis** — shows when PTU becomes cost-effective vs PAYGO
 - **Burst pattern detection** — identifies usage spikes and sizing implications
 - **Interactive cost comparison chart** with all tiers visualized
@@ -58,12 +58,28 @@
 
 The calculator resolves PAYGO pricing in this order:
 
-1. **Custom Override** — user-entered rates (for enterprise/negotiated pricing)
+1. **Custom Override** — user-entered Standard rates (for enterprise/negotiated pricing); not a Priority override
 2. **Live Azure API** — a complete quote matching the model, region, deployment, and applicable context tier, via a Vercel serverless proxy (`api/azure-pricing.js`)
 3. **Published Rates** — curated rates for the exact model and deployment from the Azure pricing page
-4. **Unavailable** — retain PTU sizing but withhold financial comparisons and exports until verified custom rates are entered; never substitute another model's price
+4. **Unavailable** — retain PTU sizing but block calculations that require missing or unsupported prices; never substitute another model or deployment's price or silently reset the selected shares
 
-GPT-5.6 PAYGO rates cover **short-context standard pricing**, not long-context, cache, or Priority Processing billing. See the [price scope and missing-rate guidance](docs/USER_GUIDE.md#paygo-price-scope-and-missing-rates).
+GPT-5.6 Standard PAYGO rates cover **short-context pricing**, not long-context or cache billing. Priority uses separately verified published input/output prices, never an arbitrary premium or cross-deployment fallback. See the [price scope and missing-rate guidance](docs/USER_GUIDE.md#paygo-price-scope-and-missing-rates).
+
+### Standard / Priority scenarios
+
+- **Priority token share** applies the same percentage to input **and** output tokens, not to requests. For example, 25% prices one quarter of each token category at Priority rates and the remainder at Standard rates. PTU sizing is unchanged.
+- **0% remains Standard**. **100% Priority** can be priced without a Standard quote when a supported Priority quote is available. Intermediate mixes need both quotes.
+- **Spillover Priority share** is selected separately for the estimated PAYGO overflow; it does not inherit the main PAYGO mix.
+- Custom pricing remains **Standard only**. A mixed scenario can combine custom Standard with published Priority, with both sources disclosed. There is no Priority custom-rate UI in this iteration.
+- Availability follows [Microsoft Learn Priority Processing](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing), reviewed September 18, 2026: no Regional or EU Data Zone support; GPT-5.6 Luna is unsupported; Global Sol/Terra support is verified. Published Data Zone Sol/Terra rates do not establish availability: these models are omitted from the Data Zone availability table, so the calculator fails closed.
+- Priority may downgrade to Standard at ramp limits, peak demand, or applicable long-context limits. A latency-critical choice produces qualified recommendations, not a blanket SLA or routing guarantee.
+- Spillover compares monthly and 1-year reserved PTU bases rounded to the model/deployment minimum and increment, plus the same estimated overflow priced using the actual monthly input/output token split and its separately selected Priority share. Annual-base costs are shown as monthly equivalents. The **P99-based extrapolation is a planning approximation**, not measured monthly overflow traffic or validation of routing/service-tier delivery.
+
+The recommendation compares actual available costs for selected PAYGO, PTU on-demand, monthly and 1-year reservations, and spillover with either reservation term. PTU and spillover labels identify the selected term (for example, **PTU Monthly Reservation** or **PTU 1-Year Reservation**). If the lowest-cost option includes Standard processing in its primary PAYGO mix or spillover overflow while latency-critical is selected, the result requires **review**: its recommended monthly cost is `null`, while its economic cost leader is retained.
+
+**Savings** remain the selected PAYGO cost versus the **1-year PTU reservation monthly equivalent**, not savings from whichever strategy is recommended. **Break-even utilization** continues to compare against the **monthly PTU reservation** and is not clipped at 100%; a higher result means the estimated break-even point exceeds that capacity.
+
+CSV/JSON reports preserve the selected shares, latency flag, quote sources/context/dates, weighted rates, available baselines, spillover estimate, and the same recommendation shown in the calculator. Unavailable costs remain `null` in JSON and `N/A` in CSV, not zero.
 
 Live pricing is **cached for 3 hours** and includes:
 - PTU hourly on-demand rates per deployment type
@@ -124,6 +140,17 @@ npm run dev
 # Visit http://localhost:5173
 ```
 
+### Validate Changes
+
+Run unit tests with `npm run test:ci`. To validate Priority processing scenarios in the browser, build the app first, then run the Node test runner:
+
+```powershell
+npm run build
+node --test tests\priority-processing.browser.mjs
+```
+
+The browser tests use Playwright and Vite preview. On Windows, they use installed Microsoft Edge (`msedge`) if bundled Chromium is unavailable. Set `PLAYWRIGHT_CHANNEL` to override the browser channel.
+
 ### Deploy to Vercel (Recommended)
 1. Fork or clone this repo
 2. Go to [vercel.com](https://vercel.com), import your repo, and click **Deploy**
@@ -157,7 +184,8 @@ azureptucalc/
 │   │   └── RightSizeWizard.jsx       # 4-step PTU right-sizing wizard
 │   ├── enhanced_pricing_service.js   # Pricing API client with cache & fallback
 │   ├── officialPTUPricing.js         # Official PTU rates & reservation overrides
-│   ├── official_token_pricing.js     # PAYGO & Priority Processing rates
+│   ├── official_token_pricing.js     # Standard PAYGO rates
+│   ├── priorityPricing.js            # Verified Priority rates and availability
 │   ├── enhanced_model_config.json    # PTU sizing definitions
 │   ├── ptu_supported_models.json     # Model support matrix
 │   ├── external_pricing_config.json  # Fallback pricing config
@@ -240,7 +268,7 @@ Global (multi-region, lowest cost), Data Zone (EU/US data residency), and Region
 Reserve base PTUs for average usage, let burst traffic spill over to PAYGO. Ideal for predictable baselines with occasional spikes (2–5× average).
 
 **What is Priority Processing?**
-A GA pay-per-token option with SLA-backed low-latency guarantees. Available for select models on Global and Data Zone deployments. Pricing varies by model.
+A pay-per-token option with model-specific latency targets, available only for documented Global and US Data Zone model/region combinations. Priority can downgrade to Standard at ramp, peak-demand, or long-context limits; it is not a blanket SLA guarantee. Pricing uses verified published rates for the selected deployment.
 
 **Is my data secure?**
 All calculations happen in your browser. No usage data is sent to external servers. The app only fetches public Azure pricing information.

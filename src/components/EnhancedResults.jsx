@@ -36,13 +36,16 @@ export const EnhancedResults = ({ results, onExport }) => {
   const recommendation = results.recommendation || 'PAYGO';
 
   const getSavingsBadge = () => {
-    if (recommendation === 'PAYGO') {
+    if (results.recommendationDetails?.requiresReview) {
+      return <Badge className="bg-yellow-100 text-yellow-800">Latency review required</Badge>;
+    }
+    if (results.recommendationDetails?.strategy === 'paygo') {
       const paygoAdvantage = Math.abs(monthlySavings);
       if (paygoAdvantage > 1000) return <Badge className="bg-blue-100 text-blue-800">PAYGO Best Value</Badge>;
       if (paygoAdvantage > 100) return <Badge className="bg-blue-100 text-blue-800">PAYGO Recommended</Badge>;
       return <Badge className="bg-yellow-100 text-yellow-800">Near Break-Even</Badge>;
     }
-    if (recommendation === 'Full PTU Reservation') {
+    if (results.recommendationDetails?.strategy === 'ptu') {
       if (monthlySavings > 1000) return <Badge className="bg-green-100 text-green-800">Significant PTU Savings</Badge>;
       if (monthlySavings > 100) return <Badge className="bg-green-100 text-green-800">PTU Cost-Effective</Badge>;
       return <Badge className="bg-yellow-100 text-yellow-800">Moderate Savings</Badge>;
@@ -72,13 +75,13 @@ export const EnhancedResults = ({ results, onExport }) => {
                     <TrendingDown className="h-5 w-5 text-green-600" /> :
                     <DollarSign className="h-5 w-5 text-blue-600" />
                   }
-                  <span className="font-medium">{monthlySavings >= 0 ? 'PTU Savings' : 'PAYGO Advantage'}</span>
+                  <span className="font-medium">{monthlySavings >= 0 ? '1-Year PTU Savings' : 'Selected PAYGO Advantage'}</span>
                 </div>
                 <div className={`text-2xl font-bold ${monthlySavings >= 0 ? 'text-green-700' : 'text-blue-700'}`}>
                   {formatCurrency(Math.abs(monthlySavings))}
                 </div>
                 <div className={`text-sm ${monthlySavings >= 0 ? 'text-green-600' : 'text-blue-600'}`}>
-                  {monthlySavings >= 0 ? 'saved vs PAYGO' : 'cheaper than PTU'}
+                  {monthlySavings >= 0 ? 'vs selected PAYGO mix' : 'vs 1-year PTU monthly equivalent'}
                 </div>
               </div>
               
@@ -104,7 +107,7 @@ export const EnhancedResults = ({ results, onExport }) => {
                   {formatCurrency(Math.abs(monthlySavings) * 12)}
                 </div>
                 <div className="text-sm text-purple-600">
-                  {monthlySavings >= 0 ? 'projected savings' : 'PAYGO annual advantage'}
+                  {monthlySavings >= 0 ? '1-year PTU vs selected PAYGO mix' : 'selected PAYGO vs 1-year PTU'}
                 </div>
               </div>
             </div>
@@ -114,6 +117,11 @@ export const EnhancedResults = ({ results, onExport }) => {
                 {results.recommendationIcon || '📊'} Smart Recommendation
               </h4>
               <p className="text-sm text-gray-600">{results.recommendationReason || 'Enter usage data to see recommendations.'}</p>
+              <p className="text-sm text-gray-600 mt-2">
+                PAYGO mix: {results.processingScenario?.priorityShare ?? 0}% Priority.
+                {' '}Spillover mix: {results.processingScenario?.spilloverPriorityShare ?? 0}% Priority.
+                {' '}Savings above compare the selected PAYGO mix with a 1-year PTU reservation; they are not a latency guarantee.
+              </p>
             </div>
             
             <div className="flex gap-2 mt-4">
@@ -149,12 +157,12 @@ export const EnhancedResults = ({ results, onExport }) => {
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                <span className="text-sm font-medium">PAYGO Monthly</span>
+                <span className="text-sm font-medium">Selected PAYGO mix ({results.processingScenario?.priorityShare ?? 0}% Priority)</span>
                 <span className="font-semibold">{formatCurrency(results.monthlyPaygoCost)}</span>
               </div>
               {results.isPrioritySupported && results.monthlyPriorityCost > 0 && (
                 <div className="flex justify-between items-center p-2 bg-amber-50 rounded">
-                  <span className="text-sm font-medium">Priority Processing</span>
+                  <span className="text-sm font-medium">Priority Processing (100% reference)</span>
                   <span className="font-semibold">{formatCurrency(results.monthlyPriorityCost)}</span>
                 </div>
               )}
@@ -170,12 +178,19 @@ export const EnhancedResults = ({ results, onExport }) => {
                 <span className="text-sm font-medium">PTU 1-Year Reservation</span>
                 <span className="font-semibold">{formatCurrency(results.yearlyReservationMonthly)}</span>
               </div>
-              {results.hybridTotalCost > 0 && (
+              {results.hybridTotalCost != null && (
                 <div className="flex justify-between items-center p-2 bg-purple-50 rounded">
-                  <span className="text-sm font-medium">Spillover Model</span>
+                  <span className="text-sm font-medium">Spillover, monthly base ({results.processingScenario?.spilloverPriorityShare ?? 0}% Priority)</span>
                   <span className="font-semibold">{formatCurrency(results.hybridTotalCost)}</span>
                 </div>
               )}
+              {results.hybridYearlyTotalCost != null && (
+                <div className="flex justify-between items-center p-2 bg-purple-50 rounded">
+                  <span className="text-sm font-medium">Spillover, 1-year base ({results.processingScenario?.spilloverPriorityShare ?? 0}% Priority)</span>
+                  <span className="font-semibold">{formatCurrency(results.hybridYearlyTotalCost)}</span>
+                </div>
+              )}
+              {results.spilloverUnavailableReason && <p role="alert">Spillover unavailable: {results.spilloverUnavailableReason}</p>}
             </div>
           </CardContent>
         )}

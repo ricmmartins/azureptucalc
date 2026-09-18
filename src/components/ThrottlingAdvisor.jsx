@@ -123,6 +123,7 @@ const ThrottlingAdvisor = ({
   burstRatio: burstRatioProp,
   hasRetryLogic = false,
   hasSpillover = false,
+  priorityAvailable = false,
   usagePattern,
 }) => {
   const safePTUCount = Math.max(0, toNumber(ptuCount, 4));
@@ -185,7 +186,7 @@ const ThrottlingAdvisor = ({
       title: 'Enable spillover',
       addressed: hasSpillover,
       description: hasSpillover ? 'Active ✅' : 'Not configured ⚠️',
-      impact: 'Burst traffic routes to PayGo/Priority Processing automatically',
+      impact: priorityAvailable ? 'Configure overflow routing to Standard or Priority processing' : 'Configure overflow routing to Standard processing',
     },
     {
       title: 'Utilization headroom',
@@ -197,7 +198,9 @@ const ThrottlingAdvisor = ({
       title: 'Burst pattern',
       addressed: burstAddressed,
       description: `${formatNumber(safeBurstRatio, 1)}x burst ratio (${resolvedUsagePattern})`,
-      impact: safeBurstRatio > 3 ? 'Consider Priority Processing spillover' : 'Within normal range',
+      impact: safeBurstRatio > 3
+        ? priorityAvailable ? 'Evaluate spillover; sharp ramps can downgrade Priority requests' : 'Evaluate Standard spillover or additional PTU capacity'
+        : 'Within normal range',
     },
   ];
 
@@ -206,7 +209,9 @@ const ThrottlingAdvisor = ({
       key: 'spillover',
       title: 'Enable spillover for overflow bursts',
       needed: !hasSpillover,
-      detail: 'Route overflow TPM to PayGo or Priority Processing instead of hard-failing on the PTU deployment.',
+      detail: priorityAvailable
+        ? 'Configure overflow to Standard or eligible Priority processing. Include the selected tier in the cost estimate.'
+        : 'Configure Standard overflow or evaluate an eligible model/location before considering Priority.',
       estimate: calculateRisk({
         ptuCount: safePTUCount,
         tokensPerPTU: safeTokensPerPTU,
@@ -272,7 +277,7 @@ const ThrottlingAdvisor = ({
     },
     {
       key: 'burst',
-      title: 'Smooth burst patterns or reserve Priority capacity',
+      title: 'Smooth burst patterns or add PTU headroom',
       needed: !burstAddressed,
       detail: 'Queue, batch, or spill the sharpest spikes so peak TPM lands closer to your steady-state rate.',
       estimate: calculateRisk({

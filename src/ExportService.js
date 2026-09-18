@@ -20,13 +20,24 @@ export class ExportService {
       throughputNeeded,
       ptuCostCalculation,
       paygCostCalculation,
-      breakEvenAnalysis,
+      breakEvenAnalysis = {},
       customPricing,
       validationWarnings,
-      outputWeighting
+      outputWeighting,
+      processingScenario,
+      scenarioAnalysis
     } = calculationData;
 
     const reportTimestamp = new Date().toISOString();
+    const breakEven = scenarioAnalysis?.breakEvenAnalysis ?? breakEvenAnalysis;
+    const recommendationDetails = scenarioAnalysis?.recommendationDetails;
+    const comparisonPtuCost = scenarioAnalysis
+      ? scenarioAnalysis.yearlyReservationMonthly ?? null
+      : ptuCostCalculation.monthly;
+    const selectedPaygoCost = paygCostCalculation.total ?? null;
+    const comparisonDifference = comparisonPtuCost == null || selectedPaygoCost == null
+      ? null
+      : comparisonPtuCost - selectedPaygoCost;
 
     this.reportData = {
       metadata: {
@@ -44,6 +55,7 @@ export class ExportService {
         requiredThroughput: throughputNeeded,
         customPricing: customPricing?.enabled || false,
         paygoPricing: paygCostCalculation.pricing,
+        processingScenario,
         outputWeighting: outputWeighting ? {
           outputWeight: outputWeighting.outputWeight,
           rawAvgTPM: outputWeighting.rawAvgTPM,
@@ -71,24 +83,51 @@ export class ExportService {
             pricePer1M: paygCostCalculation.outputPricePerK,
             usage: paygCostCalculation.outputTokens
           },
-          total: paygCostCalculation.total
+          total: selectedPaygoCost
         },
+        baselines: scenarioAnalysis ? {
+          monthlyStandardCost: scenarioAnalysis.monthlyStandardCost ?? null,
+          monthlyPriorityCost: scenarioAnalysis.monthlyPriorityCost ?? null,
+          yearlyReservationMonthly: scenarioAnalysis.yearlyReservationMonthly ?? null,
+          monthlyPtuReservationCost: scenarioAnalysis.monthlyPtuReservationCost ?? null
+        } : undefined,
+        spillover: scenarioAnalysis ? {
+          priorityShare: processingScenario?.spilloverPriorityShare ?? null,
+          basePTU: scenarioAnalysis.hybridBasePTU ?? null,
+          baseCost: scenarioAnalysis.hybridBaseCost ?? null,
+          yearlyBaseCost: scenarioAnalysis.hybridYearlyBaseCost ?? null,
+          overflowCost: scenarioAnalysis.hybridOverflowCost ?? null,
+          total: scenarioAnalysis.hybridTotalCost ?? null,
+          yearlyTotalCost: scenarioAnalysis.hybridYearlyTotalCost ?? null,
+          unavailableReason: scenarioAnalysis.spilloverUnavailableReason ?? null,
+          assumption: 'P99-based extrapolation is a planning approximation, not measured monthly traffic or validation of routing.'
+        } : undefined,
         breakEven: {
-          breakEvenPTUs: breakEvenAnalysis.breakEvenPTUs,
-          breakEvenTPM: breakEvenAnalysis.breakEvenTPM,
-          utilizationAtBreakEven: breakEvenAnalysis.utilizationAtBreakEven
+          ...breakEven,
+          utilizationAtBreakEven: breakEven.utilizationAtBreakEven ?? breakEven.breakEvenUtilization ?? null
         }
       },
       analysis: {
+        recommendationDetails,
         costComparison: {
           ptuVsPayg: {
+            ptuBasis: scenarioAnalysis ? '1-year reservation monthly equivalent' : 'Monthly PTU cost',
             monthly: {
-              ptu: ptuCostCalculation.monthly,
-              payg: paygCostCalculation.total,
-              difference: ptuCostCalculation.monthly - paygCostCalculation.total,
-              percentageDifference: paygCostCalculation.total ? ((ptuCostCalculation.monthly - paygCostCalculation.total) / paygCostCalculation.total * 100).toFixed(1) : "N/A"
+              ptu: comparisonPtuCost,
+              payg: selectedPaygoCost,
+              difference: comparisonDifference,
+              percentageDifference: comparisonDifference != null && selectedPaygoCost
+                ? (comparisonDifference / selectedPaygoCost * 100).toFixed(1) : "N/A"
             }
-          }
+          },
+          selected: recommendationDetails ? {
+            strategy: recommendationDetails.strategy,
+            label: recommendationDetails.label,
+            monthlyCost: recommendationDetails.monthlyCost ?? null,
+            monthlySavings: scenarioAnalysis.monthlySavings ?? null,
+            costLeader: recommendationDetails.costLeader,
+            requiresReview: recommendationDetails.requiresReview
+          } : undefined
         },
         throughputAnalysis: {
           ptuThroughput: this.calculatePTUThroughput(model, ptuCount),
@@ -124,6 +163,11 @@ export class ExportService {
     }
 
     const csvRows = [];
+    const csvCell = value => {
+      const text = String(value ?? 'N/A');
+      return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const addRow = (...values) => csvRows.push(values.map(csvCell).join(','));
 
     // Header
     csvRows.push('Azure PTU Cost Analysis Report');
@@ -140,11 +184,34 @@ export class ExportService {
     csvRows.push(`Usage Scenario,${this.reportData.configuration.usageScenario}`);
     const pricing = this.reportData.configuration.paygoPricing;
     if (pricing) {
-      csvRows.push(`PAYGO Price Source,${pricing.source}`);
-      csvRows.push(`PAYGO Context,${pricing.context || 'User-provided or model default'}`);
-      if (pricing.sourceUrl) csvRows.push(`PAYGO Reference,${pricing.sourceUrl}`);
+      addRow('PAYGO Price Source', pricing.source);
+      addRow('PAYGO Context', pricing.context ?? 'User-provided or model default');
+      if (pricing.sourceUrl) addRow('PAYGO Reference', pricing.sourceUrl);
     }
     csvRows.push('');
+
+    const scenario = this.reportData.configuration.processingScenario;
+    if (scenario) {
+      csvRows.push('PROCESSING SCENARIO');
+      csvRows.push('Field,Value');
+      addRow('Priority Token Share (%)', scenario.priorityShare);
+      addRow('Spillover Priority Token Share (%)', scenario.spilloverPriorityShare);
+      addRow('Latency Critical', scenario.isLatencyCritical);
+      addRow('Processing Assumption', scenario.assumption);
+      for (const [tier, quote] of [['Standard', scenario.standardPricing], ['Priority', scenario.priorityPricing]]) {
+        addRow(`${tier} Available`, quote?.available ?? false);
+        addRow(`${tier} Price Source`, quote?.source);
+        addRow(`${tier} Context`, quote?.context);
+        addRow(`${tier} Price Date`, quote?.verifiedAt ?? quote?.asOf);
+        addRow(`${tier} Reference`, quote?.sourceUrl);
+        addRow(`${tier} Input Price per 1M`, quote?.input);
+        addRow(`${tier} Output Price per 1M`, quote?.output);
+        addRow(`${tier} Unavailable Reason`, quote?.reason);
+      }
+      addRow('Weighted Input Price per 1M', this.reportData.costBreakdown.payg.inputTokens.pricePer1M);
+      addRow('Weighted Output Price per 1M', this.reportData.costBreakdown.payg.outputTokens.pricePer1M);
+      csvRows.push('');
+    }
 
     // Output Token Weighting
     if (this.reportData.configuration.outputWeighting) {
@@ -170,24 +237,60 @@ export class ExportService {
 
     csvRows.push('PAY-AS-YOU-GO COSTS');
     csvRows.push('Token Type,Usage,Price per 1M,Total Cost (USD)');
-    csvRows.push(`Input,${this.reportData.costBreakdown.payg.inputTokens.usage},${this.reportData.costBreakdown.payg.inputTokens.pricePer1M},${this.reportData.costBreakdown.payg.inputTokens.cost}`);
-    csvRows.push(`Output,${this.reportData.costBreakdown.payg.outputTokens.usage},${this.reportData.costBreakdown.payg.outputTokens.pricePer1M},${this.reportData.costBreakdown.payg.outputTokens.cost}`);
-    csvRows.push(`Total,,,$${this.reportData.costBreakdown.payg.total}`);
+    addRow('Input', this.reportData.costBreakdown.payg.inputTokens.usage, this.reportData.costBreakdown.payg.inputTokens.pricePer1M, this.reportData.costBreakdown.payg.inputTokens.cost);
+    addRow('Output', this.reportData.costBreakdown.payg.outputTokens.usage, this.reportData.costBreakdown.payg.outputTokens.pricePer1M, this.reportData.costBreakdown.payg.outputTokens.cost);
+    addRow('Total', '', '', this.reportData.costBreakdown.payg.total != null ? `$${this.reportData.costBreakdown.payg.total}` : null);
     csvRows.push('');
+
+    const baselines = this.reportData.costBreakdown.baselines;
+    if (baselines) {
+      csvRows.push('SCENARIO MONTHLY COSTS');
+      csvRows.push('Field,Value');
+      addRow('Standard Baseline Cost', baselines.monthlyStandardCost);
+      addRow('100% Priority Baseline Cost', baselines.monthlyPriorityCost);
+      addRow('Selected PAYGO Cost', this.reportData.costBreakdown.payg.total);
+      addRow('PTU 1-Year Reservation Monthly Equivalent', baselines.yearlyReservationMonthly);
+      addRow('PTU Monthly Reservation Cost', baselines.monthlyPtuReservationCost);
+      const spillover = this.reportData.costBreakdown.spillover;
+      addRow('Spillover Base PTUs', spillover.basePTU);
+      addRow('Spillover Base Cost', spillover.baseCost);
+      addRow('Spillover 1-Year Base Monthly Equivalent', spillover.yearlyBaseCost);
+      addRow('Spillover Overflow Cost', spillover.overflowCost);
+      addRow('Spillover Total Cost', spillover.total);
+      addRow('Spillover 1-Year Total Monthly Equivalent', spillover.yearlyTotalCost);
+      addRow('Spillover Unavailable Reason', spillover.unavailableReason);
+      addRow('Spillover Assumption', spillover.assumption);
+      csvRows.push('');
+    }
 
     // Break-even Analysis
     csvRows.push('BREAK-EVEN ANALYSIS');
     csvRows.push('Metric,Value');
-    csvRows.push(`Break-Even PTUs,${this.reportData.costBreakdown.breakEven.breakEvenPTUs || 'N/A'}`);
-    csvRows.push(`Break-Even TPM,${this.reportData.costBreakdown.breakEven.breakEvenTPM || 'N/A'}`);
-    csvRows.push(`Utilization at Break-Even,${this.reportData.costBreakdown.breakEven.utilizationAtBreakEven ? (this.reportData.costBreakdown.breakEven.utilizationAtBreakEven * 100).toFixed(1) + '%' : 'N/A'}`);
+    addRow('Break-Even PTUs', this.reportData.costBreakdown.breakEven.breakEvenPTUs);
+    addRow('Break-Even TPM', this.reportData.costBreakdown.breakEven.breakEvenTPM);
+    const utilization = this.reportData.costBreakdown.breakEven.utilizationAtBreakEven;
+    addRow('Utilization at Break-Even', utilization != null ? (utilization * 100).toFixed(1) + '%' : 'N/A');
     csvRows.push('');
 
     // Analysis
     csvRows.push('COST COMPARISON');
     csvRows.push('Model,PTU Monthly,PAYG Monthly,Difference,Percentage');
     const comparison = this.reportData.analysis.costComparison.ptuVsPayg.monthly;
-    csvRows.push(`${this.reportData.configuration.model},${comparison.ptu},${comparison.payg},${comparison.difference},${comparison.percentageDifference}%`);
+    addRow(this.reportData.configuration.model, comparison.ptu, comparison.payg, comparison.difference,
+      comparison.percentageDifference === 'N/A' ? 'N/A' : `${comparison.percentageDifference}%`);
+    addRow('PTU Comparison Basis', this.reportData.analysis.costComparison.ptuVsPayg.ptuBasis);
+    const recommendation = this.reportData.analysis.recommendationDetails;
+    if (recommendation) {
+      addRow('Recommended Strategy', recommendation.strategy);
+      addRow('Recommendation Label', recommendation.label);
+      addRow('Recommendation Reason', recommendation.reason);
+      addRow('Recommendation Monthly Cost', recommendation.monthlyCost);
+      addRow('Recommendation Requires Review', recommendation.requiresReview);
+      addRow('Cost Leader', recommendation.costLeader);
+      addRow('Monthly Savings', this.reportData.analysis.costComparison.selected.monthlySavings);
+      recommendation.nextSteps?.forEach(step => addRow('Next Step', step));
+      recommendation.considerations?.forEach(consideration => addRow('Consideration', consideration));
+    }
     csvRows.push('');
 
     // Warnings
@@ -195,7 +298,7 @@ export class ExportService {
       csvRows.push('WARNINGS');
       csvRows.push('Warning');
       this.reportData.analysis.warnings.forEach(warning => {
-        csvRows.push(`"${warning}"`);
+        addRow(warning);
       });
       csvRows.push('');
     }
@@ -204,7 +307,7 @@ export class ExportService {
     csvRows.push('RECOMMENDATIONS');
     csvRows.push('Recommendation');
     this.reportData.analysis.recommendations.forEach(rec => {
-      csvRows.push(`"${rec}"`);
+      addRow(rec);
     });
 
     return csvRows.join('\n');
@@ -246,8 +349,8 @@ export class ExportService {
     const summary = {
       configuration: `${this.reportData.configuration.model} (${this.reportData.configuration.ptuCount} PTU) in ${this.reportData.configuration.region}`,
       ptuCost: `$${this.reportData.costBreakdown.ptu.monthly}/month`,
-      paygCost: `$${this.reportData.costBreakdown.payg.total}/month`,
-      recommendation: this.reportData.costBreakdown.breakEven.recommendation,
+      paygCost: this.reportData.costBreakdown.payg.total != null ? `$${this.reportData.costBreakdown.payg.total}/month` : 'Unavailable',
+      recommendation: this.reportData.analysis.recommendationDetails?.label ?? this.reportData.costBreakdown.breakEven.recommendation,
       breakEvenTokens: this.reportData.costBreakdown.breakEven.monthlyTokensNeeded,
       warnings: this.reportData.analysis.warnings.length,
       generatedAt: new Date(this.reportData.metadata.generatedAt).toLocaleString()
@@ -285,6 +388,15 @@ export class ExportService {
   }
 
   generateRecommendations(calculationData) {
+    const sharedRecommendation = calculationData.scenarioAnalysis?.recommendationDetails;
+    if (sharedRecommendation) {
+      return [
+        sharedRecommendation.label,
+        sharedRecommendation.reason,
+        ...(sharedRecommendation.nextSteps ?? []),
+        ...(sharedRecommendation.considerations ?? [])
+      ].filter(value => value != null && value !== '');
+    }
     const recommendations = [];
     const { ptuCostCalculation, paygCostCalculation, ptuCount, model } = calculationData;
 

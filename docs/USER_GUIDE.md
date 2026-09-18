@@ -69,9 +69,21 @@ GPT-5.6 estimates use **short-context standard PAYGO list prices in USD per mill
 | GPT-5.6 Terra | $2 / $12 | Not available |
 | GPT-5.6 Luna | $0.20 / $1.20 | $0.22 / $1.32 |
 
-Long-context, cached-input, cache-write, and Priority Processing prices are **not included** in these GPT-5.6 PAYGO estimates. The cache-rate control adjusts PTU capacity utilization, not PAYGO billing discounts.
+The table above is the **Standard** baseline. Long-context, cached-input, and cache-write billing are not included. Selecting a Priority share uses separate verified published Priority prices. The cache-rate control adjusts PTU capacity utilization, not PAYGO billing discounts.
 
-Prices are never borrowed from another model or deployment. If a complete rate is unavailable (including unlisted GPT-5.6 Regional PAYGO rates), the calculator retains PTU sizing but withholds financial comparisons, recommendations, and exports. Enter verified input and output prices under **Use Custom Pricing** to enable those calculations. The same resolved prices are used in the display, cost breakdown, and exports; custom values are labeled **Custom**, not official.
+Prices are never borrowed from another model or deployment, and Priority prices are never estimated by applying an arbitrary premium. Missing or unsupported prices block the relevant calculation, not PTU sizing; the calculator does not silently reset either selected share. For missing **Standard** prices (including unlisted GPT-5.6 Regional rates), enter verified input and output prices under **Use Custom Pricing**. This does not make an unsupported Priority scenario available. Custom values are labeled **Custom**, not official.
+
+#### Choose the processing scenario
+
+Set the **Priority token share** and indicate whether the workload is **latency-critical**. The percentage applies equally to **input and output tokens**, not to the percentage of requests. A 25% share prices 25% of input tokens and 25% of output tokens at Priority rates; the other 75% uses Standard rates. Each effective rate is `(1 - share) × Standard rate + share × Priority rate`, with share expressed as a fraction.
+
+- **0%** is Standard-only and requires no Priority quote.
+- **100%** is Priority-only and can be priced without a Standard quote when Priority is available.
+- Between those endpoints, both rates must be available for the selected model, region, deployment, and context.
+- **Spillover Priority share** is an independent setting for estimated PAYGO overflow; changing the main share does not change it.
+- Custom pricing overrides **Standard only**. Mixed scenarios disclose custom Standard plus published Priority; this iteration has no Priority custom-pricing UI.
+
+These controls affect token costs and recommendation qualifications, **not PTU throughput, output weighting, minimums, increments, or sizing**.
 
 Recalculate older GPT-5.6 financial analyses: missing prices previously fell back to GPT-4o Mini's $0.15/$0.60, understating PAYGO costs.
 
@@ -111,7 +123,10 @@ Results appear in four tabs:
 #### Cost Analysis Tab
 - **Cost comparison cards** - PAYGO, PTU On-Demand, PTU Monthly Reserved, PTU 1-Year Reserved, and Priority Processing (when available)
 - **Interactive chart** - visual comparison of all pricing tiers
-- **Recommendation** - context-aware suggestion (PAYGO, Full PTU, or Spillover)
+- **Recommendation** - compares actual available costs for the selected PAYGO mix, PTU on-demand, monthly and 1-year reservations, and spillover with either reservation term; it does not select a strategy using utilization thresholds. PTU and spillover results identify the term, such as **PTU Monthly Reservation** or **PTU 1-Year Reservation**.
+- **Latency review** - when latency-critical is selected and the lowest-cost option includes Standard processing in the primary PAYGO mix or spillover overflow, the result requires review. Its recommended monthly cost is `null`, while the economic cost leader is retained. Priority-only scenarios still carry downgrade and validation qualifications.
+- **Savings** - selected PAYGO cost minus the **1-year PTU reservation monthly equivalent**. This comparison is independent of the recommended strategy; it is not claimed savings for a recommended monthly reservation or spillover.
+- **Break-even utilization** - based on the **monthly PTU reservation**, not the annual-equivalent savings comparison. The value is not clipped at 100%; a higher figure indicates that the estimated break-even point exceeds the selected capacity.
 
 #### Usage Patterns Tab
 - **Reservation savings opportunity** - Monthly vs 1-Year reservation comparison
@@ -139,7 +154,7 @@ Results appear in four tabs:
 | **PTU Monthly** | 1-month reservation (~64% off on-demand) | Steady usage, no long commitment |
 | **PTU 1-Year** | 1-year reservation (~70% off on-demand) | Predictable, high-volume workloads |
 | **Spillover** | Base PTUs + PAYGO overflow | Predictable baseline with occasional bursts |
-| **Priority Processing** | PAYGO with SLA-backed latency | Latency-sensitive production apps |
+| **Priority Processing** | PAYGO with model-specific latency targets and downgrade limitations | Eligible latency-sensitive workloads, subject to validation |
 
 > **Note:** Azure does not offer a 3-year PTU reservation.
 
@@ -150,28 +165,37 @@ Results appear in four tabs:
 - **Guided Tour** - click "Quick Tour" for an interactive walkthrough
 - **User Guide** — click the "User Guide" link in the footer for comprehensive documentation
 
+CSV and JSON use the same computed recommendation as the primary result, including its selected PTU term where applicable, label, reason, monthly cost, and review flag. They also include the two Priority token shares, latency-critical flag, Standard/Priority quote sources, context, price dates, published rates, selected weighted rates, Standard and 100% Priority monthly baselines, and estimated spillover costs. Unavailable costs are **`null` in JSON and `N/A` in CSV**, not zero. A valid zero cost remains zero. The PTU economic comparison and savings use the 1-year reservation monthly equivalent when scenario analysis is supplied; break-even remains based on the monthly reservation.
+
+In JSON, `costBreakdown.spillover.baseCost` and `.total` retain the **monthly-reservation base** comparison. `.yearlyBaseCost` and `.yearlyTotalCost` contain the **1-year-reservation monthly equivalents**, with the same `.overflowCost` added to either base. The recommended monthly cost can select either term; its explicit label identifies which. CSV includes both term comparisons.
+
 ---
 
 ## Spillover Strategy
 
 The spillover (hybrid) model combines PTU reservations with PAYGO overflow:
 
-1. **Set base PTUs** for your average usage (use AvgPTU from KQL)
-2. **Burst traffic** automatically spills over to PAYGO rates
+1. **Set base PTUs** for your average usage (use AvgPTU from KQL), rounded to the selected model/deployment minimum and increment; compare monthly-reservation cost with the 1-year-reservation monthly equivalent
+2. **Estimate PAYGO overflow** using the actual monthly input/output token split and its separately selected Priority token share
 3. **Best for** workloads with predictable baseline + occasional 2-5x spikes
 
-Example: Need 2 PTU average, 8 PTU peaks. Reserve 2-3 PTUs, let extra 5-6 PTUs use PAYGO.
+For example, a 17-PTU average requirement with a 15-PTU minimum and 5-PTU increment yields a 20-PTU base, not a 17-PTU reservation. Estimated excess usage is priced separately; the model's capacity parameters are unchanged.
+
+The calculator's existing P99-based monthly extrapolation is a **planning approximation**, not measured monthly burst traffic. It does not establish how many requests will overflow, configure spillover, validate a routing architecture, or guarantee the delivered service tier. Confirm routing support and measure actual overflow before using the estimate for a purchasing decision. If the selected overflow mix is unsupported, that spillover cost is unavailable even when the main PAYGO calculation is available.
 
 ---
 
 ## Priority Processing
 
-A GA pay-per-token option with SLA-backed low-latency guarantees:
+A pay-per-token option with model-specific latency targets, not a blanket latency SLA or guaranteed throughput promise. Availability was checked against [Microsoft Learn](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing) on **September 18, 2026**:
 
-- **Supported models:** GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.2, GPT-5.1, GPT-4.1, GPT-4.1 Mini
-- **Deployments:** Global Standard, Data Zone Standard only
-- **Pricing:** varies by model (approximately 70% premium over standard PAYGO)
-- **When to use:** latency-sensitive production apps needing guaranteed throughput
+- **Global Standard:** GPT-5.6 Sol and Terra support is verified, alongside the documented GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.2, GPT-5.1, and GPT-4.1 models. Availability still depends on the exact region and model.
+- **Data Zone Standard:** only documented US model/region combinations are eligible. Sol/Terra Data Zone **prices exist**, but these models are omitted from the availability table; the calculator fails closed rather than treating a listed price as deployment support.
+- **Unsupported:** Regional Standard, EU Data Zone Standard, and GPT-5.6 Luna. GPT-4.1 Mini is not on the documented Priority support list.
+- **Pricing:** independently published model/deployment/context-specific input and output rates; no generic premium, no cross-deployment borrowing. This iteration does not model long-context billing or infer a long-context rate from the short-context quote.
+- **Downgrades:** Priority requests may be processed and billed as Standard at ramp-rate limits, peak demand, or applicable long-context limits. Monitor the response service tier and actual latency rather than assuming every requested Priority token receives Priority service.
+
+For latency-critical workloads, use the recommendation's qualifications, next steps, and review flag. The lowest estimated bill alone does not validate latency, capacity, spillover routing, or Priority delivery.
 
 ---
 
@@ -179,10 +203,12 @@ A GA pay-per-token option with SLA-backed low-latency guarantees:
 
 The calculator uses a **4-tier pricing priority system**:
 
-1. **Custom Override** - your own rates (for enterprise/negotiated pricing)
+1. **Custom Override** - your own Standard rates (for enterprise/negotiated pricing)
 2. **Live Azure API** - real-time from Azure Retail Prices API via a Vercel serverless proxy
 3. **Official Hardcoded** - curated rates from Microsoft documentation
-4. **Fallback** - conservative estimates when all else fails
+4. **Unavailable** - block the relevant calculation when no complete, supported quote exists
+
+Priority uses verified published rates and availability checks separately; Custom Standard rates do not override Priority.
 
 Live pricing is cached for 3 hours. All calculations happen in your browser.
 
@@ -234,7 +260,7 @@ AzureMetrics
 - **Always verify** - compare calculator results with the [official Azure pricing page](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/) before purchasing
 - **Don't forget burst patterns** - use P99 or Max TPM for sizing, not just average
 - **Consider spillover** - for bursty workloads, hybrid is often cheaper than sizing PTUs for peak
-- **Check utilization** - PTU is typically cost-effective above 60% utilization; below that, PAYGO wins
+- **Check actual costs** - compare the selected PAYGO mix, available PTU terms, and spillover estimate; utilization is a capacity signal, not a universal cost threshold
 - **Prevent 429 errors proactively** — use the Optimization tab to analyze your request shape, implement proper retry logic, and compare spillover architectures
 
 ---

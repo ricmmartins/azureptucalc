@@ -17,7 +17,9 @@ import AzureOpenAIPricingService from "./enhanced_pricing_service.js";
 import enhancedModelConfig from "./enhanced_model_config.json";
 import correctedPricingData from './corrected_pricing_data.json';
 import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTUPricing.js";
-import { getTokenPricing, resolveTokenPricing, hasTokenPricing, calculatePAYGCost, PRIORITY_PROCESSING_PRICING, PRIORITY_PROCESSING_DEPLOYMENTS } from "./official_token_pricing.js";
+import { getTokenPricing, resolveTokenPricing, hasTokenPricing } from "./official_token_pricing.js";
+import { getPriorityPricing, calculateMixedTokenCost } from './priorityPricing.js';
+import { getProcessingRecommendation, getPaygoLabel, PROCESSING_ASSUMPTION, PRIORITY_CAVEAT, SPILLOVER_ASSUMPTION } from './processingRecommendation.js';
 import { REGION_MODEL_AVAILABILITY, getRegionsByZone, isGovernmentRegion, getGovernmentAvailableModels } from "./regionModelAvailability.js";
 import ExternalPricingService from './ExternalPricingService.js';
 import ExportService from './ExportService.js';
@@ -73,6 +75,10 @@ function App() {
   const [selectedDeployment, setSelectedDeployment] = useState('global');
   const [useCustomPricing, setUseCustomPricing] = useState(false);
   const [isGovernmentRegionSelected, setIsGovernmentRegionSelected] = useState(false);
+  const [processingInputs, setProcessingInputs] = useState({
+    priorityShare: 0,
+    spilloverPriorityShare: 0
+  });
   
   // KQL form data - ALL VALUES SET TO 0 EXCEPT MONTHLY MINUTES
   const [formData, setFormData] = useState({
@@ -375,6 +381,21 @@ function App() {
     customPricing, livePricingData, isLoadingLivePricing
   ]);
   const paygoAvailable = hasTokenPricing(currentPricing.tokenPricing);
+  const priorityPricing = useMemo(
+    () => getPriorityPricing(selectedModel, selectedDeployment, selectedRegion),
+    [selectedModel, selectedDeployment, selectedRegion]
+  );
+  const scenarioPricing = useMemo(() => calculateMixedTokenCost({
+    inputMillions: 0,
+    outputMillions: 0,
+    priorityShare: processingInputs.priorityShare,
+    standardPricing: currentPricing.tokenPricing,
+    priorityPricing
+  }), [processingInputs.priorityShare, currentPricing, priorityPricing]);
+  const calculationKey = useMemo(() => ({
+    formData, currentPricing, priorityPricing, processingInputs,
+    isLatencyCritical: optimizationInputs.isLatencyCritical
+  }), [formData, currentPricing, priorityPricing, processingInputs, optimizationInputs.isLatencyCritical]);
   
   const [calculations, setCalculations] = useState({});
   const [pricingStatus, setPricingStatus] = useState({
@@ -888,37 +909,32 @@ Check browser console for detailed error information.`);
       ? manualPTU < enhancedPTUData.minPTU 
       : enhancedPTUData.isUsingMinimum;
 
-    if (!paygoAvailable) {
-      setCalculations({ ptuNeeded, enhancedPTUData, isUsingMinimum, pricing: currentPricing });
+    if (!scenarioPricing.available) {
+      setCalculations({ ptuNeeded, enhancedPTUData, isUsingMinimum, pricing: currentPricing, calculationKey });
       setIsCalculating(false);
       return;
     }
     
-    // Monthly calculations
-    // Task 3: Enhanced PAYG calculation using official token pricing
-    let monthlyTokens, monthlyPaygoCost, paygoBreakdown;
-    
-    if (formData.inputTokensMonthly > 0 || formData.outputTokensMonthly > 0) {
-      // Use explicit input/output token counts if provided
-      const inputTokensInMillions = formData.inputTokensMonthly / 1000000;
-      const outputTokensInMillions = formData.outputTokensMonthly / 1000000;
-      paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions, selectedDeployment, currentPricing.tokenPricing);
-      monthlyPaygoCost = paygoBreakdown.totalCost;
-      monthlyTokens = (formData.inputTokensMonthly + formData.outputTokensMonthly) / 1000000;
-    } else if (effectiveInputTPM > 0 || effectiveOutputTPM > 0) {
-      // Derive from resolved input/output TPM (separate or ratio-split)
-      const inputTokensMonthly = effectiveInputTPM * formData.monthlyMinutes;
-      const outputTokensMonthly = effectiveOutputTPM * formData.monthlyMinutes;
-      monthlyTokens = (inputTokensMonthly + outputTokensMonthly) / 1000000;
-      const inputTokensInMillions = inputTokensMonthly / 1000000;
-      const outputTokensInMillions = outputTokensMonthly / 1000000;
-      paygoBreakdown = calculatePAYGCost(selectedModel, inputTokensInMillions, outputTokensInMillions, selectedDeployment, currentPricing.tokenPricing);
-      monthlyPaygoCost = paygoBreakdown.totalCost;
-    } else {
-      monthlyTokens = 0;
-      monthlyPaygoCost = 0;
-      paygoBreakdown = calculatePAYGCost(selectedModel, 0, 0, selectedDeployment, currentPricing.tokenPricing);
-    }
+    const hasMonthlyTokens = formData.inputTokensMonthly > 0 || formData.outputTokensMonthly > 0;
+    const inputMillions = (hasMonthlyTokens ? formData.inputTokensMonthly : effectiveInputTPM * formData.monthlyMinutes) / 1000000;
+    const outputMillions = (hasMonthlyTokens ? formData.outputTokensMonthly : effectiveOutputTPM * formData.monthlyMinutes) / 1000000;
+    const tokenCostInputs = { inputMillions, outputMillions, standardPricing: currentPricing.tokenPricing, priorityPricing };
+    const paygoBreakdown = calculateMixedTokenCost({ ...tokenCostInputs, priorityShare: processingInputs.priorityShare });
+    const standardBreakdown = calculateMixedTokenCost({ ...tokenCostInputs, priorityShare: 0 });
+    const priorityBreakdown = calculateMixedTokenCost({ ...tokenCostInputs, priorityShare: 100 });
+    const monthlyTokens = inputMillions + outputMillions;
+    const monthlyPaygoCost = paygoBreakdown.totalCost;
+    const monthlyStandardCost = standardBreakdown.totalCost;
+    const monthlyPriorityCost = priorityBreakdown.totalCost;
+    const isPrioritySupported = priorityPricing.available;
+    const inputFraction = monthlyTokens > 0 ? inputMillions / monthlyTokens : formData.inputOutputRatio;
+    const processingScenario = {
+      ...processingInputs,
+      isLatencyCritical: optimizationInputs.isLatencyCritical,
+      standardPricing: currentPricing.tokenPricing,
+      priorityPricing,
+      assumption: PROCESSING_ASSUMPTION
+    };
   // Use official Azure convention: 730 hours/month
   const monthlyPtuCost = ptuNeeded * currentPricing.ptu_hourly * 730;
     const monthlyPtuHourlyCost = monthlyPtuCost;
@@ -953,7 +969,7 @@ Check browser console for detailed error information.`);
         ? Math.ceil(monthlyPaygoCost / currentPricing.ptu_monthly)
         : 0;
       
-      return { breakEvenPTUs, breakEvenUtilization: Math.min(breakEvenUtilization, 2.0), isPTUCheaper };
+      return { breakEvenPTUs, breakEvenUtilization, isPTUCheaper };
     })();
     
     // Cost per 1M tokens
@@ -973,64 +989,44 @@ Check browser console for detailed error information.`);
     const monthlySavings = monthlyPaygoCost - yearlyReservationMonthly;
     
     // Spillover model calculations — use normalized TPM for overflow comparison
-    const hybridBasePTU = Math.ceil(formData.basePTUs || formData.avgPTU || ptuNeeded || 1);
+    const hybridBasePTU = Math.max(enhancedPTUData.minPTU, Math.ceil(
+      (formData.basePTUs || formData.avgPTU || ptuNeeded) / enhancedPTUData.increment
+    ) * enhancedPTUData.increment);
     // Normalize p99TPM for spillover overflow comparison
-    const p99InputTPM = (formData.p99TPM || 0) * formData.inputOutputRatio;
-    const p99OutputTPM = (formData.p99TPM || 0) * (1 - formData.inputOutputRatio);
+    const p99InputTPM = (formData.p99TPM || rawAvgTPM) * inputFraction;
+    const p99OutputTPM = (formData.p99TPM || rawAvgTPM) * (1 - inputFraction);
     const normalizedP99TPM = normalizeTPM(p99InputTPM, p99OutputTPM, outputWeight);
     const hybridOverflowTPM = Math.max(0, normalizedP99TPM - (hybridBasePTU * currentPricing.tokensPerPTUPerMinute));
     // Convert normalized overflow back to raw tokens for PAYGO cost
     // Reverse of normalization: rawTPM = normalizedTPM / [inputRatio×(1-cacheRate) + outputWeight×(1-inputRatio)]
     const cacheRate = formData.cacheRate || 0;
-    const denormFactor = (formData.inputOutputRatio * (1 - cacheRate)) + (outputWeight * (1 - formData.inputOutputRatio));
+    const denormFactor = (inputFraction * (1 - cacheRate)) + (outputWeight * (1 - inputFraction));
     const overflowRawTPM = denormFactor > 0 ? hybridOverflowTPM / denormFactor : hybridOverflowTPM;
     const hybridOverflowTokensMonthly = (overflowRawTPM * formData.monthlyMinutes) / 1000000;
-    const hybridOverflowCost = (hybridOverflowTokensMonthly * formData.inputOutputRatio * currentPricing.paygo_input) + (hybridOverflowTokensMonthly * (1 - formData.inputOutputRatio) * currentPricing.paygo_output);
+    const spilloverBreakdown = calculateMixedTokenCost({
+      ...tokenCostInputs,
+      inputMillions: hybridOverflowTokensMonthly * inputFraction,
+      outputMillions: hybridOverflowTokensMonthly * (1 - inputFraction),
+      priorityShare: processingInputs.spilloverPriorityShare
+    });
+    const hybridOverflowCost = spilloverBreakdown.totalCost;
     const hybridBaseCost = hybridBasePTU * currentPricing.ptu_monthly;
-    const hybridTotalCost = hybridBaseCost + hybridOverflowCost;
-    
-    // Priority Processing calculations (MUST be before recommendation logic)
-    const priorityPricing = PRIORITY_PROCESSING_PRICING[selectedModel];
-    const isPrioritySupported = !!priorityPricing?.supported && typeof priorityPricing?.input === 'number' && typeof priorityPricing?.output === 'number' && PRIORITY_PROCESSING_DEPLOYMENTS.includes(selectedDeployment);
-    let monthlyPriorityCost = 0;
-    let priorityBreakdown = null;
-    if (isPrioritySupported && monthlyTokens > 0) {
-      // Use resolved input/output split for priority cost (more accurate than ratio alone)
-      const inputFraction = (effectiveInputTPM + effectiveOutputTPM) > 0 ? effectiveInputTPM / (effectiveInputTPM + effectiveOutputTPM) : formData.inputOutputRatio;
-      const inputTokensM = monthlyTokens * inputFraction;
-      const outputTokensM = monthlyTokens * (1 - inputFraction);
-      const inputCost = inputTokensM * priorityPricing.input;
-      const outputCost = outputTokensM * priorityPricing.output;
-      monthlyPriorityCost = inputCost + outputCost;
-      priorityBreakdown = {
-        inputCost,
-        outputCost,
-        totalCost: monthlyPriorityCost,
-        pricing: { input: priorityPricing.input, output: priorityPricing.output }
-      };
-    }
-
-    // Recommendation logic (uses isPrioritySupported from above)
-    let recommendation = 'PAYGO';
-    let recommendationReason = 'Very low utilization. PTU reservations would be cost-ineffective. Stick with PAYGO for maximum flexibility.';
-    let recommendationIcon = '❌';
-    
-    const priorityNote = isPrioritySupported ? ' Priority Processing is also available for this model if you need SLA-backed low-latency guarantees.' : '';
-    
-    // Base recommendation on actual cost comparison and utilization
-    if (monthlyPtuReservationCost < monthlyPaygoCost && utilizationRate > 0.6) {
-      recommendation = 'Full PTU Reservation';
-      recommendationReason = 'High utilization with significant cost savings. PTU reservations offer substantial monthly savings.' + priorityNote;
-      recommendationIcon = '✅';
-    } else if (monthlyPtuReservationCost < monthlyPaygoCost && utilizationRate > 0.2) {
-      recommendation = 'Consider Spillover Model';
-      recommendationReason = 'Moderate utilization with some cost benefits. Hybrid approach balances cost savings and flexibility.' + priorityNote;
-      recommendationIcon = '⚠️';
-    } else if (utilizationRate < 0.2) {
-      recommendation = 'PAYGO';
-      recommendationReason = 'Low utilization makes PTU cost-ineffective. PAYGO provides better value for variable workloads.' + (isPrioritySupported ? ' Consider Priority Processing if you need guaranteed low-latency with pay-per-token flexibility.' : '');
-      recommendationIcon = '❌';
-    }
+    const hybridTotalCost = spilloverBreakdown.available ? hybridBaseCost + hybridOverflowCost : null;
+    const hybridYearlyBaseCost = hybridBasePTU * currentPricing.ptu_yearly / 12;
+    const hybridYearlyTotalCost = spilloverBreakdown.available ? hybridYearlyBaseCost + hybridOverflowCost : null;
+    const recommendationDetails = getProcessingRecommendation({
+      monthlyPaygoCost, monthlyPtuReservationCost, yearlyReservationMonthly, hybridTotalCost, hybridYearlyTotalCost,
+      ...processingInputs, isLatencyCritical: optimizationInputs.isLatencyCritical,
+      priorityAvailable: isPrioritySupported
+    });
+    const recommendation = recommendationDetails.label;
+    const recommendationReason = recommendationDetails.reason;
+    const recommendationIcon = recommendationDetails.requiresReview ? '⚠️' : '✅';
+    const validationWarnings = [
+      PROCESSING_ASSUMPTION, SPILLOVER_ASSUMPTION,
+      ...(processingInputs.priorityShare > 0 || processingInputs.spilloverPriorityShare > 0 || optimizationInputs.isLatencyCritical ? [PRIORITY_CAVEAT] : []),
+      ...(!spilloverBreakdown.available ? [spilloverBreakdown.reason] : [])
+    ];
     
     // FIXED: Dynamic pattern classification
     let usagePattern = 'Steady';
@@ -1048,17 +1044,27 @@ Check browser console for detailed error information.`);
 
     // Chart data
     const chartData = [
-      { name: 'PAYGO', cost: monthlyPaygoCost },
-      ...(isPrioritySupported ? [{ name: 'Priority', cost: monthlyPriorityCost }] : []),
+      { name: getPaygoLabel(processingInputs.priorityShare), cost: monthlyPaygoCost },
+      ...(processingInputs.priorityShare > 0 && standardBreakdown.available ? [{ name: 'Standard (0% Priority)', cost: monthlyStandardCost }] : []),
+      ...(isPrioritySupported && processingInputs.priorityShare < 100 ? [{ name: 'Priority (100%)', cost: monthlyPriorityCost }] : []),
       { name: 'PTU (On-Demand)', cost: monthlyPtuCost },
       { name: 'PTU (Monthly)', cost: monthlyPtuReservationCost },
       { name: 'PTU (1-Year)', cost: yearlyReservationMonthly },
-      { name: 'Spillover', cost: hybridTotalCost },
-      { name: 'Spillover (Res)', cost: hybridBasePTU * (currentPricing.ptu_yearly / 12) + hybridOverflowCost }
+      ...(spilloverBreakdown.available ? [
+        { name: `Spillover monthly (${processingInputs.spilloverPriorityShare}% Priority)`, cost: hybridTotalCost },
+        { name: `Spillover 1-year (${processingInputs.spilloverPriorityShare}% Priority)`, cost: hybridYearlyTotalCost }
+      ] : [])
     ];
     
     setCalculations({
       pricing: currentPricing,
+      calculationKey,
+      processingScenario,
+      recommendationDetails,
+      validationWarnings,
+      spilloverUnavailableReason: spilloverBreakdown.reason,
+      spilloverBreakdown,
+      monthlyStandardCost,
       enhancedPTUData,
       burstRatio,
       peakRatio,
@@ -1096,6 +1102,8 @@ Check browser console for detailed error information.`);
       hybridOverflowCost,
       hybridBaseCost,
       hybridTotalCost,
+      hybridYearlyBaseCost,
+      hybridYearlyTotalCost,
       chartData,
       // Priority Processing
       isPrioritySupported,
@@ -1128,16 +1136,16 @@ Check browser console for detailed error information.`);
         setIsCalculating(false);
       } catch (error) {
         console.error('Calculation error:', error);
-        setCalculations(prev => ({ 
-          ...prev, 
+        setCalculations({
+          calculationKey,
           exportError: 'Calculation failed. Please check your inputs.' 
-        }));
+        });
         setIsCalculating(false);
       }
     }, 100); // Small delay to allow UI to update
 
     return () => clearTimeout(calculateAsync);
-  }, [formData, currentPricing, hasValidData, selectedModel, selectedDeployment, paygoAvailable]);
+  }, [formData, currentPricing, hasValidData, selectedModel, selectedDeployment, scenarioPricing, priorityPricing, processingInputs, optimizationInputs.isLatencyCritical, calculationKey]);
 
   // Pricing validation effect - temporarily disabled
   // Handle form input changes
@@ -1162,9 +1170,10 @@ Check browser console for detailed error information.`);
   };
 
   // Task 10: Export functionality handlers
-  const handleExportCSV = () => {
-    try {
-      if (!paygoAvailable || calculations.pricing !== currentPricing) throw new Error('Current pricing must be available and calculated before exporting.');
+  const buildExportReport = () => {
+      if (!scenarioPricing.available || calculations.calculationKey !== calculationKey || !calculations.paygoBreakdown || isCalculating) {
+        throw new Error('The selected processing scenario must be available and calculated before exporting.');
+      }
       const reportData = {
         model: selectedModel,
         region: selectedRegion,
@@ -1198,6 +1207,23 @@ Check browser console for detailed error information.`);
         breakEvenAnalysis: calculations.breakEvenAnalysis || {},
         customPricing: { enabled: useCustomPricing },
         validationWarnings: calculations.validationWarnings || [],
+        processingScenario: calculations.processingScenario,
+        scenarioAnalysis: {
+          monthlyStandardCost: calculations.monthlyStandardCost,
+          monthlyPriorityCost: calculations.monthlyPriorityCost,
+          hybridBasePTU: calculations.hybridBasePTU,
+          hybridBaseCost: calculations.hybridBaseCost,
+          hybridOverflowCost: calculations.hybridOverflowCost,
+          hybridTotalCost: calculations.hybridTotalCost,
+          hybridYearlyBaseCost: calculations.hybridYearlyBaseCost,
+          hybridYearlyTotalCost: calculations.hybridYearlyTotalCost,
+          spilloverUnavailableReason: calculations.spilloverUnavailableReason,
+          recommendationDetails: calculations.recommendationDetails,
+          monthlySavings: calculations.monthlySavings,
+          yearlyReservationMonthly: calculations.yearlyReservationMonthly,
+          monthlyPtuReservationCost: calculations.monthlyPtuReservationCost,
+          breakEvenAnalysis: calculations.breakEvenAnalysis
+        },
         outputWeighting: {
           outputWeight: calculations.outputWeight || 1,
           rawAvgTPM: calculations.rawAvgTPM,
@@ -1208,13 +1234,18 @@ Check browser console for detailed error information.`);
         }
       };
       
-      exportService.generateReport(reportData);
+      return reportData;
+  };
+
+  const handleExportCSV = () => {
+    try {
+      exportService.generateReport(buildExportReport());
       exportService.downloadCSV();
     } catch (error) {
       console.error('Export CSV failed:', error);
       setCalculations(prev => ({
         ...prev, 
-        exportError: 'Failed to export CSV. Please try again.' 
+        exportError: error.message
       }));
     }
   };
@@ -1225,57 +1256,13 @@ Check browser console for detailed error information.`);
 
   const handleExportJSON = () => {
     try {
-      if (!paygoAvailable || calculations.pricing !== currentPricing) throw new Error('Current pricing must be available and calculated before exporting.');
-      const reportData = {
-        model: selectedModel,
-        region: selectedRegion,
-        deployment: selectedDeployment,
-        ptuCount: calculations.ptuNeeded || 0,
-        usageScenario: calculations.usagePattern || 'Unknown',
-        throughputNeeded: calculations.normalizedAvgTPM || formData.avgTPM,
-        ptuCostCalculation: {
-          hourly: calculations.monthlyPtuHourlyCost / 730,
-          monthly: calculations.monthlyPtuCost,
-          yearly: calculations.yearlyReservationMonthly * 12,
-          yearlyDiscount: currentPricing.officialPricing?.discount?.yearlyVsHourly || 0
-        },
-        paygCostCalculation: (() => {
-          const bd = calculations.paygoBreakdown;
-          return bd ? {
-            pricing: bd.pricing,
-            inputCost: bd.inputCost,
-            outputCost: bd.outputCost,
-            total: bd.totalCost,
-            inputTokens: bd.breakdown?.inputTokens ?? formData.inputTokensMonthly,
-            outputTokens: bd.breakdown?.outputTokens ?? formData.outputTokensMonthly,
-            inputPricePerK: bd.breakdown?.inputRate ?? 0,
-            outputPricePerK: bd.breakdown?.outputRate ?? 0
-          } : {
-            inputCost: 0, outputCost: 0, total: calculations.monthlyPaygoCost,
-            inputTokens: formData.inputTokensMonthly, outputTokens: formData.outputTokensMonthly,
-            inputPricePerK: 0, outputPricePerK: 0
-          };
-        })(),
-        breakEvenAnalysis: calculations.breakEvenAnalysis || {},
-        customPricing: { enabled: useCustomPricing },
-        validationWarnings: calculations.validationWarnings || [],
-        outputWeighting: {
-          outputWeight: calculations.outputWeight || 1,
-          rawAvgTPM: calculations.rawAvgTPM,
-          normalizedAvgTPM: calculations.normalizedAvgTPM,
-          tpmSource: calculations.tpmSource,
-          resolvedInputTPM: calculations.effectiveInputTPM,
-          resolvedOutputTPM: calculations.effectiveOutputTPM
-        }
-      };
-      
-      exportService.generateReport(reportData);
+      exportService.generateReport(buildExportReport());
       exportService.downloadJSON();
     } catch (error) {
       console.error('Export JSON failed:', error);
       setCalculations(prev => ({ 
         ...prev, 
-        exportError: 'Failed to export JSON. Please try again.' 
+        exportError: error.message
       }));
     }
   };
@@ -2134,7 +2121,8 @@ AzureMetrics
                       {currentPricing.tokenPricing.context === 'short' && !useCustomPricing && (
                         <p className="text-sm mt-2">
                           Short-context, standard PAYGO list prices (USD). Long context, cached input,
-                          cache writes, and Priority Processing rates are not included in this estimate.
+                          cache writes, and Priority Processing are not included in these Standard rates.
+                          The processing controls below apply Priority rates separately.
                           {' '}<a className="underline" href={currentPricing.tokenPricing.sourceUrl} target="_blank" rel="noopener noreferrer">Azure pricing source</a>
                           {currentPricing.tokenPricing.source === 'published'
                             ? ` (reviewed ${currentPricing.tokenPricing.verifiedAt}).`
@@ -2144,7 +2132,7 @@ AzureMetrics
                       {!paygoAvailable && (
                         <p role="alert" className="text-sm text-amber-900 mt-2">
                           No complete PAYGO rate is available for this model and deployment.
-                          Enter verified input and output rates in Custom Pricing to enable cost comparisons and exports.
+                          Enter verified Standard rates in Custom Pricing, or select 100% Priority below if available.
                           No prices from another model or deployment will be substituted.
                         </p>
                       )}
@@ -2236,7 +2224,8 @@ AzureMetrics
                   <Info className="h-4 w-4" />
                   <AlertDescription className="text-red-700">
                     <strong>Custom Pricing:</strong> Enter your negotiated rates or verified prices when published rates are unavailable.
-                    These user-provided values override the displayed prices, cost comparisons, and exports.
+                    Custom token rates apply to Standard processing only. Priority uses published rates.
+                    Cost comparisons and exports use the selected mix of those two sources.
                   </AlertDescription>
                 </Alert>
 
@@ -2244,8 +2233,9 @@ AzureMetrics
                 {useCustomPricing && (
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <div>
-                      <Label className="text-sm font-medium">PAYGO Input ($/1M tokens)</Label>
+                      <Label htmlFor="customStandardInput" className="text-sm font-medium">Standard Input ($/1M tokens)</Label>
                       <Input
+                        id="customStandardInput"
                         type="number"
                         step="0.01"
                         value={customPricing.paygo_input ?? ''}
@@ -2255,8 +2245,9 @@ AzureMetrics
                       <p className="text-xs text-red-600 mt-1">Published: {getTokenPricing(selectedModel, selectedDeployment).available ? `$${getTokenPricing(selectedModel, selectedDeployment).input}/M` : 'Unavailable'}</p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium">PAYGO Output ($/1M tokens)</Label>
+                      <Label htmlFor="customStandardOutput" className="text-sm font-medium">Standard Output ($/1M tokens)</Label>
                       <Input
+                        id="customStandardOutput"
                         type="number"
                         step="0.01"
                         value={customPricing.paygo_output ?? ''}
@@ -2741,28 +2732,91 @@ AzureMetrics
         </Card>
 
 
-        {/* Priority Processing Information — always visible */}
+        {/* Processing choices remain available even when the selected tier cannot be priced. */}
         <Card className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-amber-600" />
-              <CardTitle className="text-amber-900">Priority Processing (GA)</CardTitle>
+              <CardTitle className="text-amber-900">Processing and latency requirements</CardTitle>
             </div>
             <CardDescription className="text-amber-700">
-              A new pay-per-token option with SLA-backed low-latency guarantees
+              Choose the Standard/Priority token mix used in the cost comparison and recommendation.
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="space-y-4 mb-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  id="latencyCritical"
+                  type="checkbox"
+                  checked={optimizationInputs.isLatencyCritical}
+                  onChange={(e) => setOptimizationInputs(prev => ({ ...prev, isLatencyCritical: e.target.checked }))}
+                />
+                <span>Latency-sensitive workload</span>
+              </label>
+              <p className="text-sm">
+                Production does not automatically require Priority. This flag qualifies the recommendation;
+                it does not change your selected percentages or guarantee a latency target.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="priorityShare">PAYGO Priority token share: {processingInputs.priorityShare}%</Label>
+                  <input
+                    id="priorityShare"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    className="w-full"
+                    value={processingInputs.priorityShare}
+                    onChange={(e) => setProcessingInputs(prev => ({ ...prev, priorityShare: Number(e.target.value) }))}
+                    aria-describedby="processingAssumption"
+                  />
+                  <p className="text-sm">{100 - processingInputs.priorityShare}% Standard / {processingInputs.priorityShare}% Priority</p>
+                </div>
+                <div>
+                  <Label htmlFor="spilloverPriorityShare">Spillover Priority token share: {processingInputs.spilloverPriorityShare}%</Label>
+                  <input
+                    id="spilloverPriorityShare"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    className="w-full"
+                    value={processingInputs.spilloverPriorityShare}
+                    onChange={(e) => setProcessingInputs(prev => ({ ...prev, spilloverPriorityShare: Number(e.target.value) }))}
+                    aria-describedby="processingAssumption"
+                  />
+                  <p className="text-sm">Applies only to overflow beyond the base PTUs, not the PTU traffic.</p>
+                </div>
+              </div>
+              <p id="processingAssumption" className="text-sm">{PROCESSING_ASSUMPTION}</p>
+              <p className="text-sm">{SPILLOVER_ASSUMPTION}</p>
+              {priorityPricing.available ? (
+                <p className="text-sm" data-testid="priority-availability">
+                  Priority rates: ${priorityPricing.input}/1M input and ${priorityPricing.output}/1M output.
+                  {' '}<a className="underline" href={priorityPricing.sourceUrl} target="_blank" rel="noopener noreferrer">Published pricing</a>
+                  {' '}(reviewed {priorityPricing.verifiedAt}; {priorityPricing.context} context).
+                  {useCustomPricing && ' Custom pricing applies to Standard only; Priority uses these published rates.'}
+                </p>
+              ) : (
+                <p role="status" data-testid="priority-availability" className="text-sm">
+                  Priority unavailable: {priorityPricing.reason}
+                  {' '}Keep the shares at 0% for Standard-only estimates, or choose a supported model and location.
+                </p>
+              )}
+              <p className="text-sm">{PRIORITY_CAVEAT}</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <h4 className="font-semibold text-amber-900 mb-1">What is it?</h4>
-                <p className="text-amber-800">Priority Processing provides SLA-backed latency for supported Azure OpenAI requests. It's a pay-per-token option with model-specific pricing; check the official pricing page for availability and rates.</p>
+                <p className="text-amber-800">Priority Processing is a pay-per-token option with model-specific latency targets and prices. Estimates here exclude long context, cached-input billing and cache writes.</p>
               </div>
               <div>
                 <h4 className="font-semibold text-amber-900 mb-1">When to consider?</h4>
                 <ul className="text-amber-800 space-y-1">
                   <li>• Latency-sensitive production apps</li>
-                  <li>• Need SLA guarantees without PTU commitment</li>
+                  <li>• Need lower latency without a PTU commitment</li>
                   <li>• Variable workloads that need consistent performance</li>
                   <li>• Can combine with PTU (baseline + priority overflow)</li>
                 </ul>
@@ -2771,7 +2825,7 @@ AzureMetrics
                 <h4 className="font-semibold text-amber-900 mb-1">Availability</h4>
                 <ul className="text-amber-800 space-y-1">
                   <li>• <strong>Models:</strong> Availability varies by model; verify the official pricing page. GPT-5.6 Luna currently lists Priority Processing as N/A.</li>
-                  <li>• <strong>Deployments:</strong> Global Standard, Data Zone Standard</li>
+                  <li>• <strong>Deployments:</strong> Eligible Global Standard and US Data Zone Standard locations; not Regional or EU Data Zone</li>
                   <li>• <strong>Pricing:</strong> Model-specific rates; not a fixed percentage premium over PAYGO</li>
                 </ul>
                 <a href="https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/priority-processing"
@@ -2785,7 +2839,7 @@ AzureMetrics
         </Card>
 
         {/* Sticky Executive Summary */}
-        {hasValidData && paygoAvailable && calculations.pricing === currentPricing && calculations.paygoBreakdown && !isCalculating && (
+        {hasValidData && scenarioPricing.available && calculations.calculationKey === calculationKey && calculations.paygoBreakdown && !isCalculating && (
           <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-50/95 to-indigo-50/95 backdrop-blur-sm border border-blue-200 rounded-lg shadow-md p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
@@ -2794,7 +2848,7 @@ AzureMetrics
               </div>
               <div>
                 <div className="text-xs text-gray-500 uppercase">
-                  {(calculations.monthlySavings || 0) >= 0 ? 'PTU Savings' : 'PAYGO Advantage'}
+                  {(calculations.monthlySavings || 0) >= 0 ? '1-Year PTU Savings vs Selected PAYGO' : 'Selected PAYGO Advantage vs 1-Year PTU'}
                 </div>
                 <div className={`text-lg font-bold ${(calculations.monthlySavings || 0) > 0 ? 'text-green-600' : 'text-blue-600'}`}>
                   ${Math.abs(calculations.monthlySavings || 0).toLocaleString(undefined, {maximumFractionDigits: 0})}
@@ -2846,15 +2900,16 @@ AzureMetrics
               </div>
             </CardContent>
           </Card>
-        ) : !paygoAvailable ? (
+        ) : !scenarioPricing.available ? (
           <Card className="border-amber-300 bg-amber-50">
             <CardContent className="p-8">
               <h3 className="text-xl font-semibold">Cost comparison unavailable</h3>
-              <p>Enter verified custom PAYGO rates for this model and deployment. Savings, recommendations, charts, and exports are withheld rather than calculated from an unrelated price.</p>
-              <p className="mt-2"><strong>PTU sizing:</strong> {calculations.ptuNeeded ?? 'Calculating...'} PTUs. Throughput sizing does not require PAYGO prices.</p>
+              <p role="alert">{scenarioPricing.reason} Adjust the selected Priority share or model/location. Missing Standard rates can be supplied through Custom Pricing.</p>
+              <p>Savings, recommendations, charts and exports are withheld for this unavailable scenario. No unrelated price is substituted.</p>
+              <p className="mt-2"><strong>PTU sizing:</strong> {calculations.calculationKey === calculationKey ? calculations.ptuNeeded : 'Calculating...'} PTUs. Throughput sizing does not require token prices.</p>
             </CardContent>
           </Card>
-        ) : isCalculating || calculations.pricing !== currentPricing ? (
+        ) : isCalculating || calculations.calculationKey !== calculationKey ? (
           <Card className="border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50">
             <CardContent className="p-8 text-center">
               <div className="space-y-4">
@@ -2868,6 +2923,8 @@ AzureMetrics
               </div>
             </CardContent>
           </Card>
+        ) : !calculations.paygoBreakdown ? (
+          <Alert variant="destructive"><AlertDescription>{calculations.exportError || 'Calculation unavailable. Please check the workload inputs.'}</AlertDescription></Alert>
         ) : (
           <div className="space-y-6">{/* Results content starts here */}
             
@@ -2893,8 +2950,8 @@ AzureMetrics
             <div className={`cost-cards-section grid grid-cols-1 md:grid-cols-2 ${calculations.isPrioritySupported ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
               <Card className="bg-gray-50 border-gray-200">
                 <CardContent className="p-4 text-center">
-                  <h3 className="font-medium text-gray-800">PAYGO</h3>
-                  <p className="text-xs text-gray-600 mb-2">No commitment required</p>
+                  <h3 className="font-medium text-gray-800">{getPaygoLabel(processingInputs.priorityShare)}</h3>
+                  <p className="text-xs text-gray-600 mb-2">Selected mix; effective blended rates below</p>
                   {/* Task 3: Enhanced PAYGO breakdown */}
                   {calculations.paygoBreakdown && (
                     <div className="text-xs text-gray-600 mb-2 space-y-1">
@@ -2910,7 +2967,10 @@ AzureMetrics
                   )}
                   <div className="text-right">
                     <span className="text-xs text-gray-600">Pay-as-you-go</span>
-                    <div className="text-2xl font-bold text-gray-600">${calculations.monthlyPaygoCost?.toFixed(2) || '0.00'}</div>
+                    <div data-testid="selected-paygo-cost" className="text-2xl font-bold text-gray-600">${calculations.monthlyPaygoCost.toFixed(2)}</div>
+                    {calculations.monthlyStandardCost != null && processingInputs.priorityShare > 0 && (
+                      <p className="text-xs">Standard-only baseline: ${calculations.monthlyStandardCost.toFixed(2)}</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -2919,12 +2979,12 @@ AzureMetrics
                 <Card className="bg-amber-50 border-amber-300">
                   <CardContent className="p-4 text-center">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-medium text-amber-800">Priority</h3>
+                      <h3 className="font-medium text-amber-800">Priority (100%)</h3>
                       <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-[10px]">
-                        SLA-backed
+                        Reference
                       </Badge>
                     </div>
-                    <p className="text-xs text-amber-700 mb-2">Low-latency with guaranteed throughput</p>
+                    <p className="text-xs text-amber-700 mb-2">All tokens at Priority rates; eligibility conditions apply</p>
                     {calculations.priorityBreakdown && (
                       <div className="text-xs text-amber-700 mb-2 space-y-1">
                         <div>Input: ${calculations.priorityBreakdown.inputCost?.toFixed(2) || '0.00'}</div>
@@ -2936,7 +2996,9 @@ AzureMetrics
                       </div>
                     )}
                     <div className="text-right">
-                      <span className="text-xs text-amber-700">~{calculations.monthlyPaygoCost > 0 ? Math.round(((calculations.monthlyPriorityCost / calculations.monthlyPaygoCost) - 1) * 100) : 70}% premium</span>
+                      {calculations.monthlyStandardCost > 0 && (
+                        <span className="text-xs text-amber-700">{Math.round(((calculations.monthlyPriorityCost / calculations.monthlyStandardCost) - 1) * 100)}% vs Standard-only baseline</span>
+                      )}
                       <div className="text-2xl font-bold text-amber-700">${calculations.monthlyPriorityCost?.toFixed(2) || '0.00'}</div>
                     </div>
                   </CardContent>
@@ -3002,6 +3064,26 @@ AzureMetrics
               </Card>
             </div>
 
+            <Card>
+              <CardHeader>
+                <CardTitle>Selected spillover scenario</CardTitle>
+                <CardDescription>{processingInputs.spilloverPriorityShare}% of overflow tokens use Priority</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {calculations.hybridTotalCost == null ? (
+                  <p role="alert">Spillover cost unavailable: {calculations.spilloverUnavailableReason} Adjust its Priority share or the selected model/location. This option is excluded from the recommendation and charts.</p>
+                ) : (
+                  <div className="space-y-2">
+                    <p>Base: {calculations.hybridBasePTU} PTUs at monthly reservation rates = ${calculations.hybridBaseCost.toFixed(2)}/month.</p>
+                    <p>Overflow: ${calculations.hybridOverflowCost.toFixed(2)}/month.</p>
+                    <p data-testid="spillover-cost">Total: ${calculations.hybridTotalCost.toFixed(2)}/month.</p>
+                    <p>With a 1-year base reservation: ${calculations.hybridYearlyTotalCost.toFixed(2)}/month equivalent, including the same overflow.</p>
+                  </div>
+                )}
+                <p className="text-sm mt-2">{SPILLOVER_ASSUMPTION}</p>
+              </CardContent>
+            </Card>
+
             {/* Cost Comparison Chart */}
             <Card>
               <CardHeader>
@@ -3028,19 +3110,19 @@ AzureMetrics
                   <Target className="h-5 w-5 text-blue-600" />
                   <CardTitle>Recommendation</CardTitle>
                 </div>
-                <CardDescription>Optimized pricing strategy for your usage pattern</CardDescription>
+                <CardDescription>Selected processing mix, reservation terms and latency qualification</CardDescription>
               </CardHeader>
               <CardContent>
                 <Card className="bg-yellow-50 border-yellow-200 mb-4">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      {calculations.recommendation === 'Full PTU Reservation' ? <CheckCircle className="h-8 w-8 text-green-600" /> :
-                       calculations.recommendation === 'Consider Spillover Model' ? <AlertTriangle className="h-8 w-8 text-amber-500" /> :
-                       calculations.recommendation === 'PAYGO' ? <XCircle className="h-8 w-8 text-red-400" /> :
-                       <HelpCircle className="h-8 w-8 text-gray-400" />}
-                      <h3 className="font-medium text-yellow-800">Recommended: {calculations.recommendation || 'N/A'}</h3>
+                      {calculations.recommendationDetails.requiresReview
+                        ? <AlertTriangle className="h-8 w-8 text-amber-500" />
+                        : <CheckCircle className="h-8 w-8 text-green-600" />}
+                      <h3 data-testid="recommendation" className="font-medium text-yellow-800">Recommended: {calculations.recommendation}</h3>
                     </div>
                     <p className="text-yellow-700 mb-4">{calculations.recommendationReason || 'Enter TPM values to see recommendations'}</p>
+                    <p className="text-sm mb-4">Lowest modeled cost: {calculations.recommendationDetails.costLeader}. Cost ranking does not certify latency compliance.</p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -3049,27 +3131,7 @@ AzureMetrics
                           Next Steps
                         </h4>
                         <ol className="list-decimal list-inside space-y-1 text-sm text-green-700">
-                          {calculations.recommendation === 'PAYGO' && (
-                            <>
-                              <li>Continue with your current PAYGO setup</li>
-                              <li>Monitor usage patterns for future optimization</li>
-                              <li>Consider PTU if usage grows consistently</li>
-                            </>
-                          )}
-                          {calculations.recommendation === 'Consider Spillover Model' && (
-                            <>
-                              <li>Reserve base PTUs for average usage</li>
-                              <li>Let burst traffic use PAYGO overflow</li>
-                              <li>Monitor cost savings and adjust as needed</li>
-                            </>
-                          )}
-                          {calculations.recommendation === 'Full PTU Reservation' && (
-                            <>
-                              <li>Consider 1-year PTU reservations for maximum savings</li>
-                              <li>Start with monthly reservation for flexibility</li>
-                              <li>Monitor utilization and optimize sizing</li>
-                            </>
-                          )}
+                          {calculations.recommendationDetails.nextSteps.map(step => <li key={step}>{step}</li>)}
                         </ol>
                       </div>
                       
@@ -3079,27 +3141,7 @@ AzureMetrics
                           Considerations
                         </h4>
                         <ul className="list-disc list-inside space-y-1 text-sm text-orange-700">
-                          {calculations.recommendation === 'PAYGO' && (
-                            <>
-                              <li>No commitment but higher per-token costs</li>
-                              <li>Best for variable or experimental workloads</li>
-                              <li>Monitor for usage pattern changes</li>
-                            </>
-                          )}
-                          {calculations.recommendation === 'Consider Spillover Model' && (
-                            <>
-                              <li>Balance between cost and flexibility</li>
-                              <li>Requires monitoring of overflow costs</li>
-                              <li>Good for growing applications</li>
-                            </>
-                          )}
-                          {calculations.recommendation === 'Full PTU Reservation' && (
-                            <>
-                              <li>Significant upfront commitment required</li>
-                              <li>Best for stable, predictable workloads</li>
-                              <li>Maximum cost savings potential</li>
-                            </>
-                          )}
+                          {calculations.recommendationDetails.considerations.map(item => <li key={item}>{item}</li>)}
                         </ul>
                       </div>
                     </div>
@@ -3122,9 +3164,9 @@ AzureMetrics
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Recommended Cost</div>
                         <div className="text-2xl font-bold text-green-600">
-                          ${calculations.recommendation === 'PAYGO' ? (calculations.monthlyPaygoCost?.toFixed(2) || '0.00') : 
-                            calculations.recommendation === 'Full PTU Reservation' ? (calculations.monthlyPtuReservationCost?.toFixed(2) || '0.00') :
-                            (calculations.hybridTotalCost?.toFixed(2) || '0.00')}
+                          {calculations.recommendationDetails.monthlyCost == null
+                            ? 'Pending latency review'
+                            : `$${calculations.recommendationDetails.monthlyCost.toFixed(2)}`}
                         </div>
                       </div>
                       <div className="text-center">
@@ -3133,7 +3175,7 @@ AzureMetrics
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">
-                          {(calculations.monthlySavings || 0) >= 0 ? 'PTU Savings' : 'PAYGO Advantage'}
+                          {(calculations.monthlySavings || 0) >= 0 ? '1-Year PTU Savings vs Selected PAYGO' : 'Selected PAYGO Advantage vs 1-Year PTU'}
                         </div>
                         <div className={`text-2xl font-bold ${(calculations.monthlySavings || 0) >= 0 ? 'text-purple-600' : 'text-blue-600'}`}>
                           ${Math.abs(calculations.monthlySavings || 0).toFixed(2)}
@@ -3462,6 +3504,7 @@ AzureMetrics
               burstRatio={calculations.burstRatio || undefined}
               hasRetryLogic={optimizationInputs.hasRetryLogic}
               hasSpillover={formData.basePTUs > 0}
+              priorityAvailable={priorityPricing.available}
               usagePattern={calculations.usagePattern || 'Steady'}
             />
 
@@ -3485,6 +3528,8 @@ AzureMetrics
               isStreamingWorkload={optimizationInputs.isStreamingWorkload}
               hasAPIM={optimizationInputs.hasAPIM}
               isLatencyCritical={optimizationInputs.isLatencyCritical}
+              priorityAvailable={priorityPricing.available}
+              priorityUnavailableReason={priorityPricing.reason}
             />
 
             {/* Retry Logic Calculator */}
@@ -3648,8 +3693,8 @@ AzureMetrics
                     <ul className="space-y-2 text-sm">
                       <li><strong>• Usage Consistency:</strong> PTUs work best for predictable, sustained workloads</li>
                       <li><strong>• Capacity Planning:</strong> Each PTU provides guaranteed throughput capacity (varies by model)</li>
-                      <li><strong>• Break-Even Point:</strong> PTUs typically become cost-effective at 60%+ utilization</li>
-                      <li><strong>• Latency Requirements:</strong> Priority Processing provides SLA-backed latency guarantees without PTU commitment; consider it for latency-sensitive workloads that don't justify full PTU</li>
+                      <li><strong>• Break-Even Point:</strong> Compare the selected Standard/Priority mix with the chosen PTU reservation term; there is no universal utilization threshold.</li>
+                      <li><strong>• Latency Requirements:</strong> Priority has model-specific targets and eligibility conditions. Validate latency and fallback behavior; a cost recommendation does not certify an SLA.</li>
                       <li><strong>• Growth Projections:</strong> Consider future usage patterns, not just current needs</li>
                     </ul>
                   </CardContent>
@@ -3667,7 +3712,13 @@ AzureMetrics
                   ptuMonthly: calculations.monthlyPtuReservationCost || 0,
                   ptuYearly: calculations.yearlyReservationMonthly || 0,
                   savings: calculations.monthlySavings || 0,
-                  priority: calculations.isPrioritySupported ? (calculations.monthlyPriorityCost || 0) : null
+                  priority: calculations.isPrioritySupported ? calculations.monthlyPriorityCost : null,
+                  paygoLabel: getPaygoLabel(processingInputs.priorityShare),
+                  standard: calculations.monthlyStandardCost,
+                  spillover: calculations.hybridTotalCost,
+                  spilloverLabel: `Spillover monthly (${processingInputs.spilloverPriorityShare}% Priority)`,
+                  spilloverYearly: calculations.hybridYearlyTotalCost,
+                  spilloverYearlyLabel: `Spillover 1-year (${processingInputs.spilloverPriorityShare}% Priority)`
                 }}
                 utilizationData={{
                   utilization: calculations.utilizationRate || 0,
