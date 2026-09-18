@@ -2,6 +2,7 @@
 // Manages loading and display of pricing data from bundled configuration
 
 import externalConfig from './external_pricing_config.json';
+import { getTokenPricing } from './official_token_pricing.js';
 
 export class ExternalPricingService {
   constructor() {
@@ -139,9 +140,8 @@ export class ExternalPricingService {
   }
 
   // Get token pricing for a model
-  getTokenPricing(modelName) {
-    const data = this.cachedData || externalConfig;
-    return data.tokenPricing[modelName] || data.tokenPricing['gpt-4o-mini'];
+  getTokenPricing(modelName, deploymentType = 'global') {
+    return getTokenPricing(modelName, deploymentType);
   }
 
   // Get model configuration

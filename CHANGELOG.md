@@ -2,7 +2,18 @@
 
 All notable changes to the Microsoft Foundry PTU Calculator are documented in this file.
 
-## [Unreleased] - 2026-09-14
+## [Unreleased] - 2026-09-18
+
+### Fixed
+- Added verified short-context standard PAYGO list prices (USD per 1M tokens) for GPT-5.6 Sol (Global $5/$30; Data Zone $5.50/$33), Terra (Global $2/$12), and Luna (Global $0.20/$1.20; Data Zone $0.22/$1.32).
+- Removed GPT-4o Mini pricing as a fallback for unknown models and stopped substituting Global prices for deployments without a complete rate. Terra short-context Data Zone is listed as N/A; unlisted Regional PAYGO rates remain unavailable.
+- PAYGO calculations now use the same deployment-specific, live, or custom rates displayed in the UI and included in exports.
+- Missing PAYGO prices now show an explicit unavailable state and withhold financial comparisons and exports while retaining PTU sizing. Custom prices are no longer labeled official.
+- Live quotes must match the selected model, region, deployment, and context tier. GPT-5.6 API meters without explicit short-context identification cannot override published short-context prices.
+- Source: [Azure OpenAI pricing](https://azure.microsoft.com/en-us/pricing/details/azure-openai/), reviewed September 18, 2026. Long-context, cached-input, cache-write, and Priority Processing prices are not included in the GPT-5.6 PAYGO estimate.
+- Recalculate previous GPT-5.6 financial analyses: the former $0.15/$0.60 fallback understated PAYGO costs and could distort PTU recommendations. The September 14 throughput correction remains unchanged.
+
+## 2026-09-14
 
 ### Fixed
 - Updated GPT-5.6 Luna from 5,950 to **30,000 input TPM/PTU** and GPT-5.6 Terra from 2,400 to **3,000 input TPM/PTU** across all three model catalogs.

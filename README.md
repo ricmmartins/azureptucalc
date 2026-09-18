@@ -56,12 +56,14 @@
 
 ## How Pricing Works
 
-The calculator uses a **4-tier pricing priority system**:
+The calculator resolves PAYGO pricing in this order:
 
 1. **Custom Override** — user-entered rates (for enterprise/negotiated pricing)
-2. **Live Azure API** — real-time from Azure Retail Prices API via a Vercel serverless proxy (`api/azure-pricing.js`)
-3. **Official Hardcoded** — curated rates from Microsoft documentation
-4. **Fallback** — conservative estimates when all else fails
+2. **Live Azure API** — a complete quote matching the model, region, deployment, and applicable context tier, via a Vercel serverless proxy (`api/azure-pricing.js`)
+3. **Published Rates** — curated rates for the exact model and deployment from the Azure pricing page
+4. **Unavailable** — retain PTU sizing but withhold financial comparisons and exports until verified custom rates are entered; never substitute another model's price
+
+GPT-5.6 PAYGO rates cover **short-context standard pricing**, not long-context, cache, or Priority Processing billing. See the [price scope and missing-rate guidance](docs/USER_GUIDE.md#paygo-price-scope-and-missing-rates).
 
 Live pricing is **cached for 3 hours** and includes:
 - PTU hourly on-demand rates per deployment type

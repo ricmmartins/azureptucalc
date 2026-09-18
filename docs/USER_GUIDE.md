@@ -59,6 +59,22 @@ At the end, you get a **clear recommendation** with:
 
 Pricing updates automatically when you change any of these selections.
 
+#### PAYGO price scope and missing rates
+
+GPT-5.6 estimates use **short-context standard PAYGO list prices in USD per million tokens**, verified against the [Azure pricing page](https://azure.microsoft.com/en-us/pricing/details/azure-openai/) on September 18, 2026:
+
+| Model | Global input / output | Data Zone input / output |
+| --- | --- | --- |
+| GPT-5.6 Sol | $5 / $30 | $5.50 / $33 |
+| GPT-5.6 Terra | $2 / $12 | Not available |
+| GPT-5.6 Luna | $0.20 / $1.20 | $0.22 / $1.32 |
+
+Long-context, cached-input, cache-write, and Priority Processing prices are **not included** in these GPT-5.6 PAYGO estimates. The cache-rate control adjusts PTU capacity utilization, not PAYGO billing discounts.
+
+Prices are never borrowed from another model or deployment. If a complete rate is unavailable (including unlisted GPT-5.6 Regional PAYGO rates), the calculator retains PTU sizing but withholds financial comparisons, recommendations, and exports. Enter verified input and output prices under **Use Custom Pricing** to enable those calculations. The same resolved prices are used in the display, cost breakdown, and exports; custom values are labeled **Custom**, not official.
+
+Recalculate older GPT-5.6 financial analyses: missing prices previously fell back to GPT-4o Mini's $0.15/$0.60, understating PAYGO costs.
+
 ### 2. Input Your Usage Data
 
 #### Method A: KQL / TPM Input (Recommended)
