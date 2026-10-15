@@ -20,6 +20,7 @@ import { calculateOfficialPTUPricing, OFFICIAL_PTU_PRICING } from "./officialPTU
 import { getTokenPricing, resolveTokenPricing, hasTokenPricing } from "./official_token_pricing.js";
 import { getPriorityPricing, calculateMixedTokenCost } from './priorityPricing.js';
 import { getProcessingRecommendation, getPaygoLabel, PROCESSING_ASSUMPTION, PRIORITY_CAVEAT, SPILLOVER_ASSUMPTION } from './processingRecommendation.js';
+import { buildPtuSizingKql } from './ptuSizingKql.js';
 import { REGION_MODEL_AVAILABILITY, getRegionsByZone, isGovernmentRegion, getGovernmentAvailableModels } from "./regionModelAvailability.js";
 import ExternalPricingService from './ExternalPricingService.js';
 import ExportService from './ExportService.js';
@@ -1402,37 +1403,13 @@ Check browser console for detailed error information.`);
   };
 
   // KQL Query code - Dynamic based on selected model (with separate input/output TPM for output weighting)
-  const kqlQuery = `// Output-Weighted Azure OpenAI PTU Sizing Analysis
-// Run this query in Azure Monitor Log Analytics for accurate capacity planning
-// Model: ${selectedModel} | Output Weight: ${getModelOutputWeight()}x (1 output token = ${getModelOutputWeight()} input tokens toward utilization)
-
-let window = 1m;              // granularity for burst detection
-let p = 0.99;                 // percentile for burst sizing
-let outputWeight = ${getModelOutputWeight()};          // model-specific output token weight
-let throughputPerPTU = ${getCurrentModelThroughput()};  // input TPM per PTU for ${selectedModel}
-AzureMetrics
-| where ResourceProvider == "MICROSOFT.COGNITIVESERVICES"
-| where TimeGenerated >= ago(7d)
-| extend IsInput = MetricName == "ProcessedPromptTokens"
-| extend IsOutput = MetricName == "GeneratedCompletionTokens" or MetricName == "ProcessedCompletionTokens"
-| where IsInput or IsOutput
-| summarize
-    InputTokens = sumif(Total, IsInput),
-    OutputTokens = sumif(Total, IsOutput)
-    by bin(TimeGenerated, window)
-| extend NormalizedTPM = InputTokens + (outputWeight * OutputTokens)
-| summarize
-    AvgInputTPM = avg(InputTokens),
-    AvgOutputTPM = avg(OutputTokens),
-    AvgTPM = avg(NormalizedTPM),
-    P99TPM = percentile(NormalizedTPM, p),
-    MaxTPM = max(NormalizedTPM)
-| extend
-    AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)),
-    P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)),
-    MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))
-| extend RecommendedPTU = max_of(AvgPTU, P99PTU)
-| project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`;
+  const kqlQuery = buildPtuSizingKql({
+    outputWeight: getModelOutputWeight(),
+    throughputPerPTU: getCurrentModelThroughput(),
+    modelComment: `// Run this query in Azure Monitor Log Analytics for accurate capacity planning
+// Model: ${selectedModel} | Output Weight: ${getModelOutputWeight()}x (1 output token = ${getModelOutputWeight()} input tokens toward utilization)`,
+    detailedComments: true
+  });
 
   // Copy KQL query to clipboard
   const copyKQLQuery = () => {
