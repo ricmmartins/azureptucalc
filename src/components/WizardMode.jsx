@@ -21,6 +21,7 @@ import {
   Zap
 } from 'lucide-react';
 import enhancedModelConfig from '../enhanced_model_config.json';
+import { buildPtuSizingKql } from '../ptuSizingKql.js';
 
 const WizardMode = ({ 
   initialData = {}, 
@@ -89,24 +90,11 @@ const WizardMode = ({
     const modelComment = modelName
       ? `// Pre-configured for ${modelName} (outputWeight=${outputWeight}, throughputPerPTU=${throughputPerPTU})`
       : '// Select a model in Step 3 to auto-populate these values';
-    return `// Output-Weighted Azure OpenAI PTU Sizing Analysis
-${modelComment}
-let window = 1m;
-let p = 0.99;
-let outputWeight = ${outputWeight};
-let throughputPerPTU = ${throughputPerPTU};
-AzureMetrics
-| where ResourceProvider == "MICROSOFT.COGNITIVESERVICES"
-| where TimeGenerated >= ago(7d)
-| extend IsInput = MetricName == "ProcessedPromptTokens"
-| extend IsOutput = MetricName == "GeneratedCompletionTokens" or MetricName == "ProcessedCompletionTokens"
-| where IsInput or IsOutput
-| summarize InputTokens = sumif(Total, IsInput), OutputTokens = sumif(Total, IsOutput) by bin(TimeGenerated, window)
-| extend NormalizedTPM = InputTokens + (outputWeight * OutputTokens)
-| summarize AvgInputTPM = avg(InputTokens), AvgOutputTPM = avg(OutputTokens), AvgTPM = avg(NormalizedTPM), P99TPM = percentile(NormalizedTPM, p), MaxTPM = max(NormalizedTPM)
-| extend AvgPTU = ceiling(AvgTPM / toreal(throughputPerPTU)), P99PTU = ceiling(P99TPM / toreal(throughputPerPTU)), MaxPTU = ceiling(MaxTPM / toreal(throughputPerPTU))
-| extend RecommendedPTU = max_of(AvgPTU, P99PTU)
-| project AvgInputTPM, AvgOutputTPM, AvgTPM, P99TPM, MaxTPM, AvgPTU, P99PTU, MaxPTU, RecommendedPTU`;
+    return buildPtuSizingKql({
+      outputWeight,
+      throughputPerPTU,
+      modelComment
+    });
   }, [modelKqlParams]);
 
   const copyKqlQuery = useCallback(async () => {

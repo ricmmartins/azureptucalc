@@ -2,7 +2,15 @@
 
 All notable changes to the Microsoft Foundry PTU Calculator are documented in this file.
 
-## [Unreleased] - 2026-09-18
+## [Unreleased] - 2026-10-15
+
+### Fixed
+- Updated both generated PTU-sizing KQL queries to recognize `OutputTokens`, `GeneratedTokens`, `GeneratedCompletionTokens`, and `ProcessedCompletionTokens`. Environments exporting output usage under `OutputTokens` no longer return `AvgOutputTPM = 0` solely because of the metric alias.
+- Aggregate each output-token alias separately and use the largest per-minute value, preventing duplicate aliases from being added together before output weighting and PTU sizing.
+- Centralized the main calculator and wizard on one tested KQL generator so their supported metrics and sizing formula cannot drift independently.
+- Source: customer-assessment feedback in [issue #12](https://github.com/ricmmartins/azureptucalc/issues/12) and the [Azure OpenAI monitoring reference](https://learn.microsoft.com/azure/foundry/openai/monitor-openai-reference), reviewed October 15, 2026.
+
+## 2026-09-18
 
 ### Added
 - Standard/Priority token-mix scenarios with a separately selected Priority share for estimated spillover. Each share applies the same fraction to input and output tokens, not requests; PTU sizing remains unchanged.
